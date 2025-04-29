@@ -1,10 +1,9 @@
 package com.isteer.cvssanalyzer.api.controller;
 
-import java.io.IOException;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.isteer.cvssanalyzer.api.service.CvssService;
@@ -32,4 +31,20 @@ public class CvssController {
 //			return ResponseEntity.status(500).body("Internal Server Error");
 //		}
 	}
+	
+	@GetMapping("/search/cveId")
+	public ResponseEntity<Object> getVulnerabilitiesByCveId(@RequestParam String cveId) {
+		return ResponseEntity.ok(service.getVulnerabilitiesByCveId(cveId));
+	}
+	
+	@GetMapping("/search/keywords")
+	public ResponseEntity<Object> getVulnerabilitiesByKeywords(@RequestParam String keywords) {
+		return ResponseEntity.ok(service.getVulnerabilitiesByKeywords(keywords));
+	}
+	
+	@GetMapping("/search/cpe")
+	public ResponseEntity<Object> getVulnerabilitiesByCpe(@RequestParam String cpe) {
+		return ResponseEntity.ok(service.getVulnerabilitiesByCpe(cpe));
+	}
+	
 }
