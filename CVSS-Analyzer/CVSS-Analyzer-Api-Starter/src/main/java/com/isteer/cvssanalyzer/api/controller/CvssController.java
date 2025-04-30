@@ -19,17 +19,7 @@ public class CvssController {
 	
 	@GetMapping("/getVulnerabilities")
 	public ResponseEntity<Object> getAllVulnerabilities() {
-//		try {
 			return ResponseEntity.ok(service.getAllVulnerabilities());
-//		} catch (IOException e) {
-			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//			return ResponseEntity.status(500).body("Internal Server Error");
-//		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//			return ResponseEntity.status(500).body("Internal Server Error");
-//		}
 	}
 	
 	@GetMapping("/search/cveId")
