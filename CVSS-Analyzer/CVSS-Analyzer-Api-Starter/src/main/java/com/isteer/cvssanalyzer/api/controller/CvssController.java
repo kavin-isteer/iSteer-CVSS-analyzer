@@ -1,9 +1,7 @@
 package com.isteer.cvssanalyzer.api.controller;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.isteer.cvssanalyzer.api.service.CvssService;
@@ -12,29 +10,12 @@ import com.isteer.cvssanalyzer.api.service.CvssService;
 @RequestMapping("/cvss")
 public class CvssController {
 	private CvssService service;
-
 	public CvssController(CvssService cvssService) {
-		this.service = cvssService;
+		this.service=cvssService;
 	}
 	
-	@GetMapping("/getVulnerabilities")
-	public ResponseEntity<Object> getAllVulnerabilities() {
-			return ResponseEntity.ok(service.getAllVulnerabilities());
+	@GetMapping
+	public String handshake() {
+		return "Hi";
 	}
-	
-	@GetMapping("/search/cveId")
-	public ResponseEntity<Object> getVulnerabilitiesByCveId(@RequestParam String cveId) {
-		return ResponseEntity.ok(service.getVulnerabilitiesByCveId(cveId));
-	}
-	
-	@GetMapping("/search/keywords")
-	public ResponseEntity<Object> getVulnerabilitiesByKeywords(@RequestParam String keywords) {
-		return ResponseEntity.ok(service.getVulnerabilitiesByKeywords(keywords));
-	}
-	
-	@GetMapping("/search/cpe")
-	public ResponseEntity<Object> getVulnerabilitiesByCpe(@RequestParam String cpe) {
-		return ResponseEntity.ok(service.getVulnerabilitiesByCpe(cpe));
-	}
-	
 }
