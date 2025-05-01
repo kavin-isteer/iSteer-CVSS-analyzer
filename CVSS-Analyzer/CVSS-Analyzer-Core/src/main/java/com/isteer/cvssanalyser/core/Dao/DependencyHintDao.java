@@ -40,12 +40,13 @@ public class DependencyHintDao {
 		return hints;
 	}
 
-	public List<DependencyHintModel> getAllVendorDependencyHints(Connection con) {
-		String query = "SELECT id,type,match_key,standardized_name,confidence,description,created_at,updated_at FROM dependency_hints WHERE type = ?";
+	public List<DependencyHintModel> getAllVendorDependencyHints(Connection con,String evidence_type) {
+		String query = "SELECT id,type,match_key,standardized_name,confidence,description,created_at,updated_at FROM dependency_hints WHERE type = ? AND evidence_type=?";
 		List<DependencyHintModel> hints = new ArrayList<>();
 		try {
 			PreparedStatement psc = con.prepareStatement(query);
 			psc.setString(1, "vendor");
+			psc.setString(2, evidence_type);
 			ResultSet rs = psc.executeQuery();
 			while (rs.next()) {
 				DependencyHintModel hint = new DependencyHintModel();

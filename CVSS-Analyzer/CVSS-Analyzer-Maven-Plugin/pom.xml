@@ -70,6 +70,11 @@
 			<version>3.3.0</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.isteer</groupId>
+			<artifactId>CVSS-Analyzer-Core</artifactId>
+			<version>1</version>
+		</dependency>
 	</dependencies>
 
 	<build>

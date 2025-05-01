@@ -9,7 +9,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 import java.io.File;
 
-public class MyMojoTest
+public class CvssMojoTest
 {
 
 }

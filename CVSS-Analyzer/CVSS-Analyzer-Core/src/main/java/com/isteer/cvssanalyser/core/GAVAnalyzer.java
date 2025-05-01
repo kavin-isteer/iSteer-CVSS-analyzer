@@ -18,12 +18,6 @@ import com.isteer.cvssanalyser.core.model.GAVModel;
 import com.isteer.cvssanalyser.core.util.DbUtil;
 
 public class GAVAnalyzer {
-	public static void main(String[] args) {
-		GAVAnalyzer analyzer = new GAVAnalyzer();
-		
-		
-	}
-	
 	public List<DependencyModel> fetchProjectDependenciesFromMavenTree() {
 		DependencyTreeResolver treeResolver = new DependencyTreeResolver();
 		File projectDir = new File(".");
@@ -35,72 +29,79 @@ public class GAVAnalyzer {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		List<GAVModel> gavModels = new ArrayList<>();
 		for (String gav : gavs) {
-			String[] wrkMavenDependency = gav.split(":");
-			GAVModel model = new GAVModel();
+
 			DependencyModel dependency = new DependencyModel();
-			//Dependency name
+			// Dependency name
 			dependency.setDependencyName(gav);
+			projectDependencies.add(dependency);
+
+		}
+		return projectDependencies;
+	}
+
+	public void collectGAVEvidencesFromDependencyName(List<DependencyModel> dependencies) {
+		for (DependencyModel dependency : dependencies) {
+			String[] wrkMavenDependency = dependency.getDependencyName().split(":");
+			if(wrkMavenDependency.length<=0) {
+				continue;
+			}
 			if (wrkMavenDependency.length == 5) {
-				//Group Id
+				// Group Id
 				Evidence groupIdevidence = new Evidence();
 				groupIdevidence.setEvidence(wrkMavenDependency[0]);
 				groupIdevidence.setEvidenceType(EvidenceType.GROUP_ID);
 				dependency.addVendorEvidence(groupIdevidence);
-				//model.setGroupId(wrkMavenDependency[0]);
-				//Artifact Id
+				// model.setGroupId(wrkMavenDependency[0]);
+				// Artifact Id
 				Evidence artifactIdevidence = new Evidence();
 				artifactIdevidence.setEvidence(wrkMavenDependency[1]);
 				artifactIdevidence.setEvidenceType(EvidenceType.ARTIFACT_ID);
 				dependency.addProductEvidences(artifactIdevidence);
-				//model.setArtifactId(wrkMavenDependency[1]);
-				//Version
+				// model.setArtifactId(wrkMavenDependency[1]);
+				// Version
 				Evidence versionIdevidence = new Evidence();
 				versionIdevidence.setEvidence(wrkMavenDependency[3]);
 				versionIdevidence.setEvidenceType(EvidenceType.VERSION);
 				dependency.addVersionEvidences(versionIdevidence);
-				
-				projectDependencies.add(dependency);
-				//model.setVersion(wrkMavenDependency[3]);
+
+				// model.setVersion(wrkMavenDependency[3]);
 			} else if (wrkMavenDependency.length == 6) {
-				//model.setGroupId(wrkMavenDependency[0]);
-				//Group Id
+				// model.setGroupId(wrkMavenDependency[0]);
+				// Group Id
 				Evidence groupIdevidence = new Evidence();
 				groupIdevidence.setEvidence(wrkMavenDependency[0]);
 				groupIdevidence.setEvidenceType(EvidenceType.GROUP_ID);
 				dependency.addVendorEvidence(groupIdevidence);
-				//model.setArtifactId(wrkMavenDependency[1]);
-				//Artifact Id
+				// model.setArtifactId(wrkMavenDependency[1]);
+				// Artifact Id
 				Evidence artifactIdevidence = new Evidence();
 				artifactIdevidence.setEvidence(wrkMavenDependency[1]);
 				artifactIdevidence.setEvidenceType(EvidenceType.ARTIFACT_ID);
 				dependency.addProductEvidences(artifactIdevidence);
-				//model.setVersion(wrkMavenDependency[4]);
-				//Version
+				// model.setVersion(wrkMavenDependency[4]);
+				// Version
 				Evidence versionIdevidence = new Evidence();
 				versionIdevidence.setEvidence(wrkMavenDependency[4]);
 				versionIdevidence.setEvidenceType(EvidenceType.VERSION);
 				dependency.addVersionEvidences(versionIdevidence);
-				projectDependencies.add(dependency);
 			}
 		}
-		return projectDependencies;
 	}
-	
-	public List<CPENameModel> resolveGavsToCPENames(List<GAVModel> gavs){
+
+	public List<CPENameModel> resolveGavsToCPENames(List<GAVModel> gavs) {
 		List<CPENameModel> cpesList = new ArrayList<>();
-		if(gavs.size()<=0) {
+		if (gavs.size() <= 0) {
 			return cpesList;
 		}
 		DbUtil dbUtil = new DbUtil();
 		Connection con = dbUtil.getConnection();
 		DependencyHintDao dependencyHintDao = new DependencyHintDao();
-		List<DependencyHintModel> hints = dependencyHintDao.getAllVendorDependencyHints(con);
-		for(GAVModel gav:gavs) {
+		List<DependencyHintModel> hints = dependencyHintDao.getAllVendorDependencyHints(con, "GAV");
+		for (GAVModel gav : gavs) {
 			CPENameModel cpeModel = new CPENameModel();
-			for(DependencyHintModel hint:hints) {
-				if(gav.getGroupId().toLowerCase().startsWith(hint.getMatch_key().toLowerCase())) {
+			for (DependencyHintModel hint : hints) {
+				if (gav.getGroupId().toLowerCase().startsWith(hint.getMatch_key().toLowerCase())) {
 					cpeModel.setVendor(hint.getStandardized_name());
 				}
 			}
@@ -113,6 +114,5 @@ public class GAVAnalyzer {
 		}
 		return cpesList;
 	}
-	
-	
+
 }

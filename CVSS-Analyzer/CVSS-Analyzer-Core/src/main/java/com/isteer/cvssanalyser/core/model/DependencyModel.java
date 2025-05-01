@@ -3,8 +3,11 @@ package com.isteer.cvssanalyser.core.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.maven.artifact.Artifact;
+
 public class DependencyModel {
 	private String dependencyName;
+	private Artifact artifact;
 	private List<Evidence> vendorEvidences = new ArrayList<>();
 	private List<Evidence> productEvidences = new ArrayList<>();
 	private List<Evidence> versionEvidences = new ArrayList<>();
@@ -61,5 +64,11 @@ public class DependencyModel {
 	}
 	public void addLikelyCPEs(CPENameModel likelyCPE) {
 		this.likelyCPEs.add(likelyCPE);
+	}
+	public Artifact getArtifact() {
+		return artifact;
+	}
+	public void setArtifact(Artifact artifact) {
+		this.artifact = artifact;
 	}
 }

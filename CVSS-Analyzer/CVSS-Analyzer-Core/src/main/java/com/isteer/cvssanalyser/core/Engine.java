@@ -3,12 +3,48 @@ package com.isteer.cvssanalyser.core;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.isteer.cvssanalyser.core.cveclient.CveClient;
+import com.isteer.cvssanalyser.core.enums.EngineMode;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
+
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 
 public class Engine {
 	List<DependencyModel> dependencies;
-	public void analyze() {
+	private Integer DEFAULT_VULNERABILITY_SCORE_THRESHOLD = 7;
+	Logger logger = LoggerFactory.getLogger(Engine.class);
+	private static Log mavenLog;
+	public static EngineMode analysisMode;
+	public Engine withDependencies(List<DependencyModel> dependencies) {
+		this.dependencies=dependencies;
+		return this;
+	}
+	public Engine withLog(Log logger) {
+		this.mavenLog=logger;
+		return this;
+	}
+	
+	public void analyze(EngineMode analyzeMode) {
+		this.analysisMode=analyzeMode;
+		if(analyzeMode==EngineMode.POM) {
+			analyzePom();
+		}else if(analyzeMode==EngineMode.MAVEN_PLUGIN) {
+			try {
+				analyzeMavenPlugin();
+			} catch (MojoExecutionException e) {
+				e.printStackTrace();
+			}
+		}
+
+	}
+	public static Log getMavenLog() {
+		return mavenLog;
+	}
+	private void analyzePom() {
 		GAVAnalyzer gavAnalyzer = new GAVAnalyzer();
 		CPEEvidencesNormalizer normalizer = new CPEEvidencesNormalizer();
 		CveClient cveClient = new CveClient();
@@ -19,8 +55,37 @@ public class Engine {
 		for(DependencyModel dep:dependencies) {
 			if(dep.getCpeEnumeration()!=null) {
 				cpenames.add(dep.getCpeEnumeration().getCPE23Uri());
+			}else {
+				System.out.println(dep.getDependencyName());
 			}
 		}
 		Object result = cveClient.getAllVulnerabilities(cpenames);
+	}
+	
+	private void analyzeMavenPlugin() throws MojoExecutionException {
+		JarAnalyzer jarAnalyzer = new JarAnalyzer();
+		GAVAnalyzer gavAnalyser = new GAVAnalyzer();
+		gavAnalyser.collectGAVEvidencesFromDependencyName(dependencies);
+		CPEEvidencesNormalizer normalizer = new CPEEvidencesNormalizer();
+		normalizer.normalizeDependencyEvidences(dependencies);
+		List<String> cpenames = new ArrayList<>();
+		for(DependencyModel dep:dependencies) {
+			if(dep.getCpeEnumeration()!=null) {
+				cpenames.add(dep.getCpeEnumeration().getCPE23Uri());
+			}else {
+				System.out.println(dep.getDependencyName());
+			}
+		}
+		for(DependencyModel dep : dependencies) {
+			mavenLog.info(dep.getDependencyName());
+			if(dep.getArtifact().getType().equals("jar")) {
+				jarAnalyzer.scanJar(dep.getArtifact().getFile());
+			}
+		}
+		mavenLog.info("Dependencies size is :" +this.dependencies.size());
+		mavenLog.info("----------------------------------------Resolved CPE names-----------------------------------------");
+		for(String s:cpenames) {
+			mavenLog.info(s);
+		}
 	}
 }

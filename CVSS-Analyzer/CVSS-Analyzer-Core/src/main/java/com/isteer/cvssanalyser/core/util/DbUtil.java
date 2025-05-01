@@ -4,6 +4,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+import com.isteer.cvssanalyser.core.Engine;
+import com.isteer.cvssanalyser.core.enums.EngineMode;
+
 public class DbUtil {
 	private static Connection con= null;
 	private static final String DB_URL = "CVSS_DB_URL";
@@ -12,6 +15,15 @@ public class DbUtil {
     
     
 	public Connection getConnection() {
+		if(Engine.analysisMode!=EngineMode.POM) {
+			try {
+				this.con = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+				return con;
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			return this.con;
+		}
 		String url = System.getenv(DB_URL);
 	    String username = System.getenv(DB_USERNAME);
 	    String password = System.getenv(DB_PASSWORD);
