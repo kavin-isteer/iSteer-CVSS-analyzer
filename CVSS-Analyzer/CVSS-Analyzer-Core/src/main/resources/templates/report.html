@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Dependency Evidence Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .dependency {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        .dependency-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2980b9;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        .dependency-name:hover {
+            text-decoration: underline;
+        }
+        .evidence-section {
+            margin-left: 20px;
+        }
+        .evidence-type {
+            font-weight: bold;
+            color: #16a085;
+            cursor: pointer;
+            padding: 5px;
+            display: inline-block;
+        }
+        .evidence-type:hover {
+            background-color: #f0f0f0;
+            border-radius: 3px;
+        }
+        .evidence-type::before {
+            content: "▼ ";
+            font-size: 0.8em;
+        }
+        .evidence-type.collapsed::before {
+            content: "► ";
+        }
+        .evidence-list {
+            list-style-type: none;
+            padding-left: 0;
+            margin-top: 5px;
+        }
+        .evidence-item {
+            margin-bottom: 8px;
+            padding: 5px;
+            background-color: white;
+            border-left: 4px solid #3498db;
+            padding-left: 10px;
+        }
+        .evidence-source {
+            font-style: italic;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        .confidence-high {
+            color: #27ae60;
+        }
+        .confidence-medium {
+            color: #f39c12;
+        }
+        .confidence-low {
+            color: #e74c3c;
+        }
+        .collapsible-content {
+            display: block;
+        }
+        .collapsible-content.collapsed {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dependency Evidence Report</h1>
+    
+    <div th:each="dependency : ${dependencies}">
+        <div class="dependency">
+            <div class="dependency-name" onclick="toggleDependency(this)">
+                <span th:text="${dependency.dependencyName}"></span>
+            </div>
+            
+            <div class="dependency-content">
+                <!-- Vendor Evidences -->
+                <div class="evidence-section" th:if="${not #lists.isEmpty(dependency.vendorEvidences)}">
+                    <div class="evidence-type" onclick="toggleSection(this)">Vendor Evidences</div>
+                    <ul class="evidence-list collapsible-content">
+                        <li th:each="evidence : ${dependency.vendorEvidences}" class="evidence-item">
+                            <span th:text="${evidence.resolvedValue}"></span>
+                            <div class="evidence-source" th:text="${evidence.evidenceType} + ': ' + ${evidence.evidence}"></div>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Product Evidences -->
+                <div class="evidence-section" th:if="${not #lists.isEmpty(dependency.productEvidences)}">
+                    <div class="evidence-type" onclick="toggleSection(this)">Product Evidences</div>
+                    <ul class="evidence-list collapsible-content">
+                        <li th:each="evidence : ${dependency.productEvidences}" class="evidence-item">
+                            <span th:text="${evidence.resolvedValue}"></span>
+                            <div class="evidence-source" th:text="${evidence.evidenceType} + ': ' + ${evidence.evidence}"></div>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Version Evidences -->
+                <div class="evidence-section" th:if="${not #lists.isEmpty(dependency.versionEvidences)}">
+                    <div class="evidence-type" onclick="toggleSection(this)">Version Evidences</div>
+                    <ul class="evidence-list collapsible-content">
+                        <li th:each="evidence : ${dependency.versionEvidences}" class="evidence-item">
+                            <span th:text="${evidence.resolvedValue}"></span>
+                            <div class="evidence-source" th:text="${evidence.evidenceType} + ': ' + ${evidence.evidence}"></div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle individual evidence sections
+        function toggleSection(element) {
+            element.classList.toggle("collapsed");
+            const content = element.nextElementSibling;
+            content.classList.toggle("collapsed");
+        }
+        
+        // Toggle entire dependency (collapses all sections)
+        function toggleDependency(element) {
+            const content = element.nextElementSibling;
+            content.classList.toggle("collapsed");
+            
+            // Collapse all evidence sections when dependency is collapsed
+            if (content.classList.contains("collapsed")) {
+                const sections = content.querySelectorAll(".evidence-type");
+                sections.forEach(section => {
+                    if (!section.classList.contains("collapsed")) {
+                        section.classList.add("collapsed");
+                        section.nextElementSibling.classList.add("collapsed");
+                    }
+                });
+            }
+        }
+        
+        // Initialize all sections as expanded by default
+        document.addEventListener("DOMContentLoaded", function() {
+            // You can modify this to start with collapsed sections if preferred
+            const sections = document.querySelectorAll(".evidence-type");
+            sections.forEach(section => {
+                section.classList.remove("collapsed");
+                section.nextElementSibling.classList.remove("collapsed");
+            });
+        });
+    </script>
+</body>
+</html>

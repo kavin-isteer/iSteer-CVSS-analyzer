@@ -12,7 +12,9 @@ import org.apache.maven.project.MavenProject;
 
 import com.isteer.cvssanalyser.core.Engine;
 import com.isteer.cvssanalyser.core.enums.EngineMode;
+import com.isteer.cvssanalyser.core.model.DatabaseConfig;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
+import com.isteer.cvssanalyser.core.util.DbUtil;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -41,12 +43,15 @@ public class CvssMojo extends AbstractMojo {
 	private MavenProject project;
 	
 	@Parameter
-	
+	 private DatabaseConfig database; 
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		   getLog().info("Starting CVSS analysis...");
-		    
+		   
+		   getLog().info("Getting database credentials from plugin configuration");
+		   Engine.analysisMode=EngineMode.MAVEN_PLUGIN;
+		   DbUtil.withDbCredentials(database.getUrl(), database.getUsername(), database.getPassword());
 		    // 1. Get ALL dependencies (including transitive ones)
 		    Set<Artifact> artifacts = project.getArtifacts();
 		    
@@ -79,6 +84,7 @@ public class CvssMojo extends AbstractMojo {
 		            .withDependencies(dependencies)
 		            .withLog(getLog())  // Pass Maven's logger
 		            .analyze(EngineMode.MAVEN_PLUGIN);
+		        Engine.GenerateReport();
 		    } catch (Exception e) {
 		        getLog().error("Analysis failed: " + e.getMessage(), e);
 		        throw new MojoExecutionException("Analysis failed", e);

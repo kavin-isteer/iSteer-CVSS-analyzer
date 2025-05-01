@@ -5,7 +5,7 @@ import com.isteer.cvssanalyser.core.enums.EvidenceType;
 public class Evidence {
 	private EvidenceType evidenceType;
 	private String evidence;
-	
+	private String resolvedValue;
 	public EvidenceType getEvidenceType() {
 		return evidenceType;
 	}
@@ -17,5 +17,16 @@ public class Evidence {
 	}
 	public void setEvidence(String evidence) {
 		this.evidence = evidence;
+	}
+	public String getResolvedValue() {
+		return resolvedValue;
+	}
+	public void setResolvedValue(String resolvedValue) {
+		this.resolvedValue = resolvedValue;
+	}
+	@Override
+	public String toString() {
+		return "Evidence [evidenceType=" + evidenceType + ", evidence=" + evidence + ", resolvedValue=" + resolvedValue
+				+ "]";
 	}
 }
