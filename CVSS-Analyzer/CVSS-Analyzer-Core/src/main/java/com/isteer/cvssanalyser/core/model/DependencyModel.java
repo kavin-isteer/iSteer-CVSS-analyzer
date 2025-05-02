@@ -13,7 +13,7 @@ public class DependencyModel {
 	private List<Evidence> versionEvidences = new ArrayList<>();
 	private boolean normalizationStatus;
 	private CPENameModel cpeEnumeration;
-	private List<VulnerabilityModel> vulnerabilities = new ArrayList<>();
+	private List<VulnerabilityDetailsModel> vulnerabilities = new ArrayList<>();
 	private List<CPENameModel> likelyCPEs;
 	
 	
@@ -41,10 +41,10 @@ public class DependencyModel {
 	public void addVersionEvidences(Evidence versionEvidence) {
 		this.versionEvidences.add(versionEvidence);
 	}
-	public List<VulnerabilityModel> getVulnerabilities() {
+	public List<VulnerabilityDetailsModel> getVulnerabilities() {
 		return vulnerabilities;
 	}
-	public void addVulnerabilities(VulnerabilityModel vulnerability) {
+	public void addVulnerabilities(VulnerabilityDetailsModel vulnerability) {
 		this.vulnerabilities.add(vulnerability);
 	}
 	public boolean isNormalizationStatus() {
