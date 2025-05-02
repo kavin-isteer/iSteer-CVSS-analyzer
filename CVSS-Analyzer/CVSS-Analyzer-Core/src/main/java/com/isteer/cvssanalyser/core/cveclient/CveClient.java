@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isteer.cvssanalyser.core.model.CPENameModel;
+import com.isteer.cvssanalyser.core.model.DependencyModel;
 import com.isteer.cvssanalyser.core.model.VulnerabilityAffectedProductModel;
 import com.isteer.cvssanalyser.core.model.VulnerabilityCvssMetricsModel;
 import com.isteer.cvssanalyser.core.model.VulnerabilityModel;
@@ -26,6 +28,9 @@ public class CveClient {
 	public List<VulnerabilityModel> getAllVulnerabilities(Object cpeNames) {
 		List<VulnerabilityModel> vulnerabilities = new ArrayList<>();
 		List<String> cpeNameList = new ArrayList<>();
+		if(cpeNames != null) {
+			cpeNameList = (List<String>) cpeNames;
+		} else {
 		cpeNameList.add("cpe:2.3:a:vmware:spring_framework:5.3.20:*:*:*:*:*:*:*");
 		cpeNameList.add("cpe:2.3:a:fasterxml:jackson-databind:2.13.3:*:*:*:*:*:*:*");
 		cpeNameList.add("cpe:2.3:a:apache:log4j:2.17.1:*:*:*:*:*:*:*");
@@ -34,7 +39,7 @@ public class CveClient {
 		cpeNameList.add("cpe:2.3:a:eclipse:jetty:9.4.44:20210927:*:*:*:*:*:*");
 		cpeNameList.add("cpe:2.3:a:apache:commons_io:2.6:-:*:*:*:*:*:*");
 		cpeNameList.add("cpe:2.3:a:google:guava:30.1:*:*:*:*:*:*:*");
-
+		}
 		for (String cpeName : cpeNameList) {
 			RestTemplate restTemplate = new RestTemplate();
 			HttpHeaders headers = new HttpHeaders();
@@ -180,6 +185,17 @@ public class CveClient {
 		}
 		
 		return mitigationReferences;
+	}
+	
+	public DependencyModel fetchVulnerabilitiesForDependency(DependencyModel dependency) {
+		CPENameModel cpeNameModel = dependency.getCpeEnumeration();
+		String cpeName = cpeNameModel.getCPE23Uri();
+		List<VulnerabilityModel> vulnerabilities = getAllVulnerabilities(cpeName);
+		List<VulnerabilityDetailsModel> vulnerabilityDetails = vulnerabilities.getFirst().getVulnerabilities();
+		for (VulnerabilityDetailsModel vulnerabilityDetail : vulnerabilityDetails) {
+			dependency.addVulnerabilities(vulnerabilityDetail);
+		}
+		return dependency;
 	}
 
 }
