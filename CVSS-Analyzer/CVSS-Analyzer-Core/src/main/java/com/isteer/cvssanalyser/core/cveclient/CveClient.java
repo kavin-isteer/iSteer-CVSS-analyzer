@@ -26,36 +26,23 @@ public class CveClient {
 	private static final String BASE_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0";
 	private static final String API_KEY = "ca987215-dbe8-42f0-a656-e5da368c3c70";
 
-	public List<VulnerabilityModel> getAllVulnerabilities(Object cpeNames) {
+	public List<VulnerabilityModel> getAllVulnerabilities(String cpeName) {
 		List<VulnerabilityModel> vulnerabilities = new ArrayList<>();
-		List<String> cpeNameList = new ArrayList<>();
-		if(cpeNames != null) {
-			cpeNameList = (List<String>) cpeNames;
-		} else {
-		cpeNameList.add("cpe:2.3:a:vmware:spring_framework:5.3.20:*:*:*:*:*:*:*");
-		cpeNameList.add("cpe:2.3:a:fasterxml:jackson-databind:2.13.3:*:*:*:*:*:*:*");
-		cpeNameList.add("cpe:2.3:a:apache:log4j:2.17.1:*:*:*:*:*:*:*");
-		cpeNameList.add("cpe:2.3:a:apache:struts:2.5.30:*:*:*:*:*:*:*");
-		cpeNameList.add("cpe:2.3:a:apache:tomcat:9.0.60:*:*:*:*:*:*:*");
-		cpeNameList.add("cpe:2.3:a:eclipse:jetty:9.4.44:20210927:*:*:*:*:*:*");
-		cpeNameList.add("cpe:2.3:a:apache:commons_io:2.6:-:*:*:*:*:*:*");
-		cpeNameList.add("cpe:2.3:a:google:guava:30.1:*:*:*:*:*:*:*");
-		}
-		for (String cpeName : cpeNameList) {
-			RestTemplate restTemplate = new RestTemplate();
-			HttpHeaders headers = new HttpHeaders();
-			headers.set("apiKey", API_KEY);
-			HttpEntity<String> entity = new HttpEntity<>(headers);
 
-			String url = String.format("%s?cpeName=%s", BASE_URL, cpeName);
-			ResponseEntity<Object> response = restTemplate.exchange(url, HttpMethod.GET, entity, Object.class);
-			Object cveApiResponse = response.getBody();
+		RestTemplate restTemplate = new RestTemplate();
+		HttpHeaders headers = new HttpHeaders();
+		headers.set("apiKey", API_KEY);
+		HttpEntity<String> entity = new HttpEntity<>(headers);
 
-			VulnerabilityModel parsedVulnerability = new VulnerabilityModel();
-			parsedVulnerability.setCpeName(cpeName);
-			parsedVulnerability.setVulnerabilities(parseCveApiResponse(cveApiResponse));
-			vulnerabilities.add(parsedVulnerability);
-		}
+		String url = String.format("%s?cpeName=%s", BASE_URL, cpeName);
+		ResponseEntity<Object> response = restTemplate.exchange(url, HttpMethod.GET, entity, Object.class);
+		Object cveApiResponse = response.getBody();
+
+		VulnerabilityModel parsedVulnerability = new VulnerabilityModel();
+		parsedVulnerability.setCpeName(cpeName);
+		parsedVulnerability.setVulnerabilities(parseCveApiResponse(cveApiResponse));
+		vulnerabilities.add(parsedVulnerability);
+
 		return vulnerabilities;
 	}
 
@@ -72,16 +59,17 @@ public class CveClient {
 					VulnerabilityDetailsModel vulnerabilityDetail = new VulnerabilityDetailsModel();
 					vulnerabilityDetail.setCveId(JsonPath.read(cveItem, "$.cve.id"));
 					vulnerabilityDetail.setCveDescription(JsonPath.read(cveItem, "$.cve.descriptions[0].value"));
+					vulnerabilityDetail.setSourceIdentifier(JsonPath.read(cveItem, "$.cve.sourceIdentifier"));
 
 					Map<String, Object> cvssMetricsMap = JsonPath.read(cveItem, "$.cve.metrics");
 					vulnerabilityDetail.setCvssMetrics(processCvssMetrics(cvssMetricsMap));
-					
+
 					List<Object> affectedProducts = JsonPath.read(cveItem, "$.cve.configurations[*].nodes[*].cpeMatch");
 					vulnerabilityDetail.setAffectedProducts(processAffectedProducts(affectedProducts));
 
 					List<Object> references = JsonPath.read(cveItem, "$.cve.references[*]");
 					vulnerabilityDetail.setReferences(processReferences(references));
-					
+
 					vulnerabilityDetails.add(vulnerabilityDetail);
 				}
 			}
@@ -134,67 +122,66 @@ public class CveClient {
 		}
 		return parsedCvssMetrics;
 	}
-	
+
 	public List<VulnerabilityAffectedProductModel> processAffectedProducts(List<Object> configurations) {
-        List<VulnerabilityAffectedProductModel> affectedProducts = new ArrayList<>();
+		List<VulnerabilityAffectedProductModel> affectedProducts = new ArrayList<>();
 
-        try {
-            for (Object cpeMatchList : configurations) {
-                List<Object> cpeMatches = (List<Object>) cpeMatchList;
+		try {
+			for (Object cpeMatchList : configurations) {
+				List<Object> cpeMatches = (List<Object>) cpeMatchList;
 
-                for (Object cpeMatch : cpeMatches) {
-                    VulnerabilityAffectedProductModel product = new VulnerabilityAffectedProductModel();
-                    product.setCpeName(JsonPath.read(cpeMatch, "$.criteria"));
-                    if (JsonPath.read(cpeMatch, "$").toString().contains("versionStartIncluding")) {
-                        product.setVersionStartIncluding(JsonPath.read(cpeMatch, "$.versionStartIncluding"));
-                    }
-                    if (JsonPath.read(cpeMatch, "$").toString().contains("versionStartExcluding")) {
-                        product.setVersionStartExcluding(JsonPath.read(cpeMatch, "$.versionStartExcluding"));
-                    }
-                    if (JsonPath.read(cpeMatch, "$").toString().contains("versionEndIncluding")) {
-                        product.setVersionEndIncluding(JsonPath.read(cpeMatch, "$.versionEndIncluding"));
-                    }
-                    if (JsonPath.read(cpeMatch, "$").toString().contains("versionEndExcluding")) {
-                        product.setVersionEndExcluding(JsonPath.read(cpeMatch, "$.versionEndExcluding"));
-                    }
+				for (Object cpeMatch : cpeMatches) {
+					VulnerabilityAffectedProductModel product = new VulnerabilityAffectedProductModel();
+					product.setCpeName(JsonPath.read(cpeMatch, "$.criteria"));
+					if (JsonPath.read(cpeMatch, "$").toString().contains("versionStartIncluding")) {
+						product.setVersionStartIncluding(JsonPath.read(cpeMatch, "$.versionStartIncluding"));
+					}
+					if (JsonPath.read(cpeMatch, "$").toString().contains("versionStartExcluding")) {
+						product.setVersionStartExcluding(JsonPath.read(cpeMatch, "$.versionStartExcluding"));
+					}
+					if (JsonPath.read(cpeMatch, "$").toString().contains("versionEndIncluding")) {
+						product.setVersionEndIncluding(JsonPath.read(cpeMatch, "$.versionEndIncluding"));
+					}
+					if (JsonPath.read(cpeMatch, "$").toString().contains("versionEndExcluding")) {
+						product.setVersionEndExcluding(JsonPath.read(cpeMatch, "$.versionEndExcluding"));
+					}
 
-                    affectedProducts.add(product);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+					affectedProducts.add(product);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
-        return affectedProducts;
-    }
-	
+		return affectedProducts;
+	}
+
 	private List<VulnerabilityReferenceModel> processReferences(List<Object> references) {
 		List<VulnerabilityReferenceModel> mitigationReferences = new ArrayList<>();
 		try {
 			for (Object reference : references) {
 				VulnerabilityReferenceModel mitigationReference = new VulnerabilityReferenceModel();
 				mitigationReference.setReferenceUrl(JsonPath.read(reference, "$.url"));
-				if(JsonPath.read(reference, "$").toString().contains("tags")) {
+				if (JsonPath.read(reference, "$").toString().contains("tags")) {
 					mitigationReference.setReferenceTags(JsonPath.read(reference, "$.tags[*]"));
 				}
-				
+
 				mitigationReferences.add(mitigationReference);
-				}
-		}
-		catch (Exception e) {
+			}
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		return mitigationReferences;
 	}
-	
+
 	public DependencyModel fetchVulnerabilitiesForDependency(DependencyModel dependency) {
-		if(dependency.getCpeEnumeration()==null) {
+		if (dependency.getCpeEnumeration() == null) {
 			return null;
 		}
 		CPENameModel cpeNameModel = dependency.getCpeEnumeration();
 		String cpeName = cpeNameModel.getCPE23Uri();
-		List<VulnerabilityModel> vulnerabilities = getAllVulnerabilities(Arrays.asList(cpeName));
+		List<VulnerabilityModel> vulnerabilities = getAllVulnerabilities(cpeName);
 		List<VulnerabilityDetailsModel> vulnerabilityDetails = vulnerabilities.getFirst().getVulnerabilities();
 		for (VulnerabilityDetailsModel vulnerabilityDetail : vulnerabilityDetails) {
 			dependency.addVulnerabilities(vulnerabilityDetail);
