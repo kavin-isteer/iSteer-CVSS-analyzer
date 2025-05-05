@@ -85,6 +85,7 @@ public class CvssMojo extends AbstractMojo {
 		            .withLog(getLog())  // Pass Maven's logger
 		            .analyze(EngineMode.MAVEN_PLUGIN);
 		        Engine.GenerateReport();
+		        Engine.checkForVulnerabilityForDependencies();
 		    } catch (Exception e) {
 		        getLog().error("Analysis failed: " + e.getMessage(), e);
 		        throw new MojoExecutionException("Analysis failed", e);

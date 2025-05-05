@@ -10,6 +10,7 @@ import org.apache.maven.plugin.logging.Log;
 import com.isteer.cvssanalyser.core.cveclient.CveClient;
 import com.isteer.cvssanalyser.core.enums.EngineMode;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
+import com.isteer.cvssanalyser.core.model.VulnerabilityCvssMetricsModel;
 import com.isteer.cvssanalyser.core.model.VulnerabilityDetailsModel;
 import com.isteer.cvssanalyser.core.util.HtmlReportGenerator;
 
@@ -98,6 +99,7 @@ public class Engine {
 	public static void checkForVulnerabilityForDependencies() {
 		boolean vulnerabilityFound=false;
 		int count = 0;
+		boolean isThresholdExceeded=false;
 		for(DependencyModel dep:dependencies) {
 			if(dep.getVulnerabilities().size()>0) {
 				getMavenLog().error("Found "+dep.getVulnerabilities().size()+" vulnerabilities for dependency:"+dep.getDependencyName());
@@ -107,7 +109,19 @@ public class Engine {
 			}
 			if(vulnerabilityFound) {
 				for(VulnerabilityDetailsModel vulnerabilities : dep.getVulnerabilities()) {
-					
+					for(VulnerabilityCvssMetricsModel cvssMetrics : vulnerabilities.getCvssMetrics()) {
+						if(cvssMetrics.getBaseScore()>=thresholdValue) {
+							count++;
+							getMavenLog().error("Vulnerability found with CVSS score greater than threshold value: "+cvssMetrics.getBaseScore());
+							getMavenLog().error("Vulnerability ID: "+vulnerabilities.getCveId());
+							getMavenLog().error("CVSS Score: "+cvssMetrics.getBaseScore());
+							getMavenLog().error("CVSS Vector: "+cvssMetrics.getAttackVector());
+							isThresholdExceeded=true;
+						}
+					}
+				}
+				if(isThresholdExceeded) {
+					throw new RuntimeException("One or more dependencies found with vulnerability with base score greater than threshold value: "+thresholdValue);
 				}
 			}
 		}
