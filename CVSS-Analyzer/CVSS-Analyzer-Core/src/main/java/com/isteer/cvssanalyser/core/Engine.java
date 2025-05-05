@@ -54,9 +54,18 @@ public class Engine {
 	    dependencies =  gavAnalyzer.fetchProjectDependenciesFromMavenTree();
 	    gavAnalyzer.collectGAVEvidencesFromDependencyName(dependencies);
 		normalizer.normalizeDependencyEvidences(dependencies);
-		
+		int dependencyCount = 0;
 		for(DependencyModel dep:dependencies) {
 			cveClient.fetchVulnerabilitiesForDependency(dep);
+			dependencyCount++;
+			if(dependencyCount % 25 == 0) {
+				try {
+					getMavenLog().info("Fetched vulnerabilities for " + dependencyCount + " out of" + dependencies.size() + " dependencies");
+					Thread.sleep(10000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 		for(DependencyModel dep:dependencies) {
 			if(dep.getVulnerabilities().size()>0) {
@@ -71,6 +80,7 @@ public class Engine {
 		JarAnalyzer jarAnalyzer = new JarAnalyzer();
 		GAVAnalyzer gavAnalyser = new GAVAnalyzer();
 		CveClient cveClient = new CveClient();
+		int dependencyCount = 0;
 		gavAnalyser.collectGAVEvidencesFromDependencyName(dependencies);
 		
 		jarAnalyzer.collectEvidencesFromJar(dependencies);
@@ -79,9 +89,19 @@ public class Engine {
 		getMavenLog().info("Resolving evidences to CPE names.......");
 		normalizer.normalizeDependencyEvidences(dependencies);
 		getMavenLog().info("Fetching vulnerability details for the dependencies from the NVD api(This step requires Internet connection!!)");
+		
 		for(DependencyModel dep:dependencies) {
 			if(dep.getCpeEnumeration()!=null) {
+				dependencyCount++;
 				cveClient.fetchVulnerabilitiesForDependency(dep);
+			}
+			if(dependencyCount % 25 == 0) {
+				try {
+					getMavenLog().info("Fetched vulnerabilities for " + dependencyCount + " out of " + dependencies.size() + " dependencies");
+					Thread.sleep(10000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -98,7 +118,6 @@ public class Engine {
 		}
 	}
 	public static void checkForVulnerabilityForDependencies() {
-		int count = 0;
 		boolean isThresholdExceeded=false;
 		for(DependencyModel dep:dependencies) {
 			if(dep.getVulnerabilities().size()>0) {
@@ -106,7 +125,6 @@ public class Engine {
 				for(VulnerabilityDetailsModel vulnerabilities : dep.getVulnerabilities()) {
 					for(VulnerabilityCvssMetricsModel cvssMetrics : vulnerabilities.getCvssMetrics()) {
 						if(cvssMetrics.getBaseScore()>=thresholdValue) {
-							count++;
 							getMavenLog().error("Vulnerability found with CVSS score greater than threshold value: "+thresholdValue+"\n"+
 							"Vulnerability ID: "+vulnerabilities.getCveId()+"\n"+
 							"CVSS Score: "+cvssMetrics.getBaseScore()+"\n"+
