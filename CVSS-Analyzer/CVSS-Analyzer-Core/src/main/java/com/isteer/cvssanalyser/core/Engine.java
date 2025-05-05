@@ -21,7 +21,7 @@ public class Engine {
 	
 	public static EngineMode analysisMode;
 	
-	public static Double thresholdValue = 1.0;
+	public static Double thresholdValue = 5.0;
 	
 	public static Log getMavenLog() {
 		return mavenLog;
@@ -112,11 +112,16 @@ public class Engine {
 							"CVSS Score: "+cvssMetrics.getBaseScore()+"\n"+
 							"CVSS Vector: "+cvssMetrics.getVectorString());
 							isThresholdExceeded=true;
+						}else {
+							getMavenLog().error("Vulnerability found with CVSS score less than threshold value: "+thresholdValue+"\n"+
+									"Vulnerability ID: "+vulnerabilities.getCveId()+"\n"+
+									"CVSS Score: "+cvssMetrics.getBaseScore()+"\n"+
+									"CVSS Vector: "+cvssMetrics.getVectorString());
 						}
 					}
 				}
 			}else {
-				getMavenLog().info("No vulnerabilities found for dependency: "+ dep.getDependencyName());
+			//	getMavenLog().info("No vulnerabilities found for dependency: "+ dep.getDependencyName());
 			}
 		}
 		if(isThresholdExceeded) {

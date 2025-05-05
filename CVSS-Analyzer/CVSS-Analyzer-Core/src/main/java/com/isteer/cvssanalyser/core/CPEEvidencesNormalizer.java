@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.util.List;
 
 import com.isteer.cvssanalyser.core.dao.DependencyHintDao;
+import com.isteer.cvssanalyser.core.enums.EngineMode;
 import com.isteer.cvssanalyser.core.enums.EvidenceType;
 import com.isteer.cvssanalyser.core.model.CPENameModel;
 import com.isteer.cvssanalyser.core.model.DependencyHintModel;
@@ -29,6 +30,10 @@ public class CPEEvidencesNormalizer {
 				cpe.setProduct(product);
 				cpe.setVersion(version);
 				dependencyModel.setCpeEnumeration(cpe);
+			}else {
+				if(Engine.analysisMode==EngineMode.MAVEN_PLUGIN) {
+					Engine.getMavenLog().info("CPE name not resolved for dependency: "+dependencyModel.getDependencyName());
+				}
 			}
 		}
 	}
@@ -49,12 +54,22 @@ public class CPEEvidencesNormalizer {
 	}
 	public String normalizeProductEvidences(List<Evidence> evidences) {
 		String mostLikelyProduct = null;
+		List<DependencyHintModel> hints = hintDao.getAllProductDependencyHints(connection, "GAV");
 		for(Evidence evidence:evidences) {
 			if(evidence.getEvidenceType()==EvidenceType.ARTIFACT_ID) {
-				mostLikelyProduct = evidence.getEvidence();
-				mostLikelyProduct = mostLikelyProduct.replaceAll("[^a-z0-9_-]", "_");
-				mostLikelyProduct = mostLikelyProduct.replace("-", "_");
-				evidence.setResolvedValue(mostLikelyProduct);
+				for(DependencyHintModel hint:hints) {
+					if(evidence.getEvidence().startsWith(hint.getMatch_key())) {
+						mostLikelyProduct = hint.getStandardized_name();
+						evidence.setResolvedValue(mostLikelyProduct);
+						break;
+					}
+				}
+				if(mostLikelyProduct==null) {
+					mostLikelyProduct = evidence.getEvidence();
+					mostLikelyProduct = mostLikelyProduct.replaceAll("[^a-z0-9_-]", "_");
+					mostLikelyProduct = mostLikelyProduct.replace("-", "_");
+					evidence.setResolvedValue(mostLikelyProduct);
+				}
 			}
 		}
 		return mostLikelyProduct;
