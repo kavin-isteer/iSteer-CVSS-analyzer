@@ -19,7 +19,7 @@ import java.util.jar.Manifest;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 
-import com.isteer.cvssanalyser.core.Dao.DependencyHintDao;
+import com.isteer.cvssanalyser.core.dao.DependencyHintDao;
 import com.isteer.cvssanalyser.core.enums.EvidenceType;
 import com.isteer.cvssanalyser.core.model.DependencyHintModel;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
@@ -31,37 +31,38 @@ public class JarAnalyzer {
 		return Engine.getMavenLog();
 	}
 	public void collectEvidencesFromJar(List<DependencyModel> dependencies) {
+		getLog().info("Collecting evidences from Jar file packages and Manifest file");
 		for(DependencyModel dependency:dependencies) {
 			if(!dependency.getArtifact().getType().equals("jar")) {
 				continue;
 			}
-			getLog().info("Jar file: "+dependency.getArtifact().getFile().getName());
+			//getLog().info("Jar file: "+dependency.getArtifact().getFile().getName());
 			//package vendor evidence
 			Evidence packageVendorEvidence = collectVendorEvidenceFromPackage(dependency.getArtifact().getFile());
 			if(packageVendorEvidence!=null) {
 				dependency.addVendorEvidence(packageVendorEvidence);
-				getLog().info("adding package vendor evidence: "+packageVendorEvidence);
+			//	getLog().info("adding package vendor evidence: "+packageVendorEvidence);
 			}
 			
 			//manifest vendor evidence
 			Evidence manifestVendorEvidence = collectVendorEvidenceFromManifest(dependency.getArtifact().getFile());
 			if(manifestVendorEvidence!=null) {
 				dependency.addVendorEvidence(manifestVendorEvidence);
-				getLog().info("adding manifest vendor evidence: "+manifestVendorEvidence);
+			//	getLog().info("adding manifest vendor evidence: "+manifestVendorEvidence);
 			}
 			
 			//manifest product evidence
 			Evidence manifestProductEvidence = collectProductEvidenceFromManifest(dependency.getArtifact().getFile());
 			if(manifestProductEvidence!=null) {
 				dependency.addProductEvidences(manifestProductEvidence);
-				getLog().info("adding manifest product evidence: "+manifestProductEvidence);
+			//	getLog().info("adding manifest product evidence: "+manifestProductEvidence);
 			}
 			
 			//manifest version evidence
 			Evidence manifestVersionEvidence = collectVersionEvidenceFromManifest(dependency.getArtifact().getFile());
 			if(manifestVersionEvidence!=null) {
 				dependency.addVersionEvidences(manifestVersionEvidence);
-				getLog().info("adding manifest version evidence: "+manifestVersionEvidence);
+			//	getLog().info("adding manifest version evidence: "+manifestVersionEvidence);
 			}
 			
 		}

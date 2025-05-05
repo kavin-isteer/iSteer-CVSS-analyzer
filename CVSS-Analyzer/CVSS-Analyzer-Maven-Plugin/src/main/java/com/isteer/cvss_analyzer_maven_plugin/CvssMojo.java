@@ -1,4 +1,4 @@
-package com.isteer.CVSS_Analyzer_Maven_Plugin;
+package com.isteer.cvss_analyzer_maven_plugin;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;

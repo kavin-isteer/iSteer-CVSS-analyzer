@@ -3,7 +3,7 @@ package com.isteer.cvssanalyser.core;
 import java.sql.Connection;
 import java.util.List;
 
-import com.isteer.cvssanalyser.core.Dao.DependencyHintDao;
+import com.isteer.cvssanalyser.core.dao.DependencyHintDao;
 import com.isteer.cvssanalyser.core.enums.EvidenceType;
 import com.isteer.cvssanalyser.core.model.CPENameModel;
 import com.isteer.cvssanalyser.core.model.DependencyHintModel;

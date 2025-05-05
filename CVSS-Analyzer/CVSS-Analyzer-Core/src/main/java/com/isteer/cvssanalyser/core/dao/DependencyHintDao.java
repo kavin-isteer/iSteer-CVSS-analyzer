@@ -1,4 +1,4 @@
-package com.isteer.cvssanalyser.core.Dao;
+package com.isteer.cvssanalyser.core.dao;
 
 import java.security.Timestamp;
 import java.sql.Connection;
