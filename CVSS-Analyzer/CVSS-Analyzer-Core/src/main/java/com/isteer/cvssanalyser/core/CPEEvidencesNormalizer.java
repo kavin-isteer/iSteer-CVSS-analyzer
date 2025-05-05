@@ -40,6 +40,7 @@ public class CPEEvidencesNormalizer {
 				for(DependencyHintModel hint:hints) {
 					if(evidence.getEvidence().startsWith(hint.getMatch_key())) {
 						mostLikelyVendor = hint.getStandardized_name();
+						evidence.setResolvedValue(mostLikelyVendor);
 					}
 				}
 			}
@@ -53,6 +54,7 @@ public class CPEEvidencesNormalizer {
 				mostLikelyProduct = evidence.getEvidence();
 				mostLikelyProduct = mostLikelyProduct.replaceAll("[^a-z0-9_-]", "_");
 				mostLikelyProduct = mostLikelyProduct.replace("-", "_");
+				evidence.setResolvedValue(mostLikelyProduct);
 			}
 		}
 		return mostLikelyProduct;
@@ -62,6 +64,7 @@ public class CPEEvidencesNormalizer {
 		for(Evidence evidence:evidences) {
 			if(evidence.getEvidenceType()==EvidenceType.VERSION) {
 				mostLikelyVersion=evidence.getEvidence();
+				evidence.setResolvedValue(mostLikelyVersion);
 			}
 		}
 		return mostLikelyVersion;

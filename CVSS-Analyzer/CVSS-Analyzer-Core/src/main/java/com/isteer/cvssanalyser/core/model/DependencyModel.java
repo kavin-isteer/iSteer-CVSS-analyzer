@@ -11,7 +11,6 @@ public class DependencyModel {
 	private List<Evidence> vendorEvidences = new ArrayList<>();
 	private List<Evidence> productEvidences = new ArrayList<>();
 	private List<Evidence> versionEvidences = new ArrayList<>();
-	private boolean normalizationStatus;
 	private CPENameModel cpeEnumeration;
 	private List<VulnerabilityDetailsModel> vulnerabilities = new ArrayList<>();
 	private List<CPENameModel> likelyCPEs;
@@ -46,12 +45,6 @@ public class DependencyModel {
 	}
 	public void addVulnerabilities(VulnerabilityDetailsModel vulnerability) {
 		this.vulnerabilities.add(vulnerability);
-	}
-	public boolean isNormalizationStatus() {
-		return normalizationStatus;
-	}
-	public void setNormalizationStatus(boolean normalizationStatus) {
-		this.normalizationStatus = normalizationStatus;
 	}
 	public CPENameModel getCpeEnumeration() {
 		return cpeEnumeration;

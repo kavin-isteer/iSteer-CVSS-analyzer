@@ -1,6 +1,7 @@
 package com.isteer.cvssanalyser.core.cveclient;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -188,14 +189,16 @@ public class CveClient {
 	}
 	
 	public DependencyModel fetchVulnerabilitiesForDependency(DependencyModel dependency) {
+		if(dependency.getCpeEnumeration()==null) {
+			return null;
+		}
 		CPENameModel cpeNameModel = dependency.getCpeEnumeration();
 		String cpeName = cpeNameModel.getCPE23Uri();
-		List<VulnerabilityModel> vulnerabilities = getAllVulnerabilities(cpeName);
+		List<VulnerabilityModel> vulnerabilities = getAllVulnerabilities(Arrays.asList(cpeName));
 		List<VulnerabilityDetailsModel> vulnerabilityDetails = vulnerabilities.getFirst().getVulnerabilities();
 		for (VulnerabilityDetailsModel vulnerabilityDetail : vulnerabilityDetails) {
 			dependency.addVulnerabilities(vulnerabilityDetail);
 		}
 		return dependency;
 	}
-
 }
