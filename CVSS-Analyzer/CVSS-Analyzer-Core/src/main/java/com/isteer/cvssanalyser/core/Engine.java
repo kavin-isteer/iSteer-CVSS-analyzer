@@ -10,6 +10,7 @@ import org.apache.maven.plugin.logging.Log;
 import com.isteer.cvssanalyser.core.cveclient.CveClient;
 import com.isteer.cvssanalyser.core.enums.EngineMode;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
+import com.isteer.cvssanalyser.core.model.VulnerabilityDetailsModel;
 import com.isteer.cvssanalyser.core.util.HtmlReportGenerator;
 
 public class Engine {
@@ -18,6 +19,8 @@ public class Engine {
 	private static Log mavenLog;
 	
 	public static EngineMode analysisMode;
+	
+	public static Double thresholdValue = 8.0;
 	
 	public static Log getMavenLog() {
 		return mavenLog;
@@ -66,7 +69,7 @@ public class Engine {
 	private void analyzeMavenPlugin(){
 		JarAnalyzer jarAnalyzer = new JarAnalyzer();
 		GAVAnalyzer gavAnalyser = new GAVAnalyzer();
-		
+		CveClient cveClient = new CveClient();
 		gavAnalyser.collectGAVEvidencesFromDependencyName(dependencies);
 		
 		jarAnalyzer.collectEvidencesFromJar(dependencies);
@@ -74,32 +77,10 @@ public class Engine {
 		CPEEvidencesNormalizer normalizer = new CPEEvidencesNormalizer();
 		normalizer.normalizeDependencyEvidences(dependencies);
 		
-		List<String> cpenames = new ArrayList<>();
-		List<String> notfoundDepName = new ArrayList<>();
-		
 		for(DependencyModel dep:dependencies) {
 			if(dep.getCpeEnumeration()!=null) {
-				cpenames.add(dep.getCpeEnumeration().getCPE23Uri());
-			}else {
-				notfoundDepName.add(dep.getDependencyName());
+				cveClient.fetchVulnerabilitiesForDependency(dep);
 			}
-		}
-		
-		/*
-		 * for(DependencyModel dep : dependencies) {
-		 * mavenLog.info(dep.getDependencyName());
-		 * if(dep.getArtifact().getType().equals("jar")) {
-		 * jarAnalyzer.scanJar(dep.getArtifact().getFile()); } }
-		 */
-		
-		mavenLog.info("Dependencies size is :" +Engine.dependencies.size());
-		mavenLog.info("----------------------------------------Resolved CPE names-----------------------------------------");
-		mavenLog.info("CPE names list size: "+ cpenames.size());
-		for(String s:cpenames) {
-			mavenLog.info(s);
-		}
-		for(String s:notfoundDepName) {
-			mavenLog.info(s);
 		}
 	}
 	
@@ -112,6 +93,23 @@ public class Engine {
 		} catch (IOException e) {
 			getMavenLog().error("Error occured during generating report");
 			e.printStackTrace();
+		}
+	}
+	public static void checkForVulnerabilityForDependencies() {
+		boolean vulnerabilityFound=false;
+		int count = 0;
+		for(DependencyModel dep:dependencies) {
+			if(dep.getVulnerabilities().size()>0) {
+				getMavenLog().error("Found "+dep.getVulnerabilities().size()+" vulnerabilities for dependency:"+dep.getDependencyName());
+				vulnerabilityFound=true;
+			}else {
+				getMavenLog().info("No vulnerabilities found for dependency: "+ dep.getDependencyName());
+			}
+			if(vulnerabilityFound) {
+				for(VulnerabilityDetailsModel vulnerabilities : dep.getVulnerabilities()) {
+					
+				}
+			}
 		}
 	}
 }
