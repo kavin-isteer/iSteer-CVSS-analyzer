@@ -1,5 +1,8 @@
 package com.isteer.cvssanalyzer.api.service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -7,7 +10,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.isteer.cvssanalyser.core.Engine;
 import com.isteer.cvssanalyser.core.cveclient.CveClient;
+import com.isteer.cvssanalyser.core.enums.EngineMode;
+import com.isteer.cvssanalyser.core.model.DependencyModel;
+import com.isteer.cvssanalyser.core.model.VulnerabilityModel;
 
 @Service
 public class CvssService {
@@ -16,8 +23,12 @@ public class CvssService {
     private String apiKey = "ca987215-dbe8-42f0-a656-e5da368c3c70";
 
 	public Object getAllVulnerabilities() {
-		CveClient cveClient = new CveClient();
-		return cveClient.getAllVulnerabilities(null);
+		new Engine().analyze(EngineMode.POM);
+		List<DependencyModel> dependencies = Engine.dependencies;
+		if(dependencies==null || dependencies.isEmpty()) {
+			throw new RuntimeException("No dependencies found to fetch vulnerabilities");
+		}
+		return dependencies;
 	}
 	
 	public Object getVulnerabilitiesByCveId(String cveId) {

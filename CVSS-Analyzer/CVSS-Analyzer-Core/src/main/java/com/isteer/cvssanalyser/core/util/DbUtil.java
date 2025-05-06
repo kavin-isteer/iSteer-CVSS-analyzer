@@ -28,6 +28,14 @@ public class DbUtil {
 		    String username = System.getenv(DB_USERNAME);
 		    String password = System.getenv(DB_PASSWORD);
 		    if(url==null || url.isEmpty() ||username==null || username.isEmpty() ||password==null || password.isEmpty()) {
+		    	url = PropertyReader.getProperty(DB_URL);
+		    	username = PropertyReader.getProperty(DB_USERNAME);
+		    	password = PropertyReader.getProperty(DB_PASSWORD);
+		    }
+		    if(url==null || url.isEmpty() ||username==null || username.isEmpty() ||password==null || password.isEmpty()) {
+		    	System.out.println(url);
+		    	System.out.println(username);
+		    	System.out.println(password);
 		    	throw new RuntimeException("Unable to get connection to CVSS database. Credentials error!!");
 		    }
 			if(con!=null) {

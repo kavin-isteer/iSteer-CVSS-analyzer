@@ -15,13 +15,13 @@ import com.isteer.cvssanalyser.core.model.VulnerabilityDetailsModel;
 import com.isteer.cvssanalyser.core.util.HtmlReportGenerator;
 
 public class Engine {
-	static List<DependencyModel> dependencies;
+	public static List<DependencyModel> dependencies;
 	
 	private static Log mavenLog;
 	
 	public static EngineMode analysisMode;
 	
-	public static Double thresholdValue = 5.0;
+	public static Double thresholdValue = 8.0;
 	
 	public static Log getMavenLog() {
 		return mavenLog;
@@ -60,7 +60,7 @@ public class Engine {
 			dependencyCount++;
 			if(dependencyCount % 25 == 0) {
 				try {
-					getMavenLog().info("Fetched vulnerabilities for " + dependencyCount + " out of" + dependencies.size() + " dependencies");
+					System.out.println("Fetched vulnerabilities for " + dependencyCount + " out of" + dependencies.size() + " dependencies");
 					Thread.sleep(10000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
@@ -118,6 +118,7 @@ public class Engine {
 		}
 	}
 	public static void checkForVulnerabilityForDependencies() {
+		System.out.println("inside the method");
 		boolean isThresholdExceeded=false;
 		for(DependencyModel dep:dependencies) {
 			if(dep.getVulnerabilities().size()>0) {
