@@ -43,7 +43,10 @@ public class CvssMojo extends AbstractMojo {
 	private MavenProject project;
 	
 	@Parameter
-	 private DatabaseConfig database; 
+	private DatabaseConfig database; 
+	
+	@Parameter(alias = "threshold-value")
+	private String baseScoreThresholdValue;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -77,17 +80,26 @@ public class CvssMojo extends AbstractMojo {
 		        .collect(Collectors.toList());
 
 		    getLog().info("Found " + dependencies.size() + " dependencies to analyze");
-
+		    Double wrkbaseScoreThresholdValue;
+		    try{
+		    	wrkbaseScoreThresholdValue = Double.parseDouble(baseScoreThresholdValue);
+		    	getLog().info("Parsed threshold value is " + wrkbaseScoreThresholdValue);
+		    }catch (Exception e) {
+		    	getLog().info("Exception occurred while parsing the threshold value. Proceeding with default threshold value 8.0");
+		    	wrkbaseScoreThresholdValue = 8.0;
+		    }
+		    
 		    // 3. Run analysis
 		    try {
 		        new Engine()
 		            .withDependencies(dependencies)
 		            .withLog(getLog())  // Pass Maven's logger
+		            .withThresholdValue(wrkbaseScoreThresholdValue)
 		            .analyze(EngineMode.MAVEN_PLUGIN);
 		        Engine.GenerateReport();
 		        Engine.checkForVulnerabilityForDependencies();
 		    } catch (Exception e) {
-		        getLog().error("Analysis failed: " + e.getMessage(), e);
+		        getLog().error("Build failed: " + e.getMessage(), e);
 		        throw new MojoExecutionException("Analysis failed", e);
 		    }
 	}

@@ -35,7 +35,11 @@ public class Engine {
 		Engine.mavenLog=logger;
 		return this;
 	}
-	
+	public Engine withThresholdValue(Double threshold) {
+		getMavenLog().info("Setting threshold value to "+threshold);
+		Engine.thresholdValue = threshold;
+		return this;
+	}
 	public void analyze(EngineMode analyzeMode) {
 		Engine.analysisMode=analyzeMode;
 		if(analyzeMode==EngineMode.POM) {
@@ -67,13 +71,22 @@ public class Engine {
 				}
 			}
 		}
+		int notResolvedCPEs=0;
+		List<String> notResolvedCPEnames=new ArrayList<>();
 		for(DependencyModel dep:dependencies) {
+			if(dep.getCpeEnumeration()==null) {
+				notResolvedCPEnames.add(dep.getDependencyName());
+				notResolvedCPEs++;
+				continue;
+			}
 			if(dep.getVulnerabilities().size()>0) {
 				System.out.println("Found "+dep.getVulnerabilities().size()+" vulnerabilities for dependency:"+dep.getDependencyName());
 			}else {
-				System.out.println("No vulnerabilities found for dependency: "+ dep.getDependencyName());
+				System.out.println("No vulnerabilities found for dependency: "+ dep.getDependencyName()+" CPE: "+dep.getCpeEnumeration().getCPE23Uri());
 			}
 		}
+		System.out.println("Unable to resolve CPE names for "+notResolvedCPEs+" dependencies.");
+		notResolvedCPEnames.forEach(System.out::println);
 	}
 	
 	private void analyzeMavenPlugin(){
@@ -112,30 +125,32 @@ public class Engine {
 		HtmlReportGenerator reportGenerator = new HtmlReportGenerator();
 		try {
 			reportGenerator.generateReport(dependencies, reportFile);
+			getMavenLog().info("Report successfully generated and saved in target\\dependency-report.html");
 		} catch (IOException e) {
 			getMavenLog().error("Error occured during generating report");
 			e.printStackTrace();
 		}
 	}
 	public static void checkForVulnerabilityForDependencies() {
-		System.out.println("inside the method");
+		getMavenLog().info("Checking dependencies vulnerabilities with base score threshold value of "+thresholdValue);
 		boolean isThresholdExceeded=false;
 		for(DependencyModel dep:dependencies) {
 			if(dep.getVulnerabilities().size()>0) {
 				getMavenLog().error("Found "+dep.getVulnerabilities().size()+" vulnerabilities for dependency:"+dep.getDependencyName());
 				for(VulnerabilityDetailsModel vulnerabilities : dep.getVulnerabilities()) {
+					getMavenLog().info(vulnerabilities.getCveId());
 					for(VulnerabilityCvssMetricsModel cvssMetrics : vulnerabilities.getCvssMetrics()) {
 						if(cvssMetrics.getBaseScore()>=thresholdValue) {
+							/*getMavenLog().info("");
 							getMavenLog().error("Vulnerability found with CVSS score greater than threshold value: "+thresholdValue+"\n"+
-							"Vulnerability ID: "+vulnerabilities.getCveId()+"\n"+
-							"CVSS Score: "+cvssMetrics.getBaseScore()+"\n"+
-							"CVSS Vector: "+cvssMetrics.getVectorString());
+							"Vulnerability ID: "+vulnerabilities.getCveId()+" "+
+							"CVSS Score: "+cvssMetrics.getBaseScore());*/
 							isThresholdExceeded=true;
 						}else {
+							/*getMavenLog().info("");
 							getMavenLog().error("Vulnerability found with CVSS score less than threshold value: "+thresholdValue+"\n"+
-									"Vulnerability ID: "+vulnerabilities.getCveId()+"\n"+
-									"CVSS Score: "+cvssMetrics.getBaseScore()+"\n"+
-									"CVSS Vector: "+cvssMetrics.getVectorString());
+									"Vulnerability ID: "+vulnerabilities.getCveId()+" "+
+									"CVSS Score: "+cvssMetrics.getBaseScore());*/
 						}
 					}
 				}
@@ -144,8 +159,7 @@ public class Engine {
 			}
 		}
 		if(isThresholdExceeded) {
-			throw new RuntimeException("One or more dependencies found with vulnerability with base score greater than threshold value: "+thresholdValue);
+			throw new RuntimeException("One or more dependencies found with vulnerability with base score greater than threshold value: "+thresholdValue+". Check report for more details!!");
 		}
-
 	}
 }

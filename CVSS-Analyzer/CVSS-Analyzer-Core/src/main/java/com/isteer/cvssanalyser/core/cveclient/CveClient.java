@@ -43,7 +43,6 @@ public class CveClient {
 		parsedVulnerability.setVulnerabilities(parseCveApiResponse(cveApiResponse));
 		vulnerabilities.add(parsedVulnerability);
 
-		System.out.println(vulnerabilities);
 		return vulnerabilities;
 	}
 
