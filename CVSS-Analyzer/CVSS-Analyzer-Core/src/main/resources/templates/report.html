@@ -20,6 +20,10 @@
             padding: 15px;
             background-color: #f9f9f9;
         }
+        .dependency.vulnerable {
+            border-color: #e74c3c;
+            background-color: #fff5f5;
+        }
         .dependency-name {
             font-size: 1.2em;
             font-weight: bold;
@@ -30,52 +34,47 @@
         .dependency-name:hover {
             text-decoration: underline;
         }
-        .evidence-section {
+        .evidence-section, .vulnerability-section, .detailed-evidence-section {
             margin-left: 20px;
+            margin-bottom: 15px;
         }
-        .evidence-type {
+        .section-title {
             font-weight: bold;
             color: #16a085;
             cursor: pointer;
             padding: 5px;
             display: inline-block;
         }
-        .evidence-type:hover {
+        .section-title:hover {
             background-color: #f0f0f0;
             border-radius: 3px;
         }
-        .evidence-type::before {
+        .section-title::before {
             content: "▼ ";
             font-size: 0.8em;
         }
-        .evidence-type.collapsed::before {
+        .section-title.collapsed::before {
             content: "► ";
         }
-        .evidence-list {
+        .section-content {
             list-style-type: none;
             padding-left: 0;
             margin-top: 5px;
         }
-        .evidence-item {
+        .section-item {
             margin-bottom: 8px;
             padding: 5px;
             background-color: white;
             border-left: 4px solid #3498db;
             padding-left: 10px;
         }
-        .evidence-source {
+        .vulnerability-item {
+            border-left-color: #e74c3c;
+        }
+        .source-info {
             font-style: italic;
             color: #7f8c8d;
             font-size: 0.9em;
-        }
-        .confidence-high {
-            color: #27ae60;
-        }
-        .confidence-medium {
-            color: #f39c12;
-        }
-        .confidence-low {
-            color: #e74c3c;
         }
         .collapsible-content {
             display: block;
@@ -83,70 +82,200 @@
         .collapsible-content.collapsed {
             display: none;
         }
+        .suppress-button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+        .suppress-button:hover {
+            background-color: #c0392b;
+        }
+        .data-sources {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        .file-path {
+            font-size: 0.9em;
+            color: #34495e;
+            margin-bottom: 10px;
+        }
+        .evidence-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .evidence-table th, .evidence-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .evidence-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        .evidence-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .cve-id {
+            font-weight: bold;
+            color: #c0392b;
+            cursor: pointer;
+            display: inline-block;
+            padding: 5px;
+        }
+        .cve-id:hover {
+            background-color: #f0f0f0;
+            border-radius: 3px;
+        }
+        .vulnerability-details {
+            margin-left: 20px;
+            padding: 10px;
+            background-color: #fff;
+            border-left: 4px solid #e74c3c;
+        }
+        .reference-link {
+            color: #2980b9;
+            text-decoration: none;
+        }
+        .reference-link:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <h1>Dependency Evidence Report</h1>
     
     <div th:each="dependency : ${dependencies}">
-        <div class="dependency">
+        <div class="dependency" th:classappend="${dependency.vulnerabilities != null and not #lists.isEmpty(dependency.vulnerabilities)} ? 'vulnerable'">
             <div class="dependency-name" onclick="toggleDependency(this)">
                 <span th:text="${dependency.dependencyName}"></span>
             </div>
             
-            <div class="dependency-content">
-                <!-- Vendor Evidences -->
-                <div class="evidence-section" th:if="${not #lists.isEmpty(dependency.vendorEvidences)}">
-                    <div class="evidence-type" onclick="toggleSection(this)">Vendor Evidences</div>
-                    <ul class="evidence-list collapsible-content">
-                        <li th:each="evidence : ${dependency.vendorEvidences}" class="evidence-item">
-                            <span th:text="${evidence.resolvedValue}"></span>
-                            <div class="evidence-source" th:text="${evidence.evidenceType} + ': ' + ${evidence.evidence}"></div>
-                        </li>
-                    </ul>
+            <div class="dependency-content collapsible-content">
+                <!-- File Path -->
+                <div class="file-path" th:if="${dependency.filePath}">
+                    <span th:text="'File Path: ' + ${dependency.filePath}"></span>
                 </div>
                 
-                <!-- Product Evidences -->
-                <div class="evidence-section" th:if="${not #lists.isEmpty(dependency.productEvidences)}">
-                    <div class="evidence-type" onclick="toggleSection(this)">Product Evidences</div>
-                    <ul class="evidence-list collapsible-content">
-                        <li th:each="evidence : ${dependency.productEvidences}" class="evidence-item">
-                            <span th:text="${evidence.resolvedValue}"></span>
-                            <div class="evidence-source" th:text="${evidence.evidenceType} + ': ' + ${evidence.evidence}"></div>
-                        </li>
-                    </ul>
+                <!-- Detailed Evidence -->
+                <div class="detailed-evidence-section">
+                    <div class="section-title collapsed" onclick="toggleSection(this)">Evidence</div>
+                    <div class="section-content collapsible-content collapsed">
+                        <table class="evidence-table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Source</th>
+                                    <th>Name</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="evidence : ${dependency.vendorEvidences}">
+                                    <td>Vendor</td>
+                                    <td th:text="${evidence.evidenceType}"></td>
+                                    <td th:text="${evidence.evidence}"></td>
+                                    <td th:text="${evidence.resolvedValue} ?: ${evidence.evidence}"></td>
+                                </tr>
+                                <tr th:each="evidence : ${dependency.productEvidences}">
+                                    <td>Product</td>
+                                    <td th:text="${evidence.evidenceType}"></td>
+                                    <td th:text="${evidence.evidence}"></td>
+                                    <td th:text="${evidence.resolvedValue} ?: ${evidence.evidence}"></td>
+                                </tr>
+                                <tr th:each="evidence : ${dependency.versionEvidences}">
+                                    <td>Version</td>
+                                    <td th:text="${evidence.evidenceType}"></td>
+                                    <td th:text="${evidence.evidence}"></td>
+                                    <td th:text="${evidence.resolvedValue} ?: ${evidence.evidence}"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 
-                <!-- Version Evidences -->
-                <div class="evidence-section" th:if="${not #lists.isEmpty(dependency.versionEvidences)}">
-                    <div class="evidence-type" onclick="toggleSection(this)">Version Evidences</div>
-                    <ul class="evidence-list collapsible-content">
-                        <li th:each="evidence : ${dependency.versionEvidences}" class="evidence-item">
-                            <span th:text="${evidence.resolvedValue}"></span>
-                            <div class="evidence-source" th:text="${evidence.evidenceType} + ': ' + ${evidence.evidence}"></div>
+                <!-- Vulnerabilities -->
+                <div class="vulnerability-section" th:if="${not #lists.isEmpty(dependency.vulnerabilities)}">
+                    <div class="section-title" onclick="toggleSection(this)">Vulnerabilities</div>
+                    <ul class="section-content collapsible-content">
+                        <li th:each="vuln : ${dependency.vulnerabilities}" class="section-item vulnerability-item">
+                            <div class="cve-id" th:text="${vuln.cveId}" onclick="toggleVulnerabilityDetails(this)"></div>
+                            <div class="vulnerability-details collapsible-content collapsed">
+                                <p><b>Description:</b> <span th:text="${vuln.cveDescription}"></span></p>
+                                <p th:if="${vuln.cvssMetrics and not #lists.isEmpty(vuln.cvssMetrics)}">
+                                    <b>Base Score:</b> <span th:text="${vuln.cvssMetrics[0].baseScore}"></span>
+                                </p>
+                                <p th:if="${vuln.cvssMetrics and not #lists.isEmpty(vuln.cvssMetrics)}">
+                                    <b>Severity:</b> <span th:text="${vuln.cvssMetrics[0].baseSeverity}"></span>
+                                </p>
+                                <p th:if="${vuln.cvssMetrics and not #lists.isEmpty(vuln.cvssMetrics)}">
+                                    <b>CVSS Vector:</b> <span th:text="${vuln.cvssMetrics[0].vectorString}"></span>
+                                </p>
+                                <div th:if="${vuln.affectedProducts and not #lists.isEmpty(vuln.affectedProducts)}">
+                                    <b>Affected Products:</b>
+                                    <ul>
+                                        <li th:each="product : ${vuln.affectedProducts}">
+                                            <span th:text="${product.cpeName}"></span>
+                                            <span th:if="${product.versionStartIncluding or product.versionStartExcluding or product.versionEndIncluding or product.versionEndExcluding}">
+                                                (
+                                                <span th:if="${product.versionStartIncluding}" th:text="'Start Including: ' + ${product.versionStartIncluding} + ', '"></span>
+                                                <span th:if="${product.versionStartExcluding}" th:text="'Start Excluding: ' + ${product.versionStartExcluding} + ', '"></span>
+                                                <span th:if="${product.versionEndIncluding}" th:text="'End Including: ' + ${product.versionEndIncluding} + ', '"></span>
+                                                <span th:if="${product.versionEndExcluding}" th:text="'End Excluding: ' + ${product.versionEndExcluding}"></span>
+                                                )
+                                            </span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <p th:if="${vuln.sourceIdentifier}">
+                                    <b>Source:</b> <span th:text="${vuln.sourceIdentifier}"></span>
+                                </p>
+                                <div th:if="${vuln.references and not #lists.isEmpty(vuln.references)}">
+                                    <b>References:</b>
+                                    <ul>
+                                        <li th:each="ref : ${vuln.references}">
+                                            <a th:href="${ref.referenceUrl}" th:text="${ref.referenceUrl}" class="reference-link" target="_blank"></a>
+                                            <span th:if="${ref.referenceTags and not #lists.isEmpty(ref.referenceTags)}">
+                                                (Tags: <span th:each="tag, iterStat : ${ref.referenceTags}" th:text="${tag} + (${iterStat.last} ? '' : ', ')"></span>)
+                                            </span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <button class="suppress-button" th:attr="data-cve=${vuln.cveId}" onclick="generateSuppression(this)">
+                                    Suppress
+                                </button>
+                            </div>
                         </li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
+    
+    <div class="data-sources">
+        <p>This report contains data retrieved from:</p>
+        <ul>
+            <li><a href="https://nvd.nist.gov">National Vulnerability Database</a></li>
+        </ul>
+    </div>
 
     <script>
-        // Toggle individual evidence sections
         function toggleSection(element) {
             element.classList.toggle("collapsed");
             const content = element.nextElementSibling;
             content.classList.toggle("collapsed");
         }
         
-        // Toggle entire dependency (collapses all sections)
         function toggleDependency(element) {
             const content = element.nextElementSibling;
             content.classList.toggle("collapsed");
-            
-            // Collapse all evidence sections when dependency is collapsed
             if (content.classList.contains("collapsed")) {
-                const sections = content.querySelectorAll(".evidence-type");
+                const sections = content.querySelectorAll(".section-title, .cve-id");
                 sections.forEach(section => {
                     if (!section.classList.contains("collapsed")) {
                         section.classList.add("collapsed");
@@ -156,15 +285,27 @@
             }
         }
         
-        // Initialize all sections as expanded by default
-        document.addEventListener("DOMContentLoaded", function() {
-            // You can modify this to start with collapsed sections if preferred
-            const sections = document.querySelectorAll(".evidence-type");
-            sections.forEach(section => {
-                section.classList.remove("collapsed");
-                section.nextElementSibling.classList.remove("collapsed");
-            });
-        });
+        function toggleVulnerabilityDetails(element) {
+            element.classList.toggle("collapsed");
+            const content = element.nextElementSibling;
+            content.classList.toggle("collapsed");
+        }
+        
+        function generateSuppression(button) {
+            const cve = button.getAttribute("data-cve") || "";
+            let suppressionXml = '<?xml version="1.0" encoding="UTF-8"?>\n<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/suppressions.xsd">\n';
+            suppressionXml += '  <suppress>\n';
+            if (cve) {
+                suppressionXml += `    <cve>${cve}</cve>\n`;
+            }
+            suppressionXml += '  </suppress>\n</suppressions>';
+            
+            const blob = new Blob([suppressionXml], { type: 'text/xml' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `suppression-${cve.replace(/[:/]/g, '_')}.xml`;
+            link.click();
+        }
     </script>
 </body>
 </html>
