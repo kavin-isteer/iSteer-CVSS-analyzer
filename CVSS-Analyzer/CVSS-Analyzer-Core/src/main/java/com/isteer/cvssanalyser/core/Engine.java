@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.maven.plugin.logging.Log;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.isteer.cvssanalyser.core.cveclient.CveClient;
 import com.isteer.cvssanalyser.core.enums.EngineMode;
@@ -50,6 +51,17 @@ public class Engine {
 
 	}
 	
+	public void analyze(EngineMode analyzeMode, SseEmitter emitter) {
+		Engine.analysisMode=analyzeMode;
+		if(analyzeMode==EngineMode.POM) {
+			analyzePom(emitter);
+			emitter.complete();
+		}else if(analyzeMode==EngineMode.MAVEN_PLUGIN) {
+			analyzeMavenPlugin();
+		}
+
+	}
+	
 	private void analyzePom() {
 		GAVAnalyzer gavAnalyzer = new GAVAnalyzer();
 		CPEEvidencesNormalizer normalizer = new CPEEvidencesNormalizer();
@@ -64,7 +76,9 @@ public class Engine {
 			dependencyCount++;
 			if(dependencyCount % 25 == 0) {
 				try {
-					System.out.println("Fetched vulnerabilities for " + dependencyCount + " out of" + dependencies.size() + " dependencies");
+					
+					String message = "Fetched vulnerabilities for " + dependencyCount + " out of" + dependencies.size() + " dependencies";
+					System.out.println(message);
 					Thread.sleep(10000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
@@ -87,6 +101,40 @@ public class Engine {
 		}
 		System.out.println("Unable to resolve CPE names for "+notResolvedCPEs+" dependencies.");
 		notResolvedCPEnames.forEach(System.out::println);
+	}
+	
+	private void analyzePom(SseEmitter emitter) {
+		GAVAnalyzer gavAnalyzer = new GAVAnalyzer();
+		CPEEvidencesNormalizer normalizer = new CPEEvidencesNormalizer();
+		CveClient cveClient = new CveClient();		
+	    dependencies =  gavAnalyzer.fetchProjectDependenciesFromMavenTree();
+	    gavAnalyzer.collectGAVEvidencesFromDependencyName(dependencies);
+		normalizer.normalizeDependencyEvidences(dependencies);
+		int dependencyCount = 0;
+		for(DependencyModel dep:dependencies) {
+			cveClient.fetchVulnerabilitiesForDependency(dep);
+			dependencyCount++;
+			if(dependencyCount % 25 == 0 || dependencyCount==dependencies.size()) {
+				try {
+					
+					String message = String.format("{ Fetched dependencies : %d, Total dependencies : %d }", dependencyCount, dependencies.size());
+					System.out.println(message);
+					emitter.send(SseEmitter.event().data(message));
+					Thread.sleep(10000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		for(DependencyModel dep:dependencies) {
+			if(dep.getVulnerabilities().size()>0) {
+				System.out.println("Found "+dep.getVulnerabilities().size()+" vulnerabilities for dependency:"+dep.getDependencyName());
+			}else {
+				System.out.println("No vulnerabilities found for dependency: "+ dep.getDependencyName());
+			}
+		}
 	}
 	
 	private void analyzeMavenPlugin(){

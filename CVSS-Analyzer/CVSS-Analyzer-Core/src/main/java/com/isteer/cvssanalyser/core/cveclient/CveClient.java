@@ -28,6 +28,7 @@ public class CveClient {
 
 	public List<VulnerabilityModel> getAllVulnerabilities(String cpeName) {
 		List<VulnerabilityModel> vulnerabilities = new ArrayList<>();
+		Object cveApiResponse = null;
 
 		RestTemplate restTemplate = new RestTemplate();
 		HttpHeaders headers = new HttpHeaders();
@@ -36,13 +37,15 @@ public class CveClient {
 
 		String url = String.format("%s?cpeName=%s", BASE_URL, cpeName);
 		ResponseEntity<Object> response = restTemplate.exchange(url, HttpMethod.GET, entity, Object.class);
-		Object cveApiResponse = response.getBody();
-
-		VulnerabilityModel parsedVulnerability = new VulnerabilityModel();
-		parsedVulnerability.setCpeName(cpeName);
-		parsedVulnerability.setVulnerabilities(parseCveApiResponse(cveApiResponse));
-		vulnerabilities.add(parsedVulnerability);
-
+		if(response.getStatusCode().is2xxSuccessful()) {
+			cveApiResponse = response.getBody();
+			VulnerabilityModel parsedVulnerability = new VulnerabilityModel();
+			parsedVulnerability.setCpeName(cpeName);
+			parsedVulnerability.setVulnerabilities(parseCveApiResponse(cveApiResponse));
+			vulnerabilities.add(parsedVulnerability);
+		} else {
+			System.out.println("Failed to fetch vulnerabilities for CPE: " + cpeName);
+		}
 		return vulnerabilities;
 	}
 

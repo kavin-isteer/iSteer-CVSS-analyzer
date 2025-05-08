@@ -5,7 +5,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.isteer.cvssanalyser.core.Engine;
 import com.isteer.cvssanalyzer.api.service.CvssService;
 
 @RestController
@@ -18,8 +20,14 @@ public class CvssController {
 	}
 	
 	@GetMapping("/getVulnerabilities")
+	public SseEmitter getVulnerabilities() {
+		SseEmitter emitter = new SseEmitter(0L);
+		return service.getAllVulnerabilities(emitter);
+	}
+	
+	@GetMapping("/vulnerabilities")
 	public ResponseEntity<Object> getAllVulnerabilities() {
-			return ResponseEntity.ok(service.getAllVulnerabilities());
+			return ResponseEntity.ok(Engine.dependencies);
 	}
 	
 	@GetMapping("/search/cveId")
@@ -35,6 +43,11 @@ public class CvssController {
 	@GetMapping("/search/cpe")
 	public ResponseEntity<Object> getVulnerabilitiesByCpe(@RequestParam String cpe) {
 		return ResponseEntity.ok(service.getVulnerabilitiesByCpe(cpe));
+	}
+	
+	@GetMapping("/search/cpeName")
+	public ResponseEntity<Object> getCpeNameList(@RequestParam String cpeName) {
+		return ResponseEntity.ok(service.getCpeNameList(cpeName));
 	}
 	
 }
