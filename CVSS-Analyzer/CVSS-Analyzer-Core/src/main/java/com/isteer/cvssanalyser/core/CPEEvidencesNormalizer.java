@@ -39,11 +39,20 @@ public class CPEEvidencesNormalizer {
 	}
 	public String normalizeVendorEvidences(List<Evidence> evidences) {
 		String mostLikelyVendor=null;
+		List<DependencyHintModel> hints = hintDao.getAllVendorDependencyHints(connection);
 		for(Evidence evidence:evidences) {
-			if(evidence.getEvidenceType()==EvidenceType.GROUP_ID) {
-				List<DependencyHintModel> hints = hintDao.getAllVendorDependencyHints(connection,"GAV");
+			if(mostLikelyVendor==null && evidence.getEvidenceType()==EvidenceType.MANIFEST_ENTRY) {
 				for(DependencyHintModel hint:hints) {
-					if(evidence.getEvidence().startsWith(hint.getMatch_key())) {
+					if(hint.getEvidenceType().equals("manifest") && evidence.getEvidence().startsWith(hint.getMatch_key())) {
+						mostLikelyVendor = hint.getStandardized_name();
+						evidence.setResolvedValue(mostLikelyVendor);
+					}
+				}
+			}
+			if(mostLikelyVendor==null && evidence.getEvidenceType()==EvidenceType.GROUP_ID) {
+				//List<DependencyHintModel> hints = hintDao.getAllVendorDependencyHints(connection,"GAV");
+				for(DependencyHintModel hint:hints) {
+					if(hint.getEvidenceType().equals("GAV") && evidence.getEvidence().startsWith(hint.getMatch_key())) {
 						mostLikelyVendor = hint.getStandardized_name();
 						evidence.setResolvedValue(mostLikelyVendor);
 					}

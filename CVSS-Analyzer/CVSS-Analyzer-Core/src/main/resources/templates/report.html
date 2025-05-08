@@ -317,30 +317,34 @@
 						<table class="evidence-table">
 							<thead>
 								<tr>
-									<th>Type</th>
-									<th>Source</th>
-									<th>Name</th>
-									<th>Value</th>
+									<th>Evidence Type</th>
+									<th>Evidence Source</th>
+									<th>Evidence Title</th>
+									<th>Evidence Name</th>
+									<th>Resolved Value</th>
 								</tr>
 							</thead>
 							<tbody>
 								<tr th:each="evidence : ${dependency.vendorEvidences}">
 									<td>Vendor</td>
 									<td th:text="${evidence.evidenceType}"></td>
+									<td th:text="${evidence.evidenceTitle}"></td>
 									<td th:text="${evidence.evidence}"></td>
-									<td th:text="${evidence.resolvedValue} ?: ${evidence.evidence}"></td>
+									<td th:text="${evidence.resolvedValue}"></td>
 								</tr>
 								<tr th:each="evidence : ${dependency.productEvidences}">
 									<td>Product</td>
 									<td th:text="${evidence.evidenceType}"></td>
+									<td th:text="${evidence.evidenceTitle}"></td>
 									<td th:text="${evidence.evidence}"></td>
-									<td th:text="${evidence.resolvedValue} ?: ${evidence.evidence}"></td>
+									<td th:text="${evidence.resolvedValue}"></td>
 								</tr>
 								<tr th:each="evidence : ${dependency.versionEvidences}">
 									<td>Version</td>
 									<td th:text="${evidence.evidenceType}"></td>
+									<td th:text="${evidence.evidenceTitle}"></td>
 									<td th:text="${evidence.evidence}"></td>
-									<td th:text="${evidence.resolvedValue} ?: ${evidence.evidence}"></td>
+									<td th:text="${evidence.resolvedValue}"></td>
 								</tr>
 							</tbody>
 						</table>

@@ -71,6 +71,37 @@ public class DependencyHintDao {
 		return hints;
 	}
 	
+	public List<DependencyHintModel> getAllVendorDependencyHints(Connection con) {
+		String query = "SELECT id,type,match_key,standardized_name,confidence,description,created_at,updated_at,evidence_type FROM dependency_hints WHERE type = ?";
+		List<DependencyHintModel> hints = new ArrayList<>();
+		try {
+			PreparedStatement psc = con.prepareStatement(query);
+			psc.setString(1, "vendor");
+			ResultSet rs = psc.executeQuery();
+			while (rs.next()) {
+				DependencyHintModel hint = new DependencyHintModel();
+				hint.setId(rs.getInt(1));
+				hint.setType(rs.getString(2));
+				hint.setMatch_key(rs.getString(3));
+				hint.setStandardized_name(rs.getString(4));
+				hint.setConfidence(rs.getString(5));
+				hint.setDescription(rs.getString(6));
+				if (rs.getTimestamp(7) != null) {
+					hint.setCreatedAt(rs.getTimestamp(7).toLocalDateTime());
+				}
+				if (rs.getTimestamp(8) != null) {
+					hint.setUpdatedAt(rs.getTimestamp(8).toLocalDateTime());
+				}
+				hint.setEvidenceType(rs.getString(9));
+				hints.add(hint);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return hints;
+	}
+	
 	public List<DependencyHintModel> getAllProductDependencyHints(Connection con,String evidence_type) {
 		String query = "SELECT id,type,match_key,standardized_name,confidence,description,created_at,updated_at FROM dependency_hints WHERE type = ? AND evidence_type=?";
 		List<DependencyHintModel> hints = new ArrayList<>();
@@ -101,4 +132,6 @@ public class DependencyHintDao {
 		}
 		return hints;
 	}
+	
+	
 }

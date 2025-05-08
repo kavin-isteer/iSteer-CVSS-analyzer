@@ -3,6 +3,7 @@ package com.isteer.cvssanalyser.core;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -45,10 +46,12 @@ public class JarAnalyzer {
 			}
 			
 			//manifest vendor evidence
-			Evidence manifestVendorEvidence = collectVendorEvidenceFromManifest(dependency.getArtifact().getFile());
-			if(manifestVendorEvidence!=null) {
-				dependency.addVendorEvidence(manifestVendorEvidence);
+			List<Evidence> manifestVendorEvidence = collectVendorEvidencesFromManifest(dependency.getArtifact().getFile());
+			if(manifestVendorEvidence!=null ) {
+				for(Evidence wrkEvidence:manifestVendorEvidence) {
+				dependency.addVendorEvidence(wrkEvidence);
 			//	getLog().info("adding manifest vendor evidence: "+manifestVendorEvidence);
+				}
 			}
 			
 			//manifest product evidence
@@ -111,8 +114,7 @@ public class JarAnalyzer {
 	 * @param jarFile The JAR file to analyze
 	 * @return Evidence object with the best manifest match, or null if no match found
 	 */
-	public Evidence collectVendorEvidenceFromManifest(File jarFile) {
-	    DependencyHintDao hintDao = new DependencyHintDao();
+	public List<Evidence> collectVendorEvidencesFromManifest(File jarFile) {
 	    DbUtil dbUtil = new DbUtil();
 	    
 	    try (JarFile jar = new JarFile(jarFile);
@@ -125,16 +127,10 @@ public class JarAnalyzer {
 	            return null;
 	        }
 
-	        // 2. Get all relevant vendor hints from database
-	        List<DependencyHintModel> hints = hintDao.getAllVendorDependencyHints(connection, "manifest");
-	        if (hints.isEmpty()) {
-	            getLog().warn("No manifest vendor hints found in database");
-	            return null;
-	        }
 
-	        // 3. Check all potential vendor attributes
+	        // 2. Check all potential vendor attributes
 	        Attributes mainAttributes = manifest.getMainAttributes();
-	        Evidence bestEvidence = checkManifestVendorAttributes(mainAttributes, hints);
+	        List<Evidence> bestEvidence = checkManifestVendorAttributes(mainAttributes);
 	        
 	        return bestEvidence;
 
@@ -143,7 +139,7 @@ public class JarAnalyzer {
 	    }
 	}
 
-	private Evidence checkManifestVendorAttributes(Attributes attributes, List<DependencyHintModel> hints) {
+	private List<Evidence> checkManifestVendorAttributes(Attributes attributes) {
 	    // Ordered by priority of vendor attributes
 	    String[] vendorAttributes = {
 	        "Implementation-Vendor",
@@ -152,23 +148,18 @@ public class JarAnalyzer {
 	        "Created-By",
 	        "Built-By"
 	    };
-
+	    List<Evidence> evidences = new ArrayList<>();
 	    for (String attribute : vendorAttributes) {
 	        String value = attributes.getValue(attribute);
 	        if (value != null) {
-	            // Find matching hint (case insensitive)
-	            for (DependencyHintModel hint : hints) {
-	                if (value.equalsIgnoreCase(hint.getMatch_key())) {
-	                    Evidence evidence = new Evidence();
-	                    evidence.setEvidence(value);
-	                    evidence.setEvidenceType(EvidenceType.MANIFEST_ENTRY);
-	                    evidence.setResolvedValue(hint.getStandardized_name());
-	                    return evidence; // Return first highest-priority match
-	                }
-	            }
+	             Evidence evidence = new Evidence();
+	             evidence.setEvidence(value);
+	             evidence.setEvidenceType(EvidenceType.MANIFEST_ENTRY);
+	             evidence.setEvidenceTitle(attribute);
+	            evidences.add(evidence);
 	        }
 	    }
-	    return null;
+	    return evidences;
 	}
 	/**
 	 * Collects product evidence from JAR manifest files

@@ -7,7 +7,6 @@ public class CPENameModel {
 	private String version;
 	private String update="*";
 	
-	
 	public String getVendor() {
 		return vendor;
 	}
@@ -60,8 +59,6 @@ public class CPENameModel {
 	public String toString() {
 		return getCPE23Uri();
 	}
-
-
 
 	public String getCPE23Uri() {
 			return String.format(CPE23_URI_FORMAT, this.vendor,this.product,this.version,this.update);

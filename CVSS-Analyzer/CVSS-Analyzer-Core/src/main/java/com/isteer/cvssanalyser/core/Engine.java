@@ -48,7 +48,6 @@ public class Engine {
 		}else if(analyzeMode==EngineMode.MAVEN_PLUGIN) {
 			analyzeMavenPlugin();
 		}
-
 	}
 	
 	public void analyze(EngineMode analyzeMode, SseEmitter emitter) {

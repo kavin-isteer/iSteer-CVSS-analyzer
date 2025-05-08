@@ -4,6 +4,7 @@ import com.isteer.cvssanalyser.core.enums.EvidenceType;
 
 public class Evidence {
 	private EvidenceType evidenceType;
+	private String evidenceTitle;
 	private String evidence;
 	private String resolvedValue;
 	public EvidenceType getEvidenceType() {
@@ -23,6 +24,12 @@ public class Evidence {
 	}
 	public void setResolvedValue(String resolvedValue) {
 		this.resolvedValue = resolvedValue;
+	}
+	public String getEvidenceTitle() {
+		return evidenceTitle;
+	}
+	public void setEvidenceTitle(String evidenceTitle) {
+		this.evidenceTitle = evidenceTitle;
 	}
 	@Override
 	public String toString() {

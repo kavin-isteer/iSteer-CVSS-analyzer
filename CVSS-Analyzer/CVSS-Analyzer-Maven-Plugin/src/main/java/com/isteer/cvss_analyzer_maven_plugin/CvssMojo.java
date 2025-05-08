@@ -99,7 +99,7 @@ public class CvssMojo extends AbstractMojo {
 		        Engine.GenerateReport();
 		        Engine.checkForVulnerabilityForDependencies();
 		    } catch (Exception e) {
-		        getLog().error("Build failed: " + e.getMessage(), e);
+		        getLog().error("Build failed: " + e.getMessage());
 		        throw new MojoExecutionException("Analysis failed", e);
 		    }
 	}

@@ -11,6 +11,7 @@ public class DependencyHintModel {
 	private String description;
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
+	private String evidenceType;
 	public Integer getId() {
 		return id;
 	}
@@ -58,5 +59,11 @@ public class DependencyHintModel {
 	}
 	public void setUpdatedAt(LocalDateTime updatedAt) {
 		this.updatedAt = updatedAt;
+	}
+	public String getEvidenceType() {
+		return evidenceType;
+	}
+	public void setEvidenceType(String evidenceType) {
+		this.evidenceType = evidenceType;
 	}
 }
