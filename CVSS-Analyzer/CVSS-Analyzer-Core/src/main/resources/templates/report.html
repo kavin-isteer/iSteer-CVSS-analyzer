@@ -43,18 +43,19 @@
 
 		.summary-table th,
 		.summary-table td {
-			border: 1px solid #ddd;
+			border: 1px solid rgb(0, 128, 192);
 			padding: 10px;
 			text-align: left;
+			
 		}
 
 		.summary-table th {
-			background-color: #f0f0f0;
+			background-color: rgb(145, 219, 255);
 			font-weight: bold;
 		}
 
 		.summary-table td {
-			background-color: #f9f9f9;
+			background-color: rgb(252, 203, 173);
 		}
 
 		.dependency {
@@ -76,10 +77,21 @@
 			color: #2980b9;
 			margin-bottom: 10px;
 			cursor: pointer;
+			display: inline-flex;
+			align-items: center;
 		}
 
 		.dependency-name:hover {
 			text-decoration: underline;
+		}
+
+		.vuln-count {
+			margin-left: 8px;
+			background-color: #e74c3c;
+			color: white;
+			padding: 2px 6px;
+			border-radius: 10px;
+			font-size: 0.8em;
 		}
 
 		.evidence-section,
@@ -239,9 +251,8 @@
 </head>
 
 <body>	
-	<img src="assets/isteer.png" alt="Isteer Image" class="logo" />
-
-	<h1>Dependency Evidence Report</h1>
+	<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2UcaZvJLD2pM_VjWlkE8yx4JpBBXbGjz8vQ&s" alt="iSteer Company Logo" class="logo">
+	<h1>Cvss Analyzer Report</h1>
 	<hr>
 
 	<div class="summary-section">
@@ -267,11 +278,11 @@
 	        <tbody>
 	            <tr>
 	                <td>Vulnerable Dependencies</td>
-	                <td th:with="vulnDeps=${dependencies.{? #this.vulnerabilities != null && #this.vulnerabilities.size() > 0}.size()}" th:text="${vulnDeps}"></td>
+	                <td th:text="${vulnDeps}"></td>
 	            </tr>
 	            <tr>
 	                <td>Total Vulnerabilities</td>
-	                <td th:with="totalVulns=${#aggregates.sum(dependencies.{#this.vulnerabilities != null ? #this.vulnerabilities.size() : 0})}" th:text="${totalVulns}"></td>
+	                <td th:text="${totalVulns}"></td>
 	            </tr>
 	        </tbody>
 	    </table>
@@ -284,12 +295,13 @@
 			th:classappend="${dependency.vulnerabilities != null and not #lists.isEmpty(dependency.vulnerabilities)} ? 'vulnerable'">
 			<div class="dependency-name" onclick="toggleDependency(this)">
 				<span th:text="${dependency.dependencyName}"></span>
+				<span th:if="${#lists.size(dependency.vulnerabilities) > 0}" class="vuln-count" th:text="'(' + ${#lists.size(dependency.vulnerabilities)} + ')'"></span>
 			</div>
 
 			<div class="dependency-content collapsible-content collapsed">
 				<!-- Dependency Section -->
 				<div class="identifier-section">
-					<div class="section-title collapsed" onclick="toggleSection(this)">Dependency</div>
+					<div class="section-title collapsed" onclick="toggleSection(this)">CPE Enumeration</div>
 					<div class="section-content collapsible-content collapsed">
 						<div class="section-item">
 							<span th:if="${dependency.cpeEnumeration != null}" th:text="'CPE ID: ' + ${dependency.cpeEnumeration.getCPE23Uri()}"></span>
@@ -393,6 +405,7 @@
 	</div>
 
 	<script>
+		let currentlyOpenDependency = null;
 		let currentlyOpenVulnerability = null;
 
 		function toggleSection(element) {
@@ -402,6 +415,19 @@
 		}
 
 		function toggleDependency(element) {
+			if (currentlyOpenDependency && currentlyOpenDependency !== element) {
+				currentlyOpenDependency.nextElementSibling.classList.add("collapsed");
+				const sections = currentlyOpenDependency.nextElementSibling.querySelectorAll(".section-title, .vulnerability-item");
+				sections.forEach(section => {
+					if (!section.classList.contains("collapsed")) {
+						section.classList.add("collapsed");
+						const subContent = section.nextElementSibling;
+						if (subContent) {
+							subContent.classList.add("collapsed");
+						}
+					}
+				});
+			}
 			const content = element.nextElementSibling;
 			content.classList.toggle("collapsed");
 			if (content.classList.contains("collapsed")) {
@@ -421,6 +447,7 @@
 					currentlyOpenVulnerability = null;
 				}
 			}
+			currentlyOpenDependency = content.classList.contains("collapsed") ? null : element;
 		}
 
 		function toggleVulnerability(element) {
@@ -451,6 +478,7 @@
 					}
 				}
 			});
+			currentlyOpenDependency = null;
 			currentlyOpenVulnerability = null;
 		}
 
