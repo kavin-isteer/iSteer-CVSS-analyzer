@@ -304,7 +304,7 @@
 					<div class="section-title collapsed" onclick="toggleSection(this)">CPE Enumeration</div>
 					<div class="section-content collapsible-content collapsed">
 						<div class="section-item">
-							<span th:if="${dependency.cpeEnumeration != null}" th:text="'CPE ID: ' + ${dependency.cpeEnumeration.getCPE23Uri()}"></span>
+							<span th:if="${dependency.cpeEnumeration != null}" th:text="'Resolved CPE Name: ' + ${dependency.cpeEnumeration.getCPE23Uri()}"></span>
 							<span th:unless="${dependency.cpeEnumeration != null}">No CPE resolved</span>
 						</div>
 					</div>
