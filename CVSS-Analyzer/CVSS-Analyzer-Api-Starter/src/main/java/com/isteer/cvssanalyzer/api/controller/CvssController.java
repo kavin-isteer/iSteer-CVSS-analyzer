@@ -22,7 +22,16 @@ public class CvssController {
 	@GetMapping("/getVulnerabilities")
 	public SseEmitter getVulnerabilities() {
 		SseEmitter emitter = new SseEmitter(0L);
-		return service.getAllVulnerabilities(emitter);
+		new Thread(() -> {
+			try {
+				service.getAllVulnerabilities(emitter);
+			} catch (Exception e) {
+				emitter.completeWithError(e);
+			} finally {
+				emitter.complete();
+			}
+		}).start();
+		return emitter;
 	}
 	
 	@GetMapping("/vulnerabilities")

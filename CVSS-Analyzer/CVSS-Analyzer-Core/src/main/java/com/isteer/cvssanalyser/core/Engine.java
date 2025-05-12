@@ -105,7 +105,8 @@ public class Engine {
 	private void analyzePom(SseEmitter emitter) {
 		GAVAnalyzer gavAnalyzer = new GAVAnalyzer();
 		CPEEvidencesNormalizer normalizer = new CPEEvidencesNormalizer();
-		CveClient cveClient = new CveClient();		
+		CveClient cveClient = new CveClient();	
+		
 	    dependencies =  gavAnalyzer.fetchProjectDependenciesFromMavenTree();
 	    gavAnalyzer.collectGAVEvidencesFromDependencyName(dependencies);
 		normalizer.normalizeDependencyEvidences(dependencies);
@@ -116,7 +117,7 @@ public class Engine {
 			if(dependencyCount % 25 == 0 || dependencyCount==dependencies.size()) {
 				try {
 					
-					String message = String.format("{ Fetched dependencies : %d, Total dependencies : %d }", dependencyCount, dependencies.size());
+					String message = String.format("{\"fetchedDependencies\": %d, \"totalDependencies\": %d }", dependencyCount, dependencies.size());
 					System.out.println(message);
 					emitter.send(SseEmitter.event().data(message));
 					Thread.sleep(10000);
@@ -133,6 +134,11 @@ public class Engine {
 			}else {
 				System.out.println("No vulnerabilities found for dependency: "+ dep.getDependencyName());
 			}
+		}
+		try {
+			emitter.send(SseEmitter.event().data("Analysis completed"));
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	
