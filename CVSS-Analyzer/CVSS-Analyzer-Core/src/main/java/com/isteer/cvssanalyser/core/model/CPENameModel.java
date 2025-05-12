@@ -6,6 +6,7 @@ public class CPENameModel {
 	private String product;
 	private String version;
 	private String update="*";
+	private boolean isValidCpe;
 	
 	public String getVendor() {
 		return vendor;
@@ -51,6 +52,17 @@ public class CPENameModel {
 
 	public void setUpdate(String update) {
 		this.update = update;
+	}
+
+
+	public boolean isValidCpe() {
+		return isValidCpe;
+	}
+
+
+
+	public void setValidCpe(boolean isValidCpe) {
+		this.isValidCpe = isValidCpe;
 	}
 
 

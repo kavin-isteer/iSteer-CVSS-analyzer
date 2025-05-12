@@ -56,11 +56,12 @@ public class CvssService {
 	
 	public Object getCpeNameList(String cpeName) {
 		RestTemplate restTemplate = new RestTemplate();
+		CveClient cveClient = new CveClient();
 		HttpEntity<String> entity = getHeaders();
 		String url = String.format("%s?matchStringSearch=%s", CPE_API_BASE_URL, cpeName);
 		ResponseEntity<Object> response = restTemplate.exchange(url, HttpMethod.GET, entity, Object.class);
 		Object cpeApiResponse = response.getBody();
-		return cpeApiResponse;
+		return cveClient.parseCpeApiResponse(cpeApiResponse);
 	}
 	
 	public HttpEntity<String> getHeaders() {
