@@ -10,13 +10,18 @@
 			line-height: 1.6;
 		}
 
+		/* Add class to disable background scrolling when modal is open */
+		body.modal-open {
+			overflow: hidden;
+		}
+
 		.header-container {
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
 			margin-bottom: 20px;
 			position: relative;
-			padding-right: 110px;
+			padding-right: 110px; /* Added to account for the fixed button */
 		}
 
 		.logo {
@@ -41,12 +46,6 @@
 			text-align: center;
 			padding-bottom: 10px;
 			margin: 0;
-		}
-
-		hr {
-			border: 0;
-			border-top: 1px solid #ddd;
-			margin: 20px 0;
 		}
 
 		.summary-section {
@@ -178,29 +177,13 @@
 		}
 
 		.vulnerability-details {
-			margin-left: 20px;
-			padding: 10px;
-			background-color: #f9f9f9;
-			border-left: 4px solid #e74c3c;
-			margin-top: 5px;
+			display: none; /* Hide inline details since they will be shown in the modal */
 		}
 
 		.source-info {
 			font-style: italic;
 			color: #7f8c8d;
 			font-size: 0.9em;
-		}
-
-		.confidence-high {
-			color: #27ae60;
-		}
-
-		.confidence-medium {
-			color: #f39c12;
-		}
-
-		.confidence-low {
-			color: #e74c3c;
 		}
 
 		.collapsible-content {
@@ -256,10 +239,68 @@
 			top: 10px;
 			right: 10px;
 			z-index: 1000;
+			
 		}
 
 		#collapse-all-button:hover {
 			background-color: #2980b9;
+		}
+
+		/* Modal Overlay */
+		.modal {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-color: rgba(0, 0, 0, 0.5); /* Greyed-out background */
+			z-index: 2000; /* Above other content */
+			justify-content: center;
+			align-items: center;
+		}
+
+		/* Modal Content */
+		.modal-content {
+			background-color: #fff;
+			width: 100%; /* Larger modal */
+			max-width: 1200px;
+			max-height: 80vh; /* Limit height to 80% of viewport */
+			border-radius: 8px;
+			padding: 20px;
+			position: relative;
+			box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+			display: flex;
+			flex-direction: column;
+		}
+
+		/* Wrapper for scrollable content */
+		.modal-scrollable {
+			max-height: calc(90vh - 80px); /* Adjust for padding and header space */
+			overflow-y: auto; /* Scrollable */
+		}
+
+		/* Close Button - Adjusted position */
+		.modal-close {
+			position: absolute;
+			top: -6px; /* Adjusted from 10px to 15px for better vertical alignment */
+			right: 22px; /* Adjusted from 15px to 20px for better horizontal alignment */
+			font-size: 24px;
+			font-weight: bold;
+			color: #333;
+			cursor: pointer;
+			padding: 0%;
+			float: right;
+			z-index: 2100; /* Ensure it's above the modal content */
+		}
+
+		.modal-close:hover {
+			color: #e74c3c; /* Red on hover */
+		}
+
+		/* Modal Body */
+		#modal-body {
+			margin-top: 20px;
 		}
 	</style>
 </head>
@@ -431,6 +472,16 @@
 		</ul>
 	</div>
 
+	<!-- Modal for CVE ID Details -->
+	<div id="cve-modal" class="modal">
+		<div class="modal-content">
+			<span class="modal-close" onclick="closeModal()">×</span>
+			<div class="modal-scrollable">
+				<div id="modal-body"></div>
+			</div>
+		</div>
+	</div>
+
 	<script>
 		let currentlyOpenDependency = null;
 		let currentlyOpenVulnerability = null;
@@ -469,29 +520,49 @@
 					}
 				});
 				if (currentlyOpenVulnerability && currentlyOpenVulnerability.closest(".dependency-content") === content) {
-					currentlyOpenVulnerability.classList.add("collapsed");
-					currentlyOpenVulnerability.querySelector(".vulnerability-details").classList.add("collapsed");
+					closeModal(); // Close the modal if open
 					currentlyOpenVulnerability = null;
 				}
+			} else {
+				// Scroll to the top of the dependency when expanded
+				element.scrollIntoView({ behavior: "auto", block: "center" });
 			}
 			currentlyOpenDependency = content.classList.contains("collapsed") ? null : element;
 		}
 
 		function toggleVulnerability(element) {
 			if (currentlyOpenVulnerability && currentlyOpenVulnerability !== element) {
-				currentlyOpenVulnerability.classList.add("collapsed");
-				currentlyOpenVulnerability.querySelector(".vulnerability-details").classList.add("collapsed");
+				closeModal(); // Close the modal for the previous CVE ID
 			}
-			element.classList.toggle("collapsed");
-			const content = element.querySelector(".vulnerability-details");
-			content.classList.toggle("collapsed");
-			currentlyOpenVulnerability = content.classList.contains("collapsed") ? null : element;
 
-			// Scroll to the top of the vulnerability-details section (starting with Description)
-			if (!content.classList.contains("collapsed")) {
-				// Use scrollIntoView to bring the element into view at the top
-				element.scrollIntoView({ behavior: "smooth", block: "start" });
-			}
+			// Get the vulnerability details
+			const content = element.querySelector(".vulnerability-details");
+			const modalBody = document.getElementById("modal-body");
+
+			// Populate the modal with the CVE ID details
+			modalBody.innerHTML = content.innerHTML;
+
+			// Show the modal
+			const modal = document.getElementById("cve-modal");
+			modal.style.display = "flex";
+
+			// Disable background scrolling
+			document.body.classList.add("modal-open");
+
+			// Update the currently open vulnerability
+			currentlyOpenVulnerability = element;
+		}
+
+		function closeModal() {
+			const modal = document.getElementById("cve-modal");
+			modal.style.display = "none";
+			const modalBody = document.getElementById("modal-body");
+			modalBody.innerHTML = ""; // Clear the modal content
+
+			// Re-enable background scrolling
+			document.body.classList.remove("modal-open");
+
+			currentlyOpenVulnerability = null;
 		}
 
 		function collapseAll() {
@@ -518,6 +589,8 @@
 					details.classList.add("collapsed");
 				}
 			});
+			// Close the modal if open
+			closeModal();
 			currentlyOpenDependency = null;
 			currentlyOpenVulnerability = null;
 		}
