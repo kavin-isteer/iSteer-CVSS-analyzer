@@ -39,22 +39,22 @@ public class CvssController {
 			return ResponseEntity.ok(Engine.dependencies);
 	}
 	
-	@GetMapping("/search/cveId")
+	@GetMapping("/search/cve/cveId")
 	public ResponseEntity<Object> getVulnerabilitiesByCveId(@RequestParam String cveId) {
 		return ResponseEntity.ok(service.getVulnerabilitiesByCveId(cveId));
 	}
 	
-	@GetMapping("/search/keywords")
+	@GetMapping("/search/cve/keywords")
 	public ResponseEntity<Object> getVulnerabilitiesByKeywords(@RequestParam String keywords) {
 		return ResponseEntity.ok(service.getVulnerabilitiesByKeywords(keywords));
 	}
 	
-	@GetMapping("/search/cpe")
+	@GetMapping("/search/cve/cpeName")
 	public ResponseEntity<Object> getVulnerabilitiesByCpe(@RequestParam String cpe) {
 		return ResponseEntity.ok(service.getVulnerabilitiesByCpe(cpe));
 	}
 	
-	@GetMapping("/search/cpeName")
+	@GetMapping("/search/cpe/matchingCpeName")
 	public ResponseEntity<Object> getCpeNameList(@RequestParam String cpeName) {
 		return ResponseEntity.ok(service.getCpeNameList(cpeName));
 	}
@@ -63,6 +63,5 @@ public class CvssController {
 	public ResponseEntity<Object> getCpeNameListByKeyword(@RequestParam String keyword) {
 		return ResponseEntity.ok(service.getCpeNameListByKeywords(keyword));
 	}
-	
 	
 }
