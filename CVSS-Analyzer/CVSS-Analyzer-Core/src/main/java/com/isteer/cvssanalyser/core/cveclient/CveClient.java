@@ -1,10 +1,8 @@
 package com.isteer.cvssanalyser.core.cveclient;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -20,15 +18,12 @@ import com.isteer.cvssanalyser.core.model.VulnerabilityCvssMetricsModel;
 import com.isteer.cvssanalyser.core.model.VulnerabilityDetailsModel;
 import com.isteer.cvssanalyser.core.model.VulnerabilityModel;
 import com.isteer.cvssanalyser.core.model.VulnerabilityReferenceModel;
-import com.jayway.jsonpath.Configuration;
-import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.Option;
 
 public class CveClient {
 
 	private static final String CVE_BASE_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0";
-	private static final String CPE_BASE_URL = "https://services.nvd.nist.gov/rest/json/cpematch/2.0";
+	private static final String CPE_BASE_URL = "https://services.nvd.nist.gov/rest/json/cpes/2.0";
 	private static final String API_KEY = "ca987215-dbe8-42f0-a656-e5da368c3c70";
 
 	public DependencyModel fetchVulnerabilitiesForDependency(DependencyModel dependency) {
@@ -39,7 +34,6 @@ public class CveClient {
 		CPENameModel cpeNameModel = dependency.getCpeEnumeration();
 		String cpeName = cpeNameModel.getCPE23Uri();
 
-		List<VulnerabilityModel> vulnerabilities = new ArrayList<>();
 		List<CPENameModel> likelyCPEs = new ArrayList<>();
 		Object cveApiResponse = null;
 		Object cpeApiResponse = null;
@@ -61,7 +55,7 @@ public class CveClient {
 			dependency.getCpeEnumeration().setValidCpe(true);
 		} else {
 			dependency.getCpeEnumeration().setValidCpe(false);
-			String cpeUrl = String.format("%s?matchStringSearch=%s", CPE_BASE_URL, cpeName);
+			String cpeUrl = String.format("%s?cpeMatchString=%s", CPE_BASE_URL, cpeName);
 			ResponseEntity<Object> cpeResponse = restTemplate.exchange(cpeUrl, HttpMethod.GET, entity, Object.class);
 			if (cpeResponse.getStatusCode().is2xxSuccessful()) {
 				cpeApiResponse = cpeResponse.getBody();
@@ -76,26 +70,21 @@ public class CveClient {
 
 	public List<CPENameModel> parseCpeApiResponse(Object cpeApiResponse) {
 		List<CPENameModel> cpeNames = new ArrayList<>();
-		Set<String> seenCpeKeys = new HashSet<>();
 		ObjectMapper objectMapper = new ObjectMapper();
-
+		
 		try {
-			Configuration conf = Configuration.builder()
-	                .options(Option.SUPPRESS_EXCEPTIONS)
-	                .build();
 			String jsonResponse = objectMapper.writeValueAsString(cpeApiResponse);
-			List<Object> cpeItems = JsonPath.read(jsonResponse, "$.matchStrings[*]");
-			if (cpeItems != null) {
+			List<Object> cpeItems = JsonPath.read(jsonResponse, "$.products[*].cpe");
+			if(cpeItems != null) {
 				for (Object cpeItem : cpeItems) {
-					String criteriaCpe = JsonPath.read(cpeItem, "$.matchString.criteria");
-					processCpeUri(criteriaCpe, seenCpeKeys, cpeNames);
-					if(JsonPath.using(conf).parse(cpeItem).read("$.matchString.matches") == null) {
-						continue;
-					}
-					List<String> matchedCpenames = JsonPath.read(cpeItem, "$.matchString.matches[*].cpeName");
-					for (String cpeName : matchedCpenames) {
-						processCpeUri(cpeName, seenCpeKeys, cpeNames);
-					}
+					CPENameModel cpeName = new CPENameModel();
+					String[] cpeNameUri = JsonPath.read(cpeItem, "$.cpeName").toString().split(":");
+					cpeName.setVendor(cpeNameUri[3]);
+					cpeName.setProduct(cpeNameUri[4]);
+					cpeName.setVersion(cpeNameUri[5]);
+					cpeName.setUpdate(cpeNameUri[6]);
+					cpeName.setValidCpe(true);
+					cpeNames.add(cpeName);
 				}
 			}
 		} catch (Exception e) {
@@ -233,45 +222,4 @@ public class CveClient {
 		return mitigationReferences;
 	}
 	
-	private void processCpeUri(String cpeUri, Set<String> seenCpeKeys, List<CPENameModel> cpeNames) {
-	    String[] parts = cpeUri.split(":");
-
-	    if (parts.length >= 7) {
-	        String vendor = parts[3];
-	        String product = parts[4];
-	        String version = parts[5];
-	        String update = parts[6];
-
-	        // Build a uniqueness key
-	        String key = vendor + ":" + product + ":" + version + ":" + update;
-
-	        if (!seenCpeKeys.contains(key)) {
-	            seenCpeKeys.add(key);
-
-	            CPENameModel model = new CPENameModel();
-	            model.setVendor(vendor);
-	            model.setProduct(product);
-	            model.setVersion(version);
-	            model.setUpdate(update);
-	            model.setValidCpe(true);
-
-	            cpeNames.add(model);
-	        }
-	    }
-	}
-
-
-//	public DependencyModel fetchVulnerabilitiesForDependency(DependencyModel dependency) {
-//		if (dependency.getCpeEnumeration() == null) {
-//			return null;
-//		}
-//		CPENameModel cpeNameModel = dependency.getCpeEnumeration();
-//		String cpeName = cpeNameModel.getCPE23Uri();
-//		List<VulnerabilityModel> vulnerabilities = getAllVulnerabilities(cpeName);
-//		List<VulnerabilityDetailsModel> vulnerabilityDetails = vulnerabilities.getFirst().getVulnerabilities();
-//		for (VulnerabilityDetailsModel vulnerabilityDetail : vulnerabilityDetails) {
-//			dependency.addVulnerabilities(vulnerabilityDetail);
-//		}
-//		return dependency;
-//	}
 }

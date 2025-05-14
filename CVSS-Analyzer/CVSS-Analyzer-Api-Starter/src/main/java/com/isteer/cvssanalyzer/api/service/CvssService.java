@@ -16,7 +16,7 @@ import com.isteer.cvssanalyser.core.enums.EngineMode;
 public class CvssService {
 	
     private final String CVE_API_BASE_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0";
-    private final String CPE_API_BASE_URL = "https://services.nvd.nist.gov/rest/json/cpematch/2.0";
+    private final String CPE_API_BASE_URL = "https://services.nvd.nist.gov/rest/json/cpes/2.0";
     private String apiKey = "ca987215-dbe8-42f0-a656-e5da368c3c70";
 
 	public SseEmitter getAllVulnerabilities(SseEmitter emitter) {
@@ -58,7 +58,17 @@ public class CvssService {
 		RestTemplate restTemplate = new RestTemplate();
 		CveClient cveClient = new CveClient();
 		HttpEntity<String> entity = getHeaders();
-		String url = String.format("%s?matchStringSearch=%s", CPE_API_BASE_URL, cpeName);
+		String url = String.format("%s?cpeMatchString=%s", CPE_API_BASE_URL, cpeName);
+		ResponseEntity<Object> response = restTemplate.exchange(url, HttpMethod.GET, entity, Object.class);
+		Object cpeApiResponse = response.getBody();
+		return cveClient.parseCpeApiResponse(cpeApiResponse);
+	}
+	
+	public Object getCpeNameListByKeywords(String keywords) {
+		RestTemplate restTemplate = new RestTemplate();
+		CveClient cveClient = new CveClient();
+		HttpEntity<String> entity = getHeaders();
+		String url = String.format("%s?keywordSearch=%s", CPE_API_BASE_URL, keywords);
 		ResponseEntity<Object> response = restTemplate.exchange(url, HttpMethod.GET, entity, Object.class);
 		Object cpeApiResponse = response.getBody();
 		return cveClient.parseCpeApiResponse(cpeApiResponse);

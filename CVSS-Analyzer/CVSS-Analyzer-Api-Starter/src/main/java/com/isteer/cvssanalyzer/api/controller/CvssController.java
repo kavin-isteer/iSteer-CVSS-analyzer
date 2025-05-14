@@ -59,4 +59,10 @@ public class CvssController {
 		return ResponseEntity.ok(service.getCpeNameList(cpeName));
 	}
 	
+	@GetMapping("/search/cpe/keyword")
+	public ResponseEntity<Object> getCpeNameListByKeyword(@RequestParam String keyword) {
+		return ResponseEntity.ok(service.getCpeNameListByKeywords(keyword));
+	}
+	
+	
 }

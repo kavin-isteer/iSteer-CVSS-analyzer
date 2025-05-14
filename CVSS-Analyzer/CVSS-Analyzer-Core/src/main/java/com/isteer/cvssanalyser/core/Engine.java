@@ -114,13 +114,13 @@ public class Engine {
 		for(DependencyModel dep:dependencies) {
 			cveClient.fetchVulnerabilitiesForDependency(dep);
 			dependencyCount++;
-			if(dependencyCount % 25 == 0 || dependencyCount==dependencies.size()) {
+			if(dependencyCount % 2 == 0 || dependencyCount==dependencies.size()) {
 				try {
 					
 					String message = String.format("{\"fetchedDependencies\": %d, \"totalDependencies\": %d }", dependencyCount, dependencies.size());
 					System.out.println(message);
 					emitter.send(SseEmitter.event().data(message));
-					Thread.sleep(10000);
+					Thread.sleep(1500);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				} catch (IOException e) {
