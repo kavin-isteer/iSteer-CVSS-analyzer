@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 
 <head>
-	<title>CVSS Analyzer V 1.0</title>
+	<title>CVSS Analyzer Version 1.0</title>
 	<style>
 		body {
 			font-family: Arial, sans-serif;
@@ -91,6 +91,36 @@
 			background: rgba(255, 255, 255, 0.2);
 		}
 
+		/* Search Bar Styles */
+		.search-container {
+			margin: 20px 0;
+			text-align: center;
+		}
+
+		#search-bar {
+			width: 50%;
+			max-width: 500px;
+			padding: 10px;
+			font-size: 1em;
+			border: 1px solid #ddd;
+			border-radius: 5px;
+			box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+			outline: none;
+			transition: border-color 0.3s ease;
+		}
+
+		#search-bar:focus {
+			border-color: #3498db;
+		}
+
+		#no-matches-message {
+			display: none;
+			color: #e74c3c;
+			font-style: italic;
+			text-align: center;
+			margin: 20px 0;
+		}
+
 		.dependency {
 			margin-bottom: 30px;
 			border: 1px solid #ddd;
@@ -102,6 +132,10 @@
 		.dependency.vulnerable {
 			border-color: #e74c3c;
 			background-color: #fff5f5;
+		}
+
+		.dependency.hidden {
+			display: none; /* Hide dependencies that don't match the search */
 		}
 
 		.dependency-name {
@@ -239,7 +273,6 @@
 			top: 10px;
 			right: 10px;
 			z-index: 1000;
-			
 		}
 
 		#collapse-all-button:hover {
@@ -340,7 +373,13 @@
 		</table>
 	</div>
 
-	<div th:each="dependency : ${dependencies}">
+	<!-- Search Bar -->
+	<div class="search-container">
+		<input type="text" id="search-bar" placeholder="Search dependencies..." oninput="searchDependencies()">
+	</div>
+	<div id="no-matches-message">No matching dependencies found.</div>
+
+	<div id="dependency-list" th:each="dependency : ${dependencies}">
 		<div class="dependency"
 			th:classappend="${dependency.vulnerabilities != null and not #lists.isEmpty(dependency.vulnerabilities)} ? 'vulnerable'">
 			<div class="dependency-name" onclick="toggleDependency(this)">
@@ -524,7 +563,7 @@
 					currentlyOpenVulnerability = null;
 				}
 			} else {
-				// Scroll to the top of the dependency when expanded
+				// Scroll to the top of the dependency instantly when expanded
 				element.scrollIntoView({ behavior: "auto", block: "center" });
 			}
 			currentlyOpenDependency = content.classList.contains("collapsed") ? null : element;
@@ -593,6 +632,34 @@
 			closeModal();
 			currentlyOpenDependency = null;
 			currentlyOpenVulnerability = null;
+		}
+
+		function searchDependencies() {
+			const searchInput = document.getElementById("search-bar").value.toLowerCase();
+			const dependencies = document.querySelectorAll(".dependency");
+			const noMatchesMessage = document.getElementById("no-matches-message");
+			let hasMatches = false;
+
+			dependencies.forEach(dep => {
+				const dependencyName = dep.querySelector(".dependency-name span:first-child").textContent.toLowerCase();
+				if (dependencyName.includes(searchInput)) {
+					dep.classList.remove("hidden");
+					hasMatches = true;
+				} else {
+					dep.classList.add("hidden");
+				}
+			});
+
+			// Show or hide the "No matches" message
+			if (hasMatches) {
+				noMatchesMessage.style.display = "none";
+			} else {
+				noMatchesMessage.style.display = "block";
+			}
+
+			// Close any open modals and collapse sections when searching
+			closeModal();
+			collapseAll();
 		}
 	</script>
 </body>
