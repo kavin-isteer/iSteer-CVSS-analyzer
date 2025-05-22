@@ -205,7 +205,7 @@ public class Engine {
 			}
 		}
 	}
-	public static void checkForVulnerabilityForDependencies() {
+	public static boolean checkForVulnerabilityForDependencies() {
 		getMavenLog().info("Checking dependencies vulnerabilities with base score threshold value of "+thresholdValue);
 		boolean isThresholdExceeded=false;
 		for(DependencyModel dep:dependencies) {
@@ -232,8 +232,11 @@ public class Engine {
 			//	getMavenLog().info("No vulnerabilities found for dependency: "+ dep.getDependencyName());
 			}
 		}
-		if(isThresholdExceeded) {
-			throw new RuntimeException("One or more dependencies found with vulnerability with base score greater than threshold value: "+thresholdValue+". Check report for more details!!");
-		}
+		/*
+		 * if(isThresholdExceeded) { throw new
+		 * RuntimeException("One or more dependencies found with vulnerability with base score greater than threshold value: "
+		 * +thresholdValue+". Check report for more details!!"); }
+		 */
+		return isThresholdExceeded;
 	}
 }
