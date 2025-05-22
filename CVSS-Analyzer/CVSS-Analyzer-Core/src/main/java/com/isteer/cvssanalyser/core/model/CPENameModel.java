@@ -12,8 +12,6 @@ public class CPENameModel {
 		return vendor;
 	}
 
-
-
 	public void setVendor(String vendor) {
 		this.vendor = vendor;
 	}

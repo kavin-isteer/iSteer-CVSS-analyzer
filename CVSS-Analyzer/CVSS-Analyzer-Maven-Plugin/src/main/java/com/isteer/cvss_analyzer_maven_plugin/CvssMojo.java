@@ -96,8 +96,9 @@ public class CvssMojo extends AbstractMojo {
 		            .withLog(getLog())  // Pass Maven's logger
 		            .withThresholdValue(wrkbaseScoreThresholdValue)
 		            .analyze(EngineMode.MAVEN_PLUGIN);
-		        Engine.GenerateReport();
 		        Engine.checkForVulnerabilityForDependencies();
+		        Engine.doFuzzySearchAndGetLikelyCpes();
+		        Engine.GenerateReport();
 		    } catch (Exception e) {
 		        getLog().error("Build failed: " + e.getMessage());
 		        throw new MojoExecutionException("Analysis failed", e);

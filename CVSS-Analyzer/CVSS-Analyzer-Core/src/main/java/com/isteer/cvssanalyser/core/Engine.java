@@ -2,6 +2,7 @@ package com.isteer.cvssanalyser.core;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.isteer.cvssanalyser.core.cveclient.CveClient;
 import com.isteer.cvssanalyser.core.enums.EngineMode;
+import com.isteer.cvssanalyser.core.model.CPENameModel;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
 import com.isteer.cvssanalyser.core.model.VulnerabilityCvssMetricsModel;
 import com.isteer.cvssanalyser.core.model.VulnerabilityDetailsModel;
@@ -182,6 +184,25 @@ public class Engine {
 		} catch (IOException e) {
 			getMavenLog().error("Error occured during generating report");
 			e.printStackTrace();
+		}
+	}
+	public static void doFuzzySearchAndGetLikelyCpes() {
+		for(DependencyModel dep : dependencies) {
+			if(dep.getVulnerabilities().size()==0) {
+				getMavenLog().info("No vulnerabilities found for dependency: "+dep.getDependencyName()+" Doing fuzzy search to find likely CPEs!!");
+				FuzzySearchTool fuzzySearchTool = new FuzzySearchTool();
+				try {
+					fuzzySearchTool.searchForLikelyCpes(dep);
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				/*
+				 * if(dep.getLikelyCPEs()!=null && dep.getLikelyCPEs().size()>0) {
+				 * getMavenLog().info("Found out likely cpes: "); for (CPENameModel cpe :
+				 * dep.getLikelyCPEs()) { Engine.getMavenLog().info(cpe.getCPE23Uri()); } }
+				 */
+			}
 		}
 	}
 	public static void checkForVulnerabilityForDependencies() {

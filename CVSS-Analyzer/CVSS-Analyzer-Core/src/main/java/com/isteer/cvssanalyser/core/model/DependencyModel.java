@@ -13,7 +13,7 @@ public class DependencyModel {
 	private List<Evidence> versionEvidences = new ArrayList<>();
 	private CPENameModel cpeEnumeration;
 	private List<VulnerabilityDetailsModel> vulnerabilities = new ArrayList<>();
-	private List<CPENameModel> likelyCPEs;
+	private List<CPENameModel> likelyCPEs=new ArrayList<>();
 	
 	
 	public String getDependencyName() {
