@@ -7,10 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.maven.plugin.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.isteer.cvssanalyser.core.cveclient.CveClient;
 import com.isteer.cvssanalyser.core.enums.EngineMode;
+import com.isteer.cvssanalyser.core.logging.EngineLogger;
 import com.isteer.cvssanalyser.core.model.CPENameModel;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
 import com.isteer.cvssanalyser.core.model.VulnerabilityCvssMetricsModel;
@@ -22,24 +25,32 @@ public class Engine {
 	
 	private static Log mavenLog;
 	
+	public static EngineLogger logger;
+	
 	public static EngineMode analysisMode;
 	
 	public static Double thresholdValue = 8.0;
 	
-	public static Log getMavenLog() {
-		return mavenLog;
+	/*
+	 * public static Log getMavenLog() { return mavenLog; }
+	 */
+	public static EngineLogger getLogger() {
+		return logger;
 	}
-	
 	public Engine withDependencies(List<DependencyModel> dependencies) {
 		Engine.dependencies=dependencies;
 		return this;
 	}
-	public Engine withLog(Log logger) {
+	public Engine withMavenLog(Log logger) {
 		Engine.mavenLog=logger;
 		return this;
 	}
+	public Engine withLogger(EngineLogger logger) {
+		Engine.logger=logger;
+		return this;
+	}
 	public Engine withThresholdValue(Double threshold) {
-		getMavenLog().info("Setting threshold value to "+threshold);
+		logger.info("Setting threshold value to "+threshold);
 		Engine.thresholdValue = threshold;
 		return this;
 	}
@@ -150,13 +161,12 @@ public class Engine {
 		CveClient cveClient = new CveClient();
 		int dependencyCount = 0;
 		gavAnalyser.collectGAVEvidencesFromDependencyName(dependencies);
-		
 		jarAnalyzer.collectEvidencesFromJar(dependencies);
 		
 		CPEEvidencesNormalizer normalizer = new CPEEvidencesNormalizer();
-		getMavenLog().info("Resolving evidences to CPE names.......");
+		logger.info("Resolving evidences to CPE names.......");
 		normalizer.normalizeDependencyEvidences(dependencies);
-		getMavenLog().info("Fetching vulnerability details for the dependencies from the NVD api(This step requires Internet connection!!)");
+		logger.info("Fetching vulnerability details for the dependencies from the NVD api(This step requires Internet connection!!)");
 		
 		for(DependencyModel dep:dependencies) {
 			if(dep.getCpeEnumeration()!=null) {
@@ -165,7 +175,7 @@ public class Engine {
 			}
 			if(dependencyCount % 25 == 0) {
 				try {
-					getMavenLog().info("Fetched vulnerabilities for " + dependencyCount + " out of " + dependencies.size() + " dependencies");
+					logger.info("Fetched vulnerabilities for " + dependencyCount + " out of " + dependencies.size() + " dependencies");
 					Thread.sleep(10000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
@@ -175,27 +185,26 @@ public class Engine {
 	}
 	
 	public static void GenerateReport() {
-		getMavenLog().info("Generating dependencies vulnerability report....");
+		logger.info("Generating dependencies vulnerability report....");
 		File reportFile = new File("target/");
 		HtmlReportGenerator reportGenerator = new HtmlReportGenerator();
 		try {
 			reportGenerator.generateReport(dependencies, reportFile);
-			getMavenLog().info("Report successfully generated and saved in target\\dependency-report.html");
+			logger.info("Report successfully generated and saved in target\\dependency-report.html");
 		} catch (IOException e) {
-			getMavenLog().error("Error occured during generating report");
+			logger.error("Error occured during generating report");
 			e.printStackTrace();
 		}
 	}
 	public static void doFuzzySearchAndGetLikelyCpes() {
 		for(DependencyModel dep : dependencies) {
 			if(dep.getVulnerabilities().size()==0) {
-				getMavenLog().info("No vulnerabilities found for dependency: "+dep.getDependencyName()+" Doing fuzzy search to find likely CPEs!!");
+				logger.info("No vulnerabilities found for dependency: "+dep.getDependencyName()+" Doing fuzzy search to find likely CPEs!!");
 				FuzzySearchTool fuzzySearchTool = new FuzzySearchTool();
 				try {
 					fuzzySearchTool.searchForLikelyCpes(dep);
 				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					//e.printStackTrace();
 				}
 				/*
 				 * if(dep.getLikelyCPEs()!=null && dep.getLikelyCPEs().size()>0) {
@@ -206,13 +215,13 @@ public class Engine {
 		}
 	}
 	public static boolean checkForVulnerabilityForDependencies() {
-		getMavenLog().info("Checking dependencies vulnerabilities with base score threshold value of "+thresholdValue);
+		logger.info("Checking dependencies vulnerabilities with base score threshold value of "+thresholdValue);
 		boolean isThresholdExceeded=false;
 		for(DependencyModel dep:dependencies) {
 			if(dep.getVulnerabilities().size()>0) {
-				getMavenLog().error("Found "+dep.getVulnerabilities().size()+" vulnerabilities for dependency:"+dep.getDependencyName());
+				logger.error("Found "+dep.getVulnerabilities().size()+" vulnerabilities for dependency:"+dep.getDependencyName());
 				for(VulnerabilityDetailsModel vulnerabilities : dep.getVulnerabilities()) {
-					getMavenLog().info(vulnerabilities.getCveId());
+					logger.info(vulnerabilities.getCveId());
 					for(VulnerabilityCvssMetricsModel cvssMetrics : vulnerabilities.getCvssMetrics()) {
 						if(cvssMetrics.getBaseScore()>=thresholdValue) {
 							/*getMavenLog().info("");

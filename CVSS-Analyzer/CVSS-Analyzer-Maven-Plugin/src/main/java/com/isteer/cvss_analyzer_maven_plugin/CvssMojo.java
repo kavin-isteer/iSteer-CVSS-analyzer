@@ -12,6 +12,7 @@ import org.apache.maven.project.MavenProject;
 
 import com.isteer.cvssanalyser.core.Engine;
 import com.isteer.cvssanalyser.core.enums.EngineMode;
+import com.isteer.cvssanalyser.core.logging.MavenEngineLogger;
 import com.isteer.cvssanalyser.core.model.DatabaseConfig;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
 import com.isteer.cvssanalyser.core.util.DbUtil;
@@ -55,6 +56,7 @@ public class CvssMojo extends AbstractMojo {
 		getLog().info("Getting database credentials from plugin configuration");
 		Engine.analysisMode = EngineMode.MAVEN_PLUGIN;
 		DbUtil.withDbCredentials(database.getUrl(), database.getUsername(), database.getPassword());
+		
 		// 1. Get ALL dependencies (including transitive ones)
 		Set<Artifact> artifacts = project.getArtifacts();
 
@@ -85,7 +87,7 @@ public class CvssMojo extends AbstractMojo {
 
 		// 3. Run analysis
 		try {
-			new Engine().withDependencies(dependencies).withLog(getLog()) // Pass Maven's logger
+			new Engine().withDependencies(dependencies).withLogger(new MavenEngineLogger(getLog())) // Pass Maven's logger
 					.withThresholdValue(wrkbaseScoreThresholdValue).analyze(EngineMode.MAVEN_PLUGIN);
 			boolean isThresholdExceeded = Engine.checkForVulnerabilityForDependencies();
 			Engine.doFuzzySearchAndGetLikelyCpes();

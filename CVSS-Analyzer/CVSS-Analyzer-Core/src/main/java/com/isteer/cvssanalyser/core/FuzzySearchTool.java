@@ -44,7 +44,7 @@ public class FuzzySearchTool {
 			}
 		}
 		if(likelyVendors.size()==0) {
-			Engine.getMavenLog().info("Unable to find vendor through fuzzy search for dependency: "+dependency.getDependencyName());
+			Engine.logger.info("Unable to find vendor through fuzzy search for dependency: "+dependency.getDependencyName());
 			return;
 		}
 		List<CpeEntryModel> filteredCpes=new ArrayList<>();
@@ -63,7 +63,7 @@ public class FuzzySearchTool {
 			//	Engine.getMavenLog().info("Adding likely CPE for dependency: "+dependency.getDependencyName()+" - "+wrkCpeNameModel.getCPE23Uri());
 				dependency.addLikelyCPEs(wrkCpeNameModel);
 			}
-			
+			Engine.logger.info("Total likely CPEs found: "+filteredCpes.size());
 		}
 	}
 	public List<String> searchForLikelyVendors(String groupId) throws SQLException{

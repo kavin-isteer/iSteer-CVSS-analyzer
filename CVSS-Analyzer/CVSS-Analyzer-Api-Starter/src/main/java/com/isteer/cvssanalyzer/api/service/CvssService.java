@@ -11,6 +11,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import com.isteer.cvssanalyser.core.Engine;
 import com.isteer.cvssanalyser.core.cveclient.CveClient;
 import com.isteer.cvssanalyser.core.enums.EngineMode;
+import com.isteer.cvssanalyser.core.logging.Slf4jEngineLogger;
 
 @Service
 public class CvssService {
@@ -20,7 +21,8 @@ public class CvssService {
     private String apiKey = "ca987215-dbe8-42f0-a656-e5da368c3c70";
 
 	public SseEmitter getAllVulnerabilities(SseEmitter emitter) {
-		new Engine().analyze(EngineMode.POM, emitter);
+		new Engine().withLogger(new Slf4jEngineLogger()).analyze(EngineMode.POM, emitter);
+		Engine.doFuzzySearchAndGetLikelyCpes();
 		return emitter;
 	}
 	

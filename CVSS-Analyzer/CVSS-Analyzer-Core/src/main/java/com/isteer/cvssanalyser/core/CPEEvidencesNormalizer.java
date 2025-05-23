@@ -34,18 +34,18 @@ public class CPEEvidencesNormalizer {
 				dependencyModel.setCpeEnumeration(cpe);
 			} else {
 				if (Engine.analysisMode == EngineMode.MAVEN_PLUGIN) {
-					Engine.getMavenLog()
+					Engine.logger
 							.info("CPE name not resolved for dependency: " + dependencyModel.getDependencyName());
 				}
 
 				FuzzySearchTool fuzzySearch = new FuzzySearchTool();
 				try {
-					Engine.getMavenLog()
+					Engine.logger
 							.info("Doing fuzzysearch for the dependency: " + dependencyModel.getDependencyName());
 					fuzzySearch.withDistanceThreshold(3).searchForLikelyCpes(dependencyModel);
-					Engine.getMavenLog().info("Found out likely cpes: ");
+					Engine.logger.info("Found out likely cpes: ");
 					for (CPENameModel cpe : dependencyModel.getLikelyCPEs()) {
-						Engine.getMavenLog().info(cpe.getCPE23Uri());
+						Engine.logger.info(cpe.getCPE23Uri());
 					}
 				} catch (SQLException e) {
 				//	e.printStackTrace(); ignore

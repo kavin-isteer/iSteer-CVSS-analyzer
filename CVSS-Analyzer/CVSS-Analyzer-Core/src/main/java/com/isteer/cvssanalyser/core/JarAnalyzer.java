@@ -28,12 +28,9 @@ import com.isteer.cvssanalyser.core.model.Evidence;
 import com.isteer.cvssanalyser.core.util.DbUtil;
 
 public class JarAnalyzer {
-	private Log getLog() {
-		return Engine.getMavenLog();
-	}
 
 	public void collectEvidencesFromJar(List<DependencyModel> dependencies) {
-		getLog().info("Collecting evidences from Jar file packages and Manifest file");
+		Engine.logger.info("Collecting evidences from Jar file packages and Manifest file");
 		for (DependencyModel dependency : dependencies) {
 			if (!dependency.getArtifact().getType().equals("jar")) {
 				continue;
@@ -133,7 +130,7 @@ public class JarAnalyzer {
 			// 1. Extract manifest attributes
 			Manifest manifest = jar.getManifest();
 			if (manifest == null) {
-				getLog().debug("No manifest found in JAR: " + jarFile.getName());
+				Engine.logger.debug("No manifest found in JAR: " + jarFile.getName());
 				return null;
 			}
 
@@ -182,7 +179,7 @@ public class JarAnalyzer {
 			// 1. Extract manifest if exists
 			Manifest manifest = jar.getManifest();
 			if (manifest == null) {
-				getLog().debug("No manifest found in JAR: " + jarFile.getName());
+				Engine.logger.debug("No manifest found in JAR: " + jarFile.getName());
 				return null;
 			}
 
@@ -190,7 +187,7 @@ public class JarAnalyzer {
 			// evidence_type='manifest')
 			List<DependencyHintModel> hints = hintDao.getAllProductDependencyHints(connection, "manifest");
 			if (hints.isEmpty()) {
-				getLog().warn("No product hints found in database for manifest analysis");
+				Engine.logger.warn("No product hints found in database for manifest analysis");
 				return null;
 			}
 
@@ -237,7 +234,7 @@ public class JarAnalyzer {
 		try (JarFile jar = new JarFile(jarFile)) {
 			Manifest manifest = jar.getManifest();
 			if (manifest == null) {
-				getLog().debug("No manifest found in: " + jarFile.getName());
+				Engine.logger.debug("No manifest found in: " + jarFile.getName());
 				return null;
 			}
 
@@ -342,9 +339,9 @@ public class JarAnalyzer {
 		if (!vendorCounts.isEmpty()) {
 			String mostLikelyVendor = Collections.max(vendorCounts.entrySet(), Map.Entry.comparingByValue()).getKey();
 
-			getLog().info("JAR: " + jarName + " - Most likely vendor: " + mostLikelyVendor);
+			Engine.logger.info("JAR: " + jarName + " - Most likely vendor: " + mostLikelyVendor);
 		} else {
-			getLog().info("JAR: " + jarName + " - No vendor evidence found");
+			Engine.logger.info("JAR: " + jarName + " - No vendor evidence found");
 		}
 	}
 
@@ -358,7 +355,7 @@ public class JarAnalyzer {
 				vendor = mainAttributes.getValue("Bundle-Vendor"); // OSGi
 			}
 			if (vendor != null) {
-				getLog().info("Found vendor in manifest: " + vendor);
+				Engine.logger.info("Found vendor in manifest: " + vendor);
 			}
 		}
 	}
