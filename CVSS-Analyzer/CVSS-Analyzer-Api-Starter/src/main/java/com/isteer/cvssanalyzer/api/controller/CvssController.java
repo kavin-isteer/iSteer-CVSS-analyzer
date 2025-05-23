@@ -25,6 +25,7 @@ public class CvssController {
 		new Thread(() -> {
 			try {
 				service.getAllVulnerabilities(emitter);
+				emitter.send(SseEmitter.event().data("Analysis completed"));
 			} catch (Exception e) {
 				emitter.completeWithError(e);
 			} finally {
