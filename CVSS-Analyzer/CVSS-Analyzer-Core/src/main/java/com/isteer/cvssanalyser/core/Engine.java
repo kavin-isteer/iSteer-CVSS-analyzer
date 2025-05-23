@@ -67,7 +67,6 @@ public class Engine {
 		Engine.analysisMode=analyzeMode;
 		if(analyzeMode==EngineMode.POM) {
 			analyzePom(emitter);
-			emitter.complete();
 		}else if(analyzeMode==EngineMode.MAVEN_PLUGIN) {
 			analyzeMavenPlugin();
 		}
@@ -147,11 +146,6 @@ public class Engine {
 			}else {
 				System.out.println("No vulnerabilities found for dependency: "+ dep.getDependencyName());
 			}
-		}
-		try {
-			emitter.send(SseEmitter.event().data("Analysis completed"));
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 	
