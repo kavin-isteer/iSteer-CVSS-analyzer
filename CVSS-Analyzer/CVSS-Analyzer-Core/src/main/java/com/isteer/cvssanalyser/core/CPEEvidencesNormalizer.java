@@ -32,25 +32,7 @@ public class CPEEvidencesNormalizer {
 				cpe.setProduct(product);
 				cpe.setVersion(version);
 				dependencyModel.setCpeEnumeration(cpe);
-			} else {
-				if (Engine.analysisMode == EngineMode.MAVEN_PLUGIN) {
-					Engine.logger
-							.info("CPE name not resolved for dependency: " + dependencyModel.getDependencyName());
-				}
-
-				FuzzySearchTool fuzzySearch = new FuzzySearchTool();
-				try {
-					Engine.logger
-							.info("Doing fuzzysearch for the dependency: " + dependencyModel.getDependencyName());
-					fuzzySearch.withDistanceThreshold(3).searchForLikelyCpes(dependencyModel);
-					Engine.logger.info("Found out likely cpes: ");
-					for (CPENameModel cpe : dependencyModel.getLikelyCPEs()) {
-						Engine.logger.info(cpe.getCPE23Uri());
-					}
-				} catch (SQLException e) {
-				//	e.printStackTrace(); ignore
-				}
-			}
+			} 
 		}
 	}
 

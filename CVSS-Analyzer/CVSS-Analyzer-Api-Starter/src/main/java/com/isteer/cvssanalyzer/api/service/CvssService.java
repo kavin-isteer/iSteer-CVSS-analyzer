@@ -33,7 +33,7 @@ public class CvssService {
 		String url = String.format("%s?cveId=%s", CVE_API_BASE_URL, cveId);
 		ResponseEntity<Object> response = restTemplate.exchange(url, HttpMethod.GET, entity, Object.class);
 		Object cveApiResponse = response.getBody();
-		 return cveClient.parseCveApiResponse(cveApiResponse);
+		return cveClient.parseCveApiResponse(cveApiResponse);
 	}
 	
 	public Object getVulnerabilitiesByKeywords(String keywords) {
