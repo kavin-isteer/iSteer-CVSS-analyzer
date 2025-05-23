@@ -2,666 +2,691 @@
 <html xmlns:th="http://www.thymeleaf.org">
 
 <head>
-	<title>CVSS Analyzer Version 1.0</title>
-	<style>
-		body {
-			font-family: Arial, sans-serif;
-			margin: 20px;
-			line-height: 1.6;
-		}
+    <title>CVSS Analyzer Version 1.0</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
 
-		/* Add class to disable background scrolling when modal is open */
-		body.modal-open {
-			overflow: hidden;
-		}
+        body.modal-open {
+            overflow: hidden;
+        }
 
-		.header-container {
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			margin-bottom: 20px;
-			position: relative;
-			padding-right: 110px; /* Added to account for the fixed button */
-		}
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            position: relative;
+            padding-right: 110px;
+        }
 
-		.logo {
-			width: 150px;
-			vertical-align: middle;
-		}
+        .logo {
+            width: 150px;
+            vertical-align: middle;
+        }
 
-		h1 {
-			color: #2c3e50;
-			display: inline-block;
-			margin: 0;
-			flex-grow: 1;
-			text-align: center;
-		}
+        h1 {
+            color: #2c3e50;
+            display: inline-block;
+            margin: 0;
+            flex-grow: 1;
+            text-align: center;
+        }
 
-		h1 .underline-text {
-			border-bottom: 2px solid #eee;
-		}
+        h1 .underline-text {
+            border-bottom: 2px solid #eee;
+        }
 
-		h3 {
-			color: #2c3e50;
-			text-align: center;
-			padding-bottom: 10px;
-			margin: 0;
-		}
+        h3 {
+            color: #2c3e50;
+            text-align: center;
+            padding-bottom: 10px;
+            margin: 0;
+        }
 
-		.summary-section {
-			margin-bottom: 30px;
-			text-align: center;
-		}
+        .summary-section {
+            margin-bottom: 30px;
+            text-align: center;
+        }
 
-		.summary-table {
-			display: inline-table;
-			width: 45%;
-			border-collapse: separate;
-			border-spacing: 0;
-			margin: 0 10px;
-			box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-			border-radius: 12px;
-			overflow: hidden;
-			background: linear-gradient(135deg, #6b7280, #4b5563);
-			backdrop-filter: blur(8px);
-		}
+        .summary-table {
+            display: inline-table;
+            width: 45%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 0 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            backdrop-filter: blur(8px);
+        }
 
-		.summary-table th,
-		.summary-table td {
-			border: 1px solid rgba(255, 255, 255, 0.2);
-			padding: 12px;
-			text-align: left;
-			color: #ffffff;
-			font-weight: 600;
-		}
+        .summary-table th,
+        .summary-table td {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px;
+            text-align: left;
+            color: #ffffff;
+            font-weight: 600;
+        }
 
-		.summary-table th {
-			background: linear-gradient(45deg, #7c3aed, #db2777);
-			font-weight: bold;
-			text-transform: uppercase;
-			letter-spacing: 0.5px;
-		}
+        .summary-table th {
+            background: linear-gradient(45deg, #7c3aed, #db2777);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
-		.summary-table td {
-			background: rgba(255, 255, 255, 0.1);
-			transition: background 0.3s ease;
-		}
+        .summary-table td {
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.3s ease;
+        }
 
-		.summary-table td:hover {
-			background: rgba(255, 255, 255, 0.2);
-		}
+        .summary-table td:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
 
-		/* Search Bar Styles */
-		.search-container {
-			margin: 20px 0;
-			text-align: center;
-		}
+        .search-container {
+            margin: 20px 0;
+            text-align: center;
+        }
 
-		#search-bar {
-			width: 50%;
-			max-width: 500px;
-			padding: 10px;
-			font-size: 1em;
-			border: 1px solid #ddd;
-			border-radius: 5px;
-			box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-			outline: none;
-			transition: border-color 0.3s ease;
-		}
+        #search-bar {
+            width: 50%;
+            max-width: 500px;
+            padding: 10px;
+            font-size: 1em;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
 
-		#search-bar:focus {
-			border-color: #3498db;
-		}
+        #search-bar:focus {
+            border-color: #3498db;
+        }
 
-		#no-matches-message {
-			display: none;
-			color: #e74c3c;
-			font-style: italic;
-			text-align: center;
-			margin: 20px 0;
-		}
+        #no-matches-message {
+            display: none;
+            color: #e74c3c;
+            font-style: italic;
+            text-align: center;
+            margin: 20px 0;
+        }
 
-		.dependency {
-			margin-bottom: 30px;
-			border: 1px solid #ddd;
-			border-radius: 5px;
-			padding: 15px;
-			background-color: #f9f9f9;
-		}
+        .dependency {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
 
-		.dependency.vulnerable {
-			border-color: #e74c3c;
-			background-color: #fff5f5;
-		}
+        .dependency.vulnerable {
+            border-color: #e74c3c;
+            background-color: #fff5f5;
+        }
 
-		.dependency.hidden {
-			display: none; /* Hide dependencies that don't match the search */
-		}
+        .dependency.hidden {
+            display: none;
+        }
 
-		.dependency-name {
-			font-size: 1.2em;
-			font-weight: bold;
-			color: #2980b9;
-			margin-bottom: 10px;
-			cursor: pointer;
-			display: inline-flex;
-			align-items: center;
-		}
+        .dependency-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2980b9;
+            margin-bottom: 10px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+        }
 
-		.dependency-name:hover {
-			text-decoration: underline;
-		}
+        .dependency-name:hover {
+            text-decoration: underline;
+        }
 
-		.vuln-count {
-			margin-left: 8px;
-			background-color: #e74c3c;
-			color: white;
-			padding: 2px 6px;
-			border-radius: 10px;
-			font-size: 0.8em;
-		}
+        .vuln-count {
+            margin-left: 8px;
+            background-color: #e74c3c;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.8em;
+        }
 
-		.evidence-section,
-		.vulnerability-section,
-		.identifier-section,
-		.detailed-evidence-section {
-			margin-left: 20px;
-			margin-bottom: 15px;
-		}
+        .evidence-section,
+        .vulnerability-section,
+        .identifier-section,
+        .detailed-evidence-section,
+        .likely-cpes-section {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
 
-		.section-title {
-			font-weight: bold;
-			color: #16a085;
-			cursor: pointer;
-			padding: 5px;
-			display: inline-block;
-		}
+        .section-title {
+            font-weight: bold;
+            color: #16a085;
+            cursor: pointer;
+            padding: 5px;
+            display: inline-block;
+        }
 
-		.section-title:hover {
-			background-color: #f0f0f0;
-			border-radius: 3px;
-		}
+        .section-title:hover {
+            background-color: #f0f0f0;
+            border-radius: 3px;
+        }
 
-		.section-title::before {
-			content: "▼ ";
-			font-size: 0.8em;
-		}
+        .section-title::before {
+            content: "▼ ";
+            font-size: 0.8em;
+        }
 
-		.section-title.collapsed::before {
-			content: "► ";
-		}
+        .section-title.collapsed::before {
+            content: "► ";
+        }
 
-		.section-content {
-			list-style-type: none;
-			padding-left: 0;
-			margin-top: 5px;
-		}
+        .section-content {
+            list-style-type: none;
+            padding-left: 0;
+            margin-top: 5px;
+        }
 
-		.section-item {
-			margin-bottom: 8px;
-			padding: 5px;
-			background-color: white;
-			border-left: 4px solid #3498db;
-			padding-left: 10px;
-		}
+        .section-item {
+            margin-bottom: 8px;
+            padding: 5px;
+            background-color: white;
+            border-left: 4px solid #3498db;
+            padding-left: 10px;
+        }
 
-		.vulnerability-item {
-			border-left-color: #e74c3c;
-			cursor: pointer;
-		}
+        .vulnerability-item {
+            border-left-color: #e74c3c;
+            cursor: pointer;
+        }
 
-		.vulnerability-details {
-			display: none; /* Hide inline details since they will be shown in the modal */
-		}
+        .vulnerability-details {
+            display: none;
+        }
 
-		.source-info {
-			font-style: italic;
-			color: #7f8c8d;
-			font-size: 0.9em;
-		}
+        .source-info {
+            font-style: italic;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
 
-		.collapsible-content {
-			display: block;
-		}
+        .collapsible-content {
+            display: block;
+        }
 
-		.collapsible-content.collapsed {
-			display: none;
-		}
+        .collapsible-content.collapsed {
+            display: none;
+        }
 
-		.data-sources {
-			margin-top: 20px;
-			font-size: 0.9em;
-			color: #7f8c8d;
-		}
+        .data-sources {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
 
-		.evidence-table {
-			width: 100%;
-			border-collapse: collapse;
-			margin-top: 10px;
-		}
+        .evidence-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
 
-		.evidence-table th,
-		.evidence-table td {
-			border: 1px solid #ddd;
-			padding: 8px;
-			text-align: left;
-		}
+        .evidence-table th,
+        .evidence-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
 
-		.evidence-table th {
-			background-color: #f0f0f0;
-			font-weight: bold;
-		}
+        .evidence-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
 
-		.evidence-table tr:nth-child(even) {
-			background-color: #f9f9f9;
-		}
+        .evidence-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
 
-		.no-vulnerabilities {
-			color: #27ae60;
-			font-style: italic;
-		}
+        .no-vulnerabilities,
+        .no-likely-cpes {
+            color: #27ae60;
+            font-style: italic;
+        }
 
-		#collapse-all-button {
-			background-color: #3498db;
-			color: white;
-			border: none;
-			padding: 10px 20px;
-			border-radius: 5px;
-			cursor: pointer;
-			font-size: 1em;
-			position: fixed;
-			top: 10px;
-			right: 10px;
-			z-index: 1000;
-		}
+        #collapse-all-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
 
-		#collapse-all-button:hover {
-			background-color: #2980b9;
-		}
+        #collapse-all-button:hover {
+            background-color: #2980b9;
+        }
 
-		/* Modal Overlay */
-		.modal {
-			display: none;
-			position: fixed;
-			top: 0;
-			left: 0;
-			width: 100%;
-			height: 100%;
-			background-color: rgba(0, 0, 0, 0.5); /* Greyed-out background */
-			z-index: 2000; /* Above other content */
-			justify-content: center;
-			align-items: center;
-		}
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
 
-		/* Modal Content */
-		.modal-content {
-			background-color: #fff;
-			width: 100%; /* Larger modal */
-			max-width: 1200px;
-			max-height: 80vh; /* Limit height to 80% of viewport */
-			border-radius: 8px;
-			padding: 20px;
-			position: relative;
-			box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-			display: flex;
-			flex-direction: column;
-		}
+        .modal-content {
+            background-color: #fff;
+            width: 100%;
+            max-width: 1200px;
+            max-height: 80vh;
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+        }
 
-		/* Wrapper for scrollable content */
-		.modal-scrollable {
-			max-height: calc(90vh - 80px); /* Adjust for padding and header space */
-			overflow-y: auto; /* Scrollable */
-		}
+        .modal-scrollable {
+            max-height: calc(90vh - 80px);
+            overflow-y: auto;
+        }
 
-		/* Close Button - Adjusted position */
-		.modal-close {
-			position: absolute;
-			top: -6px; /* Adjusted from 10px to 15px for better vertical alignment */
-			right: 22px; /* Adjusted from 15px to 20px for better horizontal alignment */
-			font-size: 24px;
-			font-weight: bold;
-			color: #333;
-			cursor: pointer;
-			padding: 0%;
-			float: right;
-			z-index: 2100; /* Ensure it's above the modal content */
-		}
+        .modal-close {
+            position: absolute;
+            top: -6px;
+            right: 22px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            padding: 0%;
+            float: right;
+            z-index: 2100;
+        }
 
-		.modal-close:hover {
-			color: #e74c3c; /* Red on hover */
-		}
+        .modal-close:hover {
+            color: #e74c3c;
+        }
 
-		/* Modal Body */
-		#modal-body {
-			margin-top: 20px;
-		}
-	</style>
+        #modal-body {
+            margin-top: 20px;
+        }
+
+        .likely-cpe-count {
+            margin-left: 8px;
+            background-color: #16a085;
+            color: white;
+            padding: 3px 6px;
+            border-radius: 10px;
+            font-size: 1em;
+        }
+    </style>
 </head>
 
 <body>
-	<div class="header-container">
-		<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2UcaZvJLD2pM_VjWlkE8yx4JpBBXbGjz8vQ&s"
-			alt="iSteer Company Logo" class="logo">
-		<h1><span class="underline-text">CVSS Analyzer V 1.0</span></h1>
-		<button id="collapse-all-button" onclick="collapseAll()">Collapse All</button>
-	</div>
+    <div class="header-container">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2UcaZvJLD2pM_VjWlkE8yx4JpBBXbGjz8vQ&s"
+            alt="iSteer Company Logo" class="logo">
+        <h1><span class="underline-text">CVSS Analyzer V 1.0</span></h1>
+        <button id="collapse-all-button" onclick="collapseAll()">Collapse All</button>
+    </div>
 
-	<h3>Analysis Report</h3>
-	<br>
-	<div class="summary-section">
-		<table class="summary-table">
-			<thead>
-				<tr>
-					<th>Metrics</th>
-					<th>Count</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					<td>Total Dependencies</td>
-					<td th:text="${#lists.size(dependencies)}"></td>
-				</tr>
-				<tr>
-					<td>Vulnerable Dependencies</td>
-					<td th:text="${vulnDeps}"></td>
-				</tr>
-				<tr>
-					<td>Total Vulnerabilities</td>
-					<td th:text="${totalVulns}"></td>
-				</tr>
-			</tbody>
-		</table>
-	</div>
+    <h3>Analysis Report</h3>
+    <br>
+    <div class="summary-section">
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>Metrics</th>
+                    <th>Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Total Dependencies</td>
+                    <td th:text="${#lists.size(dependencies)}"></td>
+                </tr>
+                <tr>
+                    <td>Vulnerable Dependencies</td>
+                    <td th:text="${vulnDeps}"></td>
+                </tr>
+                <tr>
+                    <td>Total Vulnerabilities</td>
+                    <td th:text="${totalVulns}"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
-	<!-- Search Bar -->
-	<div class="search-container">
-		<input type="text" id="search-bar" placeholder="Search dependencies..." oninput="searchDependencies()">
-	</div>
-	<div id="no-matches-message">No matching dependencies found.</div>
+    <div class="search-container">
+        <input type="text" id="search-bar" placeholder="Search dependencies..." oninput="searchDependencies()">
+    </div>
+    <div id="no-matches-message">No matching dependencies found.</div>
 
-	<div id="dependency-list" th:each="dependency : ${dependencies}">
-		<div class="dependency"
-			th:classappend="${dependency.vulnerabilities != null and not #lists.isEmpty(dependency.vulnerabilities)} ? 'vulnerable'">
-			<div class="dependency-name" onclick="toggleDependency(this)">
-				<span th:text="${dependency.dependencyName}"></span>
-				<span th:if="${#lists.size(dependency.vulnerabilities) > 0}" class="vuln-count"
-					th:text="'(' + ${#lists.size(dependency.vulnerabilities)} + ')'"></span>
-			</div>
+    <div id="dependency-list" th:each="dependency : ${dependencies}">
+        <div class="dependency"
+            th:classappend="${dependency.vulnerabilities != null and not #lists.isEmpty(dependency.vulnerabilities)} ? 'vulnerable'">
+            <div class="dependency-name" onclick="toggleDependency(this)">
+                <span th:text="${dependency.dependencyName}"></span>
+                <span th:if="${#lists.size(dependency.vulnerabilities) > 0}" class="vuln-count"
+                    th:text="'(' + ${#lists.size(dependency.vulnerabilities)} + ')'"></span>
+            </div>
 
-			<div class="dependency-content collapsible-content collapsed">
-				<!-- Dependency Section -->
-				<div class="identifier-section">
-					<div class="section-title collapsed" onclick="toggleSection(this)">CPE Enumeration</div>
-					<div class="section-content collapsible-content collapsed">
-						<div class="section-item">
-							<span th:if="${dependency.cpeEnumeration != null}"
-								th:text="'CPE ID: ' + ${dependency.cpeEnumeration.getCPE23Uri()}"></span>
-							<span th:unless="${dependency.cpeEnumeration != null}">No CPE resolved</span>
-						</div>
-					</div>
-				</div>
+            <div class="dependency-content collapsible-content collapsed">
+                <!-- CPE Enumeration Section -->
+                <div class="identifier-section">
+                    <div class="section-title collapsed" onclick="toggleSection(this)">CPE Enumeration</div>
+                    <div class="section-content collapsible-content collapsed">
+                        <div class="section-item">
+                            <span th:if="${dependency.cpeEnumeration != null}"
+                                th:text="'CPE ID: ' + ${dependency.cpeEnumeration.getCPE23Uri()}"></span>
+                            <span th:unless="${dependency.cpeEnumeration != null}">No CPE resolved</span>
+                        </div>
+                    </div>
+                </div>
 
-				<!-- Evidence Section -->
-				<div class="detailed-evidence-section">
-					<div class="section-title collapsed" onclick="toggleSection(this)">Evidence</div>
-					<div class="section-content collapsible-content collapsed">
-						<table class="evidence-table">
-							<thead>
-								<tr>
-									<th>Evidence Type</th>
-									<th>Evidence Source</th>
-									<th>Evidence Title</th>
-									<th>Evidence Name</th>
-									<th>Resolved Value</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr th:each="evidence : ${dependency.vendorEvidences}">
-									<td>Vendor</td>
-									<td th:text="${evidence.evidenceType}"></td>
-									<td th:text="${evidence.evidenceTitle}"></td>
-									<td th:text="${evidence.evidence}"></td>
-									<td th:text="${evidence.resolvedValue}"></td>
-								</tr>
-								<tr th:each="evidence : ${dependency.productEvidences}">
-									<td>Product</td>
-									<td th:text="${evidence.evidenceType}"></td>
-									<td th:text="${evidence.evidenceTitle}"></td>
-									<td th:text="${evidence.evidence}"></td>
-									<td th:text="${evidence.resolvedValue}"></td>
-								</tr>
-								<tr th:each="evidence : ${dependency.versionEvidences}">
-									<td>Version</td>
-									<td th:text="${evidence.evidenceType}"></td>
-									<td th:text="${evidence.evidenceTitle}"></td>
-									<td th:text="${evidence.evidence}"></td>
-									<td th:text="${evidence.resolvedValue}"></td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-				</div>
+                <!-- Likely CPEs Section -->
+                <div class="likely-cpes-section">
+                    <div class="section-title collapsed" onclick="toggleSection(this)">
+                        Likely CPEs
+                        <span class="likely-cpe-count" th:text="'(' + ${#lists.size(dependency.likelyCPEs)} + ')'"></span>
+                    </div>
+                    <div class="section-content collapsible-content collapsed">
+                        <div th:if="${dependency.likelyCPEs == null or #lists.isEmpty(dependency.likelyCPEs)}"
+                            class="section-item no-likely-cpes">
+                            No likely CPEs found for this dependency
+                        </div>
+                        <div th:each="likelyCPE : ${dependency.likelyCPEs}" class="section-item">
+                            <strong>CPE URI:</strong> <span th:text="${likelyCPE.getCPE23Uri()}"></span>
+                        </div>
+                    </div>
+                </div>
 
-				<!-- Vulnerabilities Section -->
-				<div class="vulnerability-section">
-					<div class="section-title collapsed" onclick="toggleSection(this)">Vulnerabilities</div>
-					<div class="section-content collapsible-content collapsed">
-						<div th:if="${dependency.vulnerabilities == null or #lists.isEmpty(dependency.vulnerabilities)}"
-							class="section-item no-vulnerabilities">
-							No vulnerabilities found for this dependency
-						</div>
-						<div th:each="vulnerability : ${dependency.vulnerabilities}"
-							class="section-item vulnerability-item collapsed" onclick="toggleVulnerability(this)">
-							<span th:text="'CVE ID: ' + ${vulnerability.cveId}"></span>
-							<div class="vulnerability-details collapsible-content collapsed">
-								<div><strong>Description:</strong> <span
-										th:text="${vulnerability.cveDescription}"></span></div>
-								<div><strong>Source:</strong> <span th:text="${vulnerability.sourceIdentifier}"></span>
-								</div>
-								<div
-									th:if="${vulnerability.cvssMetrics != null and not #lists.isEmpty(vulnerability.cvssMetrics)}">
-									<strong>CVSS Metrics:</strong>
-									<ul>
-										<li th:each="metric : ${vulnerability.cvssMetrics}">
-											<span th:text="'Version: ' + ${metric.version}"></span>,
-											<span th:text="'Base Score: ' + ${metric.baseScore}"></span>,
-											<span th:text="'Severity: ' + ${metric.baseSeverity}"></span>,
-											<span th:text="'Vector: ' + ${metric.vectorString}"></span>
-										</li>
-									</ul>
-								</div>
-								<div
-									th:if="${vulnerability.affectedProducts != null and not #lists.isEmpty(vulnerability.affectedProducts)}">
-									<strong>Affected Products:</strong>
-									<ul>
-										<li th:each="product : ${vulnerability.affectedProducts}">
-											<span th:text="${product.cpeName}"></span>
-											<span th:if="${product.versionStartIncluding}"
-												th:text="' (Start Including: ' + ${product.versionStartIncluding} + ')'"></span>
-											<span th:if="${product.versionEndIncluding}"
-												th:text="' (End Including: ' + ${product.versionEndIncluding} + ')'"></span>
-										</li>
-									</ul>
-								</div>
-								<div
-									th:if="${vulnerability.references != null and not #lists.isEmpty(vulnerability.references)}">
-									<strong>References:</strong>
-									<ul>
-										<li th:each="reference : ${vulnerability.references}">
-											<a th:href="${reference.referenceUrl}"
-												th:text="${reference.referenceUrl}"></a>
-											<span
-												th:if="${reference.referenceTags != null and not #lists.isEmpty(reference.referenceTags)}"
-												th:text="' (' + ${#strings.listJoin(reference.referenceTags, ', ')} + ')'"></span>
-										</li>
-									</ul>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+                <!-- Evidence Section -->
+                <div class="detailed-evidence-section">
+                    <div class="section-title collapsed" onclick="toggleSection(this)">Evidence</div>
+                    <div class="section-content collapsible-content collapsed">
+                        <table class="evidence-table">
+                            <thead>
+                                <tr>
+                                    <th>Evidence Type</th>
+                                    <th>Evidence Source</th>
+                                    <th>Evidence Title</th>
+                                    <th>Evidence Name</th>
+                                    <th>Resolved Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="evidence : ${dependency.vendorEvidences}">
+                                    <td>Vendor</td>
+                                    <td th:text="${evidence.evidenceType}"></td>
+                                    <td th:text="${evidence.evidenceTitle != null} ? ${evidence.evidenceTitle} : '-'"></td>
+                                    <td th:text="${evidence.evidence}"></td>
+                                    <td th:text="${evidence.resolvedValue != null} ? ${evidence.resolvedValue} : '-'"></td>
+                                </tr>
+                                <tr th:each="evidence : ${dependency.productEvidences}">
+                                    <td>Product</td>
+                                    <td th:text="${evidence.evidenceType}"></td>
+                                    <td th:text="${evidence.evidenceTitle != null} ? ${evidence.evidenceTitle} : '-'"></td>
+                                    <td th:text="${evidence.evidence}"></td>
+                                    <td th:text="${evidence.resolvedValue != null} ? ${evidence.resolvedValue} : '-'"></td>
+                                </tr>
+                                <tr th:each="evidence : ${dependency.versionEvidences}">
+                                    <td>Version</td>
+                                    <td th:text="${evidence.evidenceType}"></td>
+                                    <td th:text="${evidence.evidenceTitle != null} ? ${evidence.evidenceTitle} : '-'"></td>
+                                    <td th:text="${evidence.evidence}"></td>
+                                    <td th:text="${evidence.resolvedValue != null} ? ${evidence.resolvedValue} : '-'"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-	<div class="data-sources">
-		<p>This report contains data retrieved from:</p>
-		<ul>
-			<li><a href="https://nvd.nist.gov">National Vulnerability Database</a></li>
-		</ul>
-	</div>
+                <!-- Vulnerabilities Section -->
+                <div class="vulnerability-section">
+                    <div class="section-title collapsed" onclick="toggleSection(this)">Vulnerabilities</div>
+                    <div class="section-content collapsible-content collapsed">
+                        <div th:if="${dependency.vulnerabilities == null or #lists.isEmpty(dependency.vulnerabilities)}"
+                            class="section-item no-vulnerabilities">
+                            No vulnerabilities found for this dependency
+                        </div>
+                        <div th:each="vulnerability : ${dependency.vulnerabilities}"
+                            class="section-item vulnerability-item collapsed" onclick="toggleVulnerability(this)">
+                            <span th:text="'CVE ID: ' + ${vulnerability.cveId}"></span>
+                            <div class="vulnerability-details collapsible-content collapsed">
+                                <div><strong>Description:</strong> <span th:text="${vulnerability.cveDescription}"></span></div>
+                                <div><strong>Source:</strong> <span th:text="${vulnerability.sourceIdentifier}"></span></div>
+                                <div th:if="${vulnerability.cvssMetrics != null and not #lists.isEmpty(vulnerability.cvssMetrics)}">
+                                    <strong>CVSS Metrics:</strong>
+                                    <ul>
+                                        <li th:each="metric : ${vulnerability.cvssMetrics}">
+                                            <span th:text="'Version: ' + ${metric.version}"></span>,
+                                            <span th:text="'Base Score: ' + ${metric.baseScore}"></span>,
+                                            <span th:text="'Severity: ' + ${metric.baseSeverity}"></span>,
+                                            <span th:text="'Vector: ' + ${metric.vectorString}"></span>,
+                                            <span th:if="${metric.attackVector != null}"
+                                                th:text="'Attack Vector: ' + ${metric.attackVector}"></span>,
+                                            <span th:if="${metric.attackComplexity != null}"
+                                                th:text="'Attack Complexity: ' + ${metric.attackComplexity}"></span>,
+                                            <span th:if="${metric.privilegesRequired != null}"
+                                                th:text="'Privileges Required: ' + ${metric.privilegesRequired}"></span>,
+                                            <span th:if="${metric.userInteraction != null}"
+                                                th:text="'User Interaction: ' + ${metric.userInteraction}"></span>,
+                                            <span th:if="${metric.scope != null}"
+                                                th:text="'Scope: ' + ${metric.scope}"></span>,
+                                            <span th:if="${metric.confidentiality != null}"
+                                                th:text="'Confidentiality: ' + ${metric.confidentiality}"></span>,
+                                            <span th:if="${metric.integrity != null}"
+                                                th:text="'Integrity: ' + ${metric.integrity}"></span>,
+                                            <span th:if="${metric.availability != null}"
+                                                th:text="'Availability: ' + ${metric.availability}"></span>,
+                                            <span th:if="${metric.exploitabilityScore != null}"
+                                                th:text="'Exploitability Score: ' + ${metric.exploitabilityScore}"></span>,
+                                            <span th:if="${metric.impactScore != null}"
+                                                th:text="'Impact Score: ' + ${metric.impactScore}"></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div th:if="${vulnerability.affectedProducts != null and not #lists.isEmpty(vulnerability.affectedProducts)}">
+                                    <strong>Affected Products:</strong>
+                                    <ul>
+                                        <li th:each="product : ${vulnerability.affectedProducts}">
+                                            <span th:text="${product.cpeName}"></span>
+                                            <span th:if="${product.versionStartIncluding}"
+                                                th:text="' (Start Including: ' + ${product.versionStartIncluding} + ')'"></span>
+                                            <span th:if="${product.versionStartExcluding}"
+                                                th:text="' (Start Excluding: ' + ${product.versionStartExcluding} + ')'"></span>
+                                            <span th:if="${product.versionEndIncluding}"
+                                                th:text="' (End Including: ' + ${product.versionEndIncluding} + ')'"></span>
+                                            <span th:if="${product.versionEndExcluding}"
+                                                th:text="' (End Excluding: ' + ${product.versionEndExcluding} + ')'"></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div th:if="${vulnerability.references != null and not #lists.isEmpty(vulnerability.references)}">
+                                    <strong>References:</strong>
+                                    <ul>
+                                        <li th:each="reference : ${vulnerability.references}">
+                                            <a th:href="${reference.referenceUrl}" th:text="${reference.referenceUrl}"></a>
+                                            <span th:if="${reference.referenceTags != null and not #lists.isEmpty(reference.referenceTags)}"
+                                                th:text="' (' + ${#strings.listJoin(reference.referenceTags, ', ')} + ')'"></span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-	<!-- Modal for CVE ID Details -->
-	<div id="cve-modal" class="modal">
-		<div class="modal-content">
-			<span class="modal-close" onclick="closeModal()">×</span>
-			<div class="modal-scrollable">
-				<div id="modal-body"></div>
-			</div>
-		</div>
-	</div>
+    <div class="data-sources">
+        <p>This report contains data retrieved from:</p>
+        <ul>
+            <li><a href="https://nvd.nist.gov">National Vulnerability Database</a></li>
+        </ul>
+    </div>
 
-	<script>
-		let currentlyOpenDependency = null;
-		let currentlyOpenVulnerability = null;
+    <div id="cve-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">×</span>
+            <div class="modal-scrollable">
+                <div id="modal-body"></div>
+            </div>
+        </div>
+    </div>
 
-		function toggleSection(element) {
-			element.classList.toggle("collapsed");
-			const content = element.nextElementSibling;
-			content.classList.toggle("collapsed");
-		}
+    <script>
+        let currentlyOpenDependency = null;
+        let currentlyOpenVulnerability = null;
 
-		function toggleDependency(element) {
-			if (currentlyOpenDependency && currentlyOpenDependency !== element) {
-				currentlyOpenDependency.nextElementSibling.classList.add("collapsed");
-				const sections = currentlyOpenDependency.nextElementSibling.querySelectorAll(".section-title, .vulnerability-item");
-				sections.forEach(section => {
-					if (!section.classList.contains("collapsed")) {
-						section.classList.add("collapsed");
-						const subContent = section.nextElementSibling;
-						if (subContent) {
-							subContent.classList.add("collapsed");
-						}
-					}
-				});
-			}
-			const content = element.nextElementSibling;
-			content.classList.toggle("collapsed");
-			if (content.classList.contains("collapsed")) {
-				const sections = content.querySelectorAll(".section-title, .vulnerability-item");
-				sections.forEach(section => {
-					if (!section.classList.contains("collapsed")) {
-						section.classList.add("collapsed");
-						const subContent = section.nextElementSibling;
-						if (subContent) {
-							subContent.classList.add("collapsed");
-						}
-					}
-				});
-				if (currentlyOpenVulnerability && currentlyOpenVulnerability.closest(".dependency-content") === content) {
-					closeModal(); // Close the modal if open
-					currentlyOpenVulnerability = null;
-				}
-			} else {
-				// Scroll to the top of the dependency instantly when expanded
-				element.scrollIntoView({ behavior: "auto", block: "center" });
-			}
-			currentlyOpenDependency = content.classList.contains("collapsed") ? null : element;
-		}
+        function toggleSection(element) {
+            element.classList.toggle("collapsed");
+            const content = element.nextElementSibling;
+            content.classList.toggle("collapsed");
+        }
 
-		function toggleVulnerability(element) {
-			if (currentlyOpenVulnerability && currentlyOpenVulnerability !== element) {
-				closeModal(); // Close the modal for the previous CVE ID
-			}
+        function toggleDependency(element) {
+            if (currentlyOpenDependency && currentlyOpenDependency !== element) {
+                currentlyOpenDependency.nextElementSibling.classList.add("collapsed");
+                const sections = currentlyOpenDependency.nextElementSibling.querySelectorAll(".section-title, .vulnerability-item");
+                sections.forEach(section => {
+                    if (!section.classList.contains("collapsed")) {
+                        section.classList.add("collapsed");
+                        const subContent = section.nextElementSibling;
+                        if (subContent) {
+                            subContent.classList.add("collapsed");
+                        }
+                    }
+                });
+            }
+            const content = element.nextElementSibling;
+            content.classList.toggle("collapsed");
+            if (content.classList.contains("collapsed")) {
+                const sections = content.querySelectorAll(".section-title, .vulnerability-item");
+                sections.forEach(section => {
+                    if (!section.classList.contains("collapsed")) {
+                        section.classList.add("collapsed");
+                        const subContent = section.nextElementSibling;
+                        if (subContent) {
+                            subContent.classList.add("collapsed");
+                        }
+                    }
+                });
+                if (currentlyOpenVulnerability && currentlyOpenVulnerability.closest(".dependency-content") === content) {
+                    closeModal();
+                    currentlyOpenVulnerability = null;
+                }
+            } else {
+                element.scrollIntoView({ behavior: "auto", block: "center" });
+            }
+            currentlyOpenDependency = content.classList.contains("collapsed") ? null : element;
+        }
 
-			// Get the vulnerability details
-			const content = element.querySelector(".vulnerability-details");
-			const modalBody = document.getElementById("modal-body");
+        function toggleVulnerability(element) {
+            if (currentlyOpenVulnerability && currentlyOpenVulnerability !== element) {
+                closeModal();
+            }
 
-			// Populate the modal with the CVE ID details
-			modalBody.innerHTML = content.innerHTML;
+            const content = element.querySelector(".vulnerability-details");
+            const modalBody = document.getElementById("modal-body");
 
-			// Show the modal
-			const modal = document.getElementById("cve-modal");
-			modal.style.display = "flex";
+            modalBody.innerHTML = content.innerHTML;
 
-			// Disable background scrolling
-			document.body.classList.add("modal-open");
+            const modal = document.getElementById("cve-modal");
+            modal.style.display = "flex";
 
-			// Update the currently open vulnerability
-			currentlyOpenVulnerability = element;
-		}
+            document.body.classList.add("modal-open");
 
-		function closeModal() {
-			const modal = document.getElementById("cve-modal");
-			modal.style.display = "none";
-			const modalBody = document.getElementById("modal-body");
-			modalBody.innerHTML = ""; // Clear the modal content
+            currentlyOpenVulnerability = element;
+        }
 
-			// Re-enable background scrolling
-			document.body.classList.remove("modal-open");
+        function closeModal() {
+            const modal = document.getElementById("cve-modal");
+            modal.style.display = "none";
+            const modalBody = document.getElementById("modal-body");
+            modalBody.innerHTML = "";
 
-			currentlyOpenVulnerability = null;
-		}
+            document.body.classList.remove("modal-open");
 
-		function collapseAll() {
-			const dependencies = document.querySelectorAll(".dependency-content");
-			dependencies.forEach(dep => {
-				if (!dep.classList.contains("collapsed")) {
-					dep.classList.add("collapsed");
-				}
-			});
-			const sections = document.querySelectorAll(".section-title, .vulnerability-item");
-			sections.forEach(section => {
-				if (!section.classList.contains("collapsed")) {
-					section.classList.add("collapsed");
-					const subContent = section.nextElementSibling;
-					if (subContent) {
-						subContent.classList.add("collapsed");
-					}
-				}
-			});
-			// Explicitly collapse all vulnerability-details sections
-			const vulnerabilityDetails = document.querySelectorAll(".vulnerability-details");
-			vulnerabilityDetails.forEach(details => {
-				if (!details.classList.contains("collapsed")) {
-					details.classList.add("collapsed");
-				}
-			});
-			// Close the modal if open
-			closeModal();
-			currentlyOpenDependency = null;
-			currentlyOpenVulnerability = null;
-		}
+            currentlyOpenVulnerability = null;
+        }
 
-		function searchDependencies() {
-			const searchInput = document.getElementById("search-bar").value.toLowerCase();
-			const dependencies = document.querySelectorAll(".dependency");
-			const noMatchesMessage = document.getElementById("no-matches-message");
-			let hasMatches = false;
+        function collapseAll() {
+            const dependencies = document.querySelectorAll(".dependency-content");
+            dependencies.forEach(dep => {
+                if (!dep.classList.contains("collapsed")) {
+                    dep.classList.add("collapsed");
+                }
+            });
+            const sections = document.querySelectorAll(".section-title, .vulnerability-item");
+            sections.forEach(section => {
+                if (!section.classList.contains("collapsed")) {
+                    section.classList.add("collapsed");
+                    const subContent = section.nextElementSibling;
+                    if (subContent) {
+                        subContent.classList.add("collapsed");
+                    }
+                }
+            });
+            const vulnerabilityDetails = document.querySelectorAll(".vulnerability-details");
+            vulnerabilityDetails.forEach(details => {
+                if (!details.classList.contains("collapsed")) {
+                    details.classList.add("collapsed");
+                }
+            });
+            closeModal();
+            currentlyOpenDependency = null;
+            currentlyOpenVulnerability = null;
+        }
 
-			dependencies.forEach(dep => {
-				const dependencyName = dep.querySelector(".dependency-name span:first-child").textContent.toLowerCase();
-				if (dependencyName.includes(searchInput)) {
-					dep.classList.remove("hidden");
-					hasMatches = true;
-				} else {
-					dep.classList.add("hidden");
-				}
-			});
+        function searchDependencies() {
+            const searchInput = document.getElementById("search-bar").value.toLowerCase();
+            const dependencies = document.querySelectorAll(".dependency");
+            const noMatchesMessage = document.getElementById("no-matches-message");
+            let hasMatches = false;
 
-			// Show or hide the "No matches" message
-			if (hasMatches) {
-				noMatchesMessage.style.display = "none";
-			} else {
-				noMatchesMessage.style.display = "block";
-			}
+            dependencies.forEach(dep => {
+                const dependencyName = dep.querySelector(".dependency-name span:first-child").textContent.toLowerCase();
+                if (dependencyName.includes(searchInput)) {
+                    dep.classList.remove("hidden");
+                    hasMatches = true;
+                } else {
+                    dep.classList.add("hidden");
+                }
+            });
 
-			// Close any open modals and collapse sections when searching
-			closeModal();
-			collapseAll();
-		}
-	</script>
+            if (hasMatches) {
+                noMatchesMessage.style.display = "none";
+            } else {
+                noMatchesMessage.style.display = "block";
+            }
+
+            closeModal();
+            collapseAll();
+        }
+    </script>
 </body>
 
 </html>
