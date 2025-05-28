@@ -27,16 +27,15 @@ public class FuzzySearchTool {
 	}
 	
 	public boolean isMatch(String input1, String input2) {
-	//Engine.getMavenLog().info("Matching words "+input1+" and "+input2);
 		LevenshteinDistance distance = new LevenshteinDistance();
 		int score = distance.apply(input1, input2);
-	//	Engine.getMavenLog().info("Match score is :"+String.valueOf(score));
 		if(score<=DISTANCE_THRESHOLD) {
 			return true;
 		}
 		return false;
 	}
 	public void searchForLikelyCpes(DependencyModel dependency) throws SQLException {
+		//in line comments---
 		List<String> likelyVendors = new ArrayList<>();
 		for(Evidence ev:dependency.getVendorEvidences()) {
 			if(ev.getEvidenceType()==EvidenceType.GROUP_ID) {
@@ -71,14 +70,10 @@ public class FuzzySearchTool {
 			return null;
 		}
 		String[] wrkGroupIdStrings = groupId.split("\\.");
-		//Engine.getMavenLog().info("Group id is: "+groupId+" size of split array is : "+wrkGroupIdStrings.length);
 		List<String> vendorNames = entriesDao.getDistinctVendorsList(connection);
-		//Engine.getMavenLog().info("Distinct vendor size is:"+vendorNames.size());
 		List<String> likelyMatch = new ArrayList<>();
 		for(String literal:wrkGroupIdStrings) {
-		//	Engine.getMavenLog().info("Group Id literal is: "+literal);
 			for(String vendor:vendorNames) {
-		//		Engine.getMavenLog().info("Current vendor name is :"+vendor);
 				if(isMatch(literal,vendor)) {
 					if(vendor.length()>=literal.length()) {
 						likelyMatch.add(vendor);

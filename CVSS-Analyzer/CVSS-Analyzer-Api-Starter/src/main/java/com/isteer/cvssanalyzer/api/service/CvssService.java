@@ -23,7 +23,8 @@ public class CvssService {
     private String apiKey = "ca987215-dbe8-42f0-a656-e5da368c3c70";
 
 	public SseEmitter getAllVulnerabilities(SseEmitter emitter) {
-		new Engine().withLogger(new Slf4jEngineLogger()).analyze(EngineMode.POM, emitter);
+		Engine.withLogger(new Slf4jEngineLogger());
+		Engine.analyze(EngineMode.POM, emitter);
 		Engine.doFuzzySearchAndGetLikelyCpes();
 		return emitter;
 	}

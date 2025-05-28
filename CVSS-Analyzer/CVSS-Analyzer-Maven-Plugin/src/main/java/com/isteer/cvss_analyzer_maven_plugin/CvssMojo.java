@@ -87,8 +87,10 @@ public class CvssMojo extends AbstractMojo {
 
 		// 3. Run analysis
 		try {
-			new Engine().withDependencies(dependencies).withLogger(new MavenEngineLogger(getLog())) // Pass Maven's logger
-					.withThresholdValue(wrkbaseScoreThresholdValue).analyze(EngineMode.MAVEN_PLUGIN);
+			Engine.withDependencies(dependencies);
+			Engine.withLogger(new MavenEngineLogger(getLog())); // Pass Maven's logger
+			Engine.withThresholdValue(wrkbaseScoreThresholdValue);
+			Engine.analyze(EngineMode.MAVEN_PLUGIN);
 			boolean isThresholdExceeded = Engine.checkForVulnerabilityForDependencies();
 			Engine.doFuzzySearchAndGetLikelyCpes();
 			Engine.GenerateReport();

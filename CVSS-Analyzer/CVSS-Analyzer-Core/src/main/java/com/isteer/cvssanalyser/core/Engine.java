@@ -23,38 +23,29 @@ import com.isteer.cvssanalyser.core.util.HtmlReportGenerator;
 public class Engine {
 	public static List<DependencyModel> dependencies;
 	
-	private static Log mavenLog;
-	
 	public static EngineLogger logger;
 	
 	public static EngineMode analysisMode;
 	
 	public static Double thresholdValue = 8.0;
 	
-	/*
-	 * public static Log getMavenLog() { return mavenLog; }
-	 */
 	public static EngineLogger getLogger() {
 		return logger;
 	}
-	public Engine withDependencies(List<DependencyModel> dependencies) {
+	public static void withDependencies(List<DependencyModel> dependencies) {
 		Engine.dependencies=dependencies;
-		return this;
+		return ;
 	}
-	public Engine withMavenLog(Log logger) {
-		Engine.mavenLog=logger;
-		return this;
-	}
-	public Engine withLogger(EngineLogger logger) {
+	public static void withLogger(EngineLogger logger) {
 		Engine.logger=logger;
-		return this;
+		return;
 	}
-	public Engine withThresholdValue(Double threshold) {
+	public static void withThresholdValue(Double threshold) {
 		logger.info("Setting threshold value to "+threshold);
 		Engine.thresholdValue = threshold;
-		return this;
+		return;
 	}
-	public void analyze(EngineMode analyzeMode) {
+	public static void analyze(EngineMode analyzeMode) {
 		Engine.analysisMode=analyzeMode;
 		if(analyzeMode==EngineMode.POM) {
 			analyzePom();
@@ -63,7 +54,7 @@ public class Engine {
 		}
 	}
 	
-	public void analyze(EngineMode analyzeMode, SseEmitter emitter) {
+	public static void analyze(EngineMode analyzeMode, SseEmitter emitter) {
 		Engine.analysisMode=analyzeMode;
 		if(analyzeMode==EngineMode.POM) {
 			analyzePom(emitter);
@@ -73,7 +64,7 @@ public class Engine {
 
 	}
 	
-	private void analyzePom() {
+	private static void analyzePom() {
 		GAVAnalyzer gavAnalyzer = new GAVAnalyzer();
 		CPEEvidencesNormalizer normalizer = new CPEEvidencesNormalizer();
 		CveClient cveClient = new CveClient();
@@ -114,11 +105,10 @@ public class Engine {
 		notResolvedCPEnames.forEach(System.out::println);
 	}
 	
-	private void analyzePom(SseEmitter emitter) {
+	private static void analyzePom(SseEmitter emitter) {
 		GAVAnalyzer gavAnalyzer = new GAVAnalyzer();
 		CPEEvidencesNormalizer normalizer = new CPEEvidencesNormalizer();
 		CveClient cveClient = new CveClient();	
-		
 	    dependencies =  gavAnalyzer.fetchProjectDependenciesFromMavenTree();
 	    gavAnalyzer.collectGAVEvidencesFromDependencyName(dependencies);
 		normalizer.normalizeDependencyEvidences(dependencies);
@@ -149,7 +139,7 @@ public class Engine {
 		}
 	}
 	
-	private void analyzeMavenPlugin(){
+	private static void analyzeMavenPlugin(){
 		JarAnalyzer jarAnalyzer = new JarAnalyzer();
 		GAVAnalyzer gavAnalyser = new GAVAnalyzer();
 		CveClient cveClient = new CveClient();
