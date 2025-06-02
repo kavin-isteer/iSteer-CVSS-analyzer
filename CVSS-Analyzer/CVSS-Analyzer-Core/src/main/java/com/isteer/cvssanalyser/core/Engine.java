@@ -116,7 +116,7 @@ public class Engine {
 		for(DependencyModel dep:dependencies) {
 			cveClient.fetchVulnerabilitiesForDependency(dep);
 			dependencyCount++;
-			if(dependencyCount % 2 == 0 || dependencyCount==dependencies.size()) {
+			if(dependencyCount % 6 == 0 || dependencyCount==dependencies.size()) {
 				try {
 					
 					String message = String.format("{\"fetchedDependencies\": %d, \"totalDependencies\": %d }", dependencyCount, dependencies.size());
