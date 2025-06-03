@@ -15,7 +15,7 @@ public class CPEDatabaseUpdater {
     private static final String NVD_CPE_API = "https://services.nvd.nist.gov/rest/json/cpes/2.0/";
     private static final String DB_URL = "jdbc:mysql://localhost:3306/cpe_match";
     private static final String DB_USER = "root";
-    private static final String DB_PASS = "kavin123";
+    private static final String DB_PASS = "vasanth123";
 
     public static void main(String[] args) {
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS)) {

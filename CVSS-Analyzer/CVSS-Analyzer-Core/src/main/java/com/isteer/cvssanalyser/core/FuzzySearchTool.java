@@ -3,18 +3,13 @@ package com.isteer.cvssanalyser.core;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.apache.commons.text.similarity.JaroWinklerSimilarity;
-import org.apache.commons.text.similarity.LevenshteinDistance;
 
 import com.isteer.cvssanalyser.core.dao.CPEEntriesDao;
 import com.isteer.cvssanalyser.core.enums.EvidenceType;
@@ -32,9 +27,14 @@ public class FuzzySearchTool {
 	private String[] COMMON_PACKAGE_LITERALS = { "org", "com" };
 	private static List<String> vendorNames = new ArrayList<>();
 
-
+	/**
+     * Given a DependencyModel, attempts to find likely matching CPE entries
+     * based on vendor and product evidences extracted from the dependency.
+     * 
+     * @param dependency DependencyModel to search likely CPEs for
+     * @throws SQLException on DB errors
+     */
 	public void searchForLikelyCpes(DependencyModel dependency) throws SQLException {
-		// in line comments---
 		Set<String> likelyVendors = new HashSet<>();
 
 		likelyVendors = searchForLikelyVendors(dependency.getVendorEvidences());
@@ -68,7 +68,15 @@ public class FuzzySearchTool {
 			Engine.logger.info("Total likely CPEs found: " + filteredCpes.size());
 		}
 	}
-
+	
+	 /**
+     * Searches for likely matching vendors based on evidence strings,
+     * primarily the groupId from Maven coordinates.
+     * 
+     * @param evidences List of Evidence objects related to vendor info
+     * @return Set of likely matching vendor names
+     * @throws SQLException on DB errors
+     */
 	public Set<String> searchForLikelyVendors(List<Evidence> evidences) throws SQLException {
 		//Retrieve the group Id evidence from the list of evidences.
 		String groupId = "";
@@ -119,7 +127,17 @@ public class FuzzySearchTool {
 		Engine.logger.info("Total Vendor likely match found after searching with other evidences: "+likelyMatch.size());
 		return likelyMatch;
 	}
-
+	
+	/**
+     * Searches for likely matching products for the given artifactId,
+     * filtered by the likely vendors identified previously.
+     * Returns up to 5 best matching product CPE entries sorted by similarity.
+     * 
+     * @param likelyVendors Set of vendor names to filter products by
+     * @param artifactId Product artifact ID string to fuzzy match
+     * @return List of best matching CPE entries for products
+     * @throws SQLException on DB errors
+     */
 	public List<CpeEntryModel> searchForLikelyProducts(Set<String> likelyVendors, String artifactId)
 			throws SQLException {
 		 if (artifactId == null || artifactId.trim().isEmpty()) {
@@ -145,7 +163,14 @@ public class FuzzySearchTool {
                 .map(scored -> scored.entry)
                 .collect(Collectors.toList());
 	}
-
+	
+	 /**
+     * Checks if a given package literal is a common package literal to be ignored
+     * during vendor matching.
+     * 
+     * @param packageLiteral String literal to check
+     * @return true if it is a common literal like "org" or "com", false otherwise
+     */
 	private boolean isCommonPackageLiteral(String packageLiteral) {
 		for (String literal : COMMON_PACKAGE_LITERALS) {
 			if (literal.equalsIgnoreCase(packageLiteral)) {
@@ -156,6 +181,13 @@ public class FuzzySearchTool {
 	}
 
 	// Jaro-Winkler Similarity
+	/**
+     * Computes Jaro-Winkler similarity between two input strings.
+     * 
+     * @param input1 first input string
+     * @param input2 second input string
+     * @return similarity score between 0.0 and 1.0 (higher means more similar)
+     */
 	public double JWMatch(String input1, String input2) {
 		JaroWinklerSimilarity jaroWinkler = new JaroWinklerSimilarity();
 		double similarity = jaroWinkler.apply(input1, input2);
