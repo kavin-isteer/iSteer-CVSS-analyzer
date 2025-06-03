@@ -46,8 +46,9 @@ public class CvssMojo extends AbstractMojo {
 	@Parameter
 	private DatabaseConfig database;
 
-	@Parameter(alias = "threshold-value")
-	private String baseScoreThresholdValue;
+	/*
+	 * @Parameter(alias = "threshold-value") private String baseScoreThresholdValue;
+	 */
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -75,21 +76,20 @@ public class CvssMojo extends AbstractMojo {
 		}).collect(Collectors.toList());
 
 		getLog().info("Found " + dependencies.size() + " dependencies to analyze");
-		Double wrkbaseScoreThresholdValue;
-		try {
-			wrkbaseScoreThresholdValue = Double.parseDouble(baseScoreThresholdValue);
-			getLog().info("Parsed threshold value is " + wrkbaseScoreThresholdValue);
-		} catch (Exception e) {
-			getLog().info(
-					"Exception occurred while parsing the threshold value. Proceeding with default threshold value 8.0");
-			wrkbaseScoreThresholdValue = 8.0;
-		}
+		/*
+		 * Double wrkbaseScoreThresholdValue; try { wrkbaseScoreThresholdValue =
+		 * Double.parseDouble(baseScoreThresholdValue);
+		 * getLog().info("Parsed threshold value is " + wrkbaseScoreThresholdValue); }
+		 * catch (Exception e) { getLog().info(
+		 * "Exception occurred while parsing the threshold value. Proceeding with default threshold value 8.0"
+		 * ); wrkbaseScoreThresholdValue = 8.0; }
+		 */
 
 		// 3. Run analysis
 		try {
 			Engine.withDependencies(dependencies);
 			Engine.withLogger(new MavenEngineLogger(getLog())); // Pass Maven's logger
-			Engine.withThresholdValue(wrkbaseScoreThresholdValue);
+		//	Engine.withThresholdValue(wrkbaseScoreThresholdValue);
 			Engine.analyze(EngineMode.MAVEN_PLUGIN);
 			boolean isThresholdExceeded = Engine.checkForVulnerabilityForDependencies();
 			Engine.doFuzzySearchAndGetLikelyCpes();

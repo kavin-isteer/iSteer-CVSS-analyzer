@@ -68,7 +68,6 @@ public class CPEEntriesDao {
 			ps.executeBatch();
 		}
 		catch (Exception e) {
-			// TODO: handle exception
 			System.err.println("Error executing query: " + e.getMessage());
 		}
 

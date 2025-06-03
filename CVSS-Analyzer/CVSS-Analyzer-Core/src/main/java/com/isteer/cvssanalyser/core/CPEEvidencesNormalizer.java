@@ -22,6 +22,7 @@ public class CPEEvidencesNormalizer {
 		if (dependencies == null || dependencies.isEmpty()) {
 			return;
 		}
+		
 		for (DependencyModel dependencyModel : dependencies) {
 			String vendor = normalizeVendorEvidences(dependencyModel.getVendorEvidences());
 			String product = normalizeProductEvidences(dependencyModel.getProductEvidences());

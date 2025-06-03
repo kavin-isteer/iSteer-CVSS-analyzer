@@ -34,7 +34,6 @@ public class DependencyHintDao {
 				hints.add(hint);
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return hints;
@@ -65,7 +64,6 @@ public class DependencyHintDao {
 				hints.add(hint);
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return hints;
@@ -96,7 +94,6 @@ public class DependencyHintDao {
 				hints.add(hint);
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return hints;
@@ -127,7 +124,6 @@ public class DependencyHintDao {
 				hints.add(hint);
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return hints;

@@ -26,7 +26,6 @@ public class GAVAnalyzer {
 		try {
 			gavs = treeResolver.fetchDependencies(projectDir);
 		} catch (IOException | InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		for (String gav : gavs) {

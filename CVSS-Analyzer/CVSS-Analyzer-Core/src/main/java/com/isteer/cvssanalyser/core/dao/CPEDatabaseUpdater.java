@@ -32,7 +32,7 @@ public class CPEDatabaseUpdater {
 
             ObjectMapper mapper = new ObjectMapper();
             int startIndex = 0;
-            int resultsPerPage = 2000;
+            int resultsPerPage = 10000;
 
             while (true) {
                 String paginatedUrl = NVD_CPE_API + "?startIndex=" + startIndex + "&resultsPerPage=" + resultsPerPage;
