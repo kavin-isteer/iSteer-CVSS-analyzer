@@ -89,8 +89,8 @@ public class CvssMojo extends AbstractMojo {
 		try {
 			Engine.withDependencies(dependencies);
 			Engine.withLogger(new MavenEngineLogger(getLog())); // Pass Maven's logger
-		//	Engine.withThresholdValue(wrkbaseScoreThresholdValue);
-			Engine.analyze(EngineMode.MAVEN_PLUGIN);
+//			Engine.withThresholdValue(wrkbaseScoreThresholdValue);
+			Engine.analyze(EngineMode.MAVEN_PLUGIN, null); // No SSE emitter in Maven plugin context
 			boolean isThresholdExceeded = Engine.checkForVulnerabilityForDependencies();
 			Engine.doFuzzySearchAndGetLikelyCpes();
 			Engine.GenerateReport();

@@ -14,6 +14,15 @@ import org.apache.maven.cli.MavenCli;
 
 public class DependencyTreeResolver {
 
+	/**
+     * Fetches the list of dependencies from the Maven project by executing the
+     * `mvn dependency:tree` command in the given project directory.
+     *
+     * @param projectDir The directory containing the Maven project (should include a valid pom.xml)
+     * @return A list of dependencies extracted from the Maven output
+     * @throws IOException If there is an error during process I/O
+     * @throws InterruptedException If the process execution is interrupted
+     */
     public List<String> fetchDependencies(File projectDir) throws IOException, InterruptedException {
     	List<String> dependencies = new ArrayList<>();
 

@@ -27,7 +27,13 @@ public class CveClient {
 	private static final String CVE_BASE_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0";
 	private static final String CPE_BASE_URL = "https://services.nvd.nist.gov/rest/json/cpes/2.0";
 	private static final String API_KEY = "ca987215-dbe8-42f0-a656-e5da368c3c70";
-
+	
+	/**
+     * Fetches and attaches vulnerability data for a given dependency based on its CPE enumeration.
+     *
+     * @param dependency The dependency model containing CPE info.
+     * @return The updated dependency model with vulnerabilities, if any.
+     */
 	public DependencyModel fetchVulnerabilitiesForDependency(DependencyModel dependency) {
 		if (dependency == null || dependency.getCpeEnumeration() == null) {
 			// No dependency or CPE info available; return as is or null
@@ -71,7 +77,13 @@ public class CveClient {
 
 		return dependency;
 	}
-
+	
+	/**
+     * Parses the CPE API response and converts it into a list of {@link CPENameModel}.
+     *
+     * @param cpeApiResponse The raw JSON response from the NVD CPE API.
+     * @return A list of CPE name models.
+     */
 	public List<CPENameModel> parseCpeApiResponse(Object cpeApiResponse) {
 		List<CPENameModel> cpeNames = new ArrayList<>();
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -101,7 +113,13 @@ public class CveClient {
 		}
 		return cpeNames;
 	}
-
+	
+	/**
+     * Parses the CVE API response into a list of {@link VulnerabilityDetailsModel}.
+     *
+     * @param cveApiResponse The raw JSON response from the NVD CVE API.
+     * @return A list of vulnerability detail models.
+     */
 	public List<VulnerabilityDetailsModel> parseCveApiResponse(Object cveApiResponse) {
 		List<VulnerabilityDetailsModel> vulnerabilityDetails = new ArrayList<>();
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -140,7 +158,13 @@ public class CveClient {
 		}
 		return vulnerabilityDetails;
 	}
-
+	
+	/**
+     * Processes CVSS metrics of a vulnerability from the parsed metrics map.
+     *
+     * @param metricMap The metrics section from the CVE API.
+     * @return A list of parsed CVSS metric models.
+     */
 	private List<VulnerabilityCvssMetricsModel> processCvssMetrics(Map<String, Object> metricMap) {
 		String[] metricTypes = { "cvssMetricV31", "cvssMetricV4", "cvssMetricV2" };
 		List<VulnerabilityCvssMetricsModel> parsedCvssMetrics = new ArrayList<>();
@@ -187,7 +211,13 @@ public class CveClient {
 		}
 		return parsedCvssMetrics;
 	}
-
+	
+	/**
+     * Processes affected product configurations from a list of CPE match entries.
+     *
+     * @param configurations List of CPE match JSON entries.
+     * @return List of affected product models.
+     */
 	public List<VulnerabilityAffectedProductModel> processAffectedProducts(List<Object> configurations) {
 		List<VulnerabilityAffectedProductModel> affectedProducts = new ArrayList<>();
 
@@ -225,7 +255,13 @@ public class CveClient {
 
 		return affectedProducts;
 	}
-
+	
+	 /**
+     * Processes reference URLs and tags related to a CVE vulnerability.
+     *
+     * @param references List of reference JSON objects.
+     * @return List of parsed reference models.
+     */
 	private List<VulnerabilityReferenceModel> processReferences(List<Object> references) {
 		List<VulnerabilityReferenceModel> mitigationReferences = new ArrayList<>();
 		try {
