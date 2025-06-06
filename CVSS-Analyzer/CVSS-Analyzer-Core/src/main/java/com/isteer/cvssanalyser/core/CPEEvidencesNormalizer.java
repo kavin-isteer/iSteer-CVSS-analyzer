@@ -30,10 +30,14 @@ public class CPEEvidencesNormalizer {
 		}
 		
 		for (DependencyModel dependencyModel : dependencies) {
+			//normalize the vendor evidences name from collected evidences and resolve it to a standardized name.
 			String vendor = normalizeVendorEvidences(dependencyModel.getVendorEvidences());
+			//normalize the product evidences name from collected evidences and resolve it to a standardized name.
 			String product = normalizeProductEvidences(dependencyModel.getProductEvidences());
+			//normalize the version evidences from collected evidences and resolve it to a standardized name.
 			String version = normalizeVersionEvidences(dependencyModel.getVersionEvidences());
 			if (vendor != null && product != null && version != null) {
+				//create CPE name model from the collected resolved value.
 				CPENameModel cpe = new CPENameModel();
 				cpe.setVendor(vendor);
 				cpe.setProduct(product);
@@ -55,6 +59,7 @@ public class CPEEvidencesNormalizer {
      */
 	public String normalizeVendorEvidences(List<Evidence> evidences) {
 		String mostLikelyVendor = null;
+		//get all dependency hints for Vendor from the database.
 		List<DependencyHintModel> hints = hintDao.getAllVendorDependencyHints(connection);
 		for (Evidence evidence : evidences) {
 			if (mostLikelyVendor == null && evidence.getEvidenceType() == EvidenceType.MANIFEST_ENTRY) {

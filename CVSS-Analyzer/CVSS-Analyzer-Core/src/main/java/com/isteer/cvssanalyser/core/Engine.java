@@ -16,7 +16,6 @@ import com.isteer.cvssanalyser.core.model.VulnerabilityCvssMetricsModel;
 import com.isteer.cvssanalyser.core.model.VulnerabilityDetailsModel;
 import com.isteer.cvssanalyser.core.util.HtmlReportGenerator;
 
-// FIXME: check the name of the dependencies variable
 public class Engine {
 	public static List<DependencyModel> dependencies;
 
@@ -142,18 +141,23 @@ public class Engine {
 		CPEEvidencesNormalizer normalizer = new CPEEvidencesNormalizer();
 		CveClient cveClient = new CveClient();
 		int dependencyCount = 0;
+		//invoke analyzer to fetch the project dependencies from Maven tree.
 		dependencies = gavAnalyzer.fetchProjectDependenciesFromMavenTree();
 		gavAnalyzer.collectGAVEvidencesFromDependencyName(dependencies);
+		//invoke normalizer to normalize the collected evidence to corresponding resolved value from dependency hints database.
 		normalizer.normalizeDependencyEvidences(dependencies);
+		//iterate through dependencies and fetch vulnerabilities by invoking NVD api.
 		for (DependencyModel dep : dependencies) {
 			cveClient.fetchVulnerabilitiesForDependency(dep);
 			dependencyCount++;
+			//For evry 6 dependencies wait for 1.5 seconds to avoid API rate limiting issue.
 			if (dependencyCount % 6 == 0 || dependencyCount == dependencies.size()) {
 				try {
 
 					String message = String.format("{\"fetchedDependencies\": %d, \"totalDependencies\": %d }",
 							dependencyCount, dependencies.size());
-					System.out.println(message);
+					logger.info(message);
+					//send progress message as emitter event
 					emitter.send(SseEmitter.event().data(message));
 					Thread.sleep(1500);
 				} catch (InterruptedException e) {
@@ -165,10 +169,10 @@ public class Engine {
 		}
 		for (DependencyModel dep : dependencies) {
 			if (dep.getVulnerabilities().size() > 0) {
-				System.out.println("Found " + dep.getVulnerabilities().size() + " vulnerabilities for dependency:"
+				logger.info("Found " + dep.getVulnerabilities().size() + " vulnerabilities for dependency:"
 						+ dep.getDependencyName());
 			} else {
-				System.out.println("No vulnerabilities found for dependency: " + dep.getDependencyName());
+				logger.info("No vulnerabilities found for dependency: " + dep.getDependencyName());
 			}
 		}
 	}
@@ -193,20 +197,24 @@ public class Engine {
 		GAVAnalyzer gavAnalyser = new GAVAnalyzer();
 		CveClient cveClient = new CveClient();
 		int dependencyCount = 0;
+		//Invoke GAV analyser to collect GAV evidences from Dependency name
 		gavAnalyser.collectGAVEvidencesFromDependencyName(dependencies);
+		//invoke Jar analyzer to collect manifest evidences from jar file
 		jarAnalyzer.collectEvidencesFromJar(dependencies);
 
 		CPEEvidencesNormalizer normalizer = new CPEEvidencesNormalizer();
 		logger.info("Resolving evidences to CPE names.......");
+		//invoke normalizer to normalize dependency evidences to resolved value using hints database
 		normalizer.normalizeDependencyEvidences(dependencies);
 		logger.info(
 				"Fetching vulnerability details for the dependencies from the NVD api(This step requires Internet connection!!)");
-
+		//iterate through dependencies and fetch vulnerabilities by invoking NVD api.
 		for (DependencyModel dep : dependencies) {
 			if (dep.getCpeEnumeration() != null) {
 				dependencyCount++;
 				cveClient.fetchVulnerabilitiesForDependency(dep);
 			}
+			//For every 6 dependencies wait for 1.5 seconds to avoid API rate limiting issue.
 			if (dependencyCount % 6 == 0) {
 				try {
 					logger.info("Fetched vulnerabilities for " + dependencyCount + " out of " + dependencies.size()
@@ -246,15 +254,11 @@ public class Engine {
 						+ " Doing fuzzy search to find likely CPEs!!");
 				FuzzySearchTool fuzzySearchTool = new FuzzySearchTool();
 				try {
+					//invoke the fuzzy search tool and search for likely CPEs.
 					fuzzySearchTool.searchForLikelyCpes(dep);
 				} catch (SQLException e) {
 					// e.printStackTrace();
 				}
-				/*
-				 * if(dep.getLikelyCPEs()!=null && dep.getLikelyCPEs().size()>0) {
-				 * getMavenLog().info("Found out likely cpes: "); for (CPENameModel cpe :
-				 * dep.getLikelyCPEs()) { Engine.getMavenLog().info(cpe.getCPE23Uri()); } }
-				 */
 			}
 		}
 	}
@@ -264,10 +268,10 @@ public class Engine {
 	 * 
 	 * @return true if any dependency has a vulnerability with a base score above the threshold, false otherwise
 	 */
-	// FIXME: Review the nameing of this method
 	public static boolean checkForVulnerabilityForDependencies() {
 		logger.info("Checking dependencies vulnerabilities with base score threshold value of " + thresholdValue);
 		boolean isThresholdExceeded = false;
+		//Iterate through the dependencies and check for vulnerabilities with score greater than the threshold value.
 		for (DependencyModel dep : dependencies) {
 			if (dep.getVulnerabilities().size() > 0) {
 				logger.error("Found " + dep.getVulnerabilities().size() + " vulnerabilities for dependency:"

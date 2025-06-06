@@ -36,7 +36,7 @@ public class FuzzySearchTool {
      */
 	public void searchForLikelyCpes(DependencyModel dependency) throws SQLException {
 		Set<String> likelyVendors = new HashSet<>();
-
+		//filter out likely vendors from the list of vendor evidences
 		likelyVendors = searchForLikelyVendors(dependency.getVendorEvidences());
 		if (likelyVendors.size() == 0) {
 			// Engine.logger.info(
@@ -47,9 +47,11 @@ public class FuzzySearchTool {
 		List<CpeEntryModel> filteredCpes = new ArrayList<>();
 		for (Evidence ev : dependency.getProductEvidences()) {
 			if (ev.getEvidenceType() == EvidenceType.ARTIFACT_ID) {
+				//Search for CPE entries with likely product from the filtered likely vendors list
 				filteredCpes = searchForLikelyProducts(likelyVendors, ev.getEvidence());
 			}
 		}
+		//Create CPE entry model for each filtered CPE
 		if (filteredCpes.size() > 0) {
 			for (CpeEntryModel entry : filteredCpes) {
 				CPENameModel wrkCpeNameModel = new CPENameModel();
@@ -91,25 +93,28 @@ public class FuzzySearchTool {
 		// split the group id with dot as the delimiter.
 		String[] wrkGroupIdStrings = groupId.split("\\.");
 		if(vendorNames.size()==0) {
-			Engine.logger.info("Hititng db for distinct vendor names");
-			//Retrieve list of distinct vendor names from the database.
+			//Engine.logger.info("Hititng db for distinct vendor names");
+			//Retrieve list of distinct vendor names from the CPE dictionary database.
 			vendorNames = entriesDao.getDistinctVendorsList(connection);
 		}
 		
 		Set<String> likelyMatch = new HashSet<>();
 		for (String literal : wrkGroupIdStrings) {
+			//If the literal is a common package name ignore it.
 			if (isCommonPackageLiteral(literal)) {
 				// Engine.logger.info("Is common package literal :"+literal);
 				continue;
 			}
 			for (String vendor : vendorNames) {
 				// Jaro-winkler similarity
+				//If the literal matches with any of the vendor names from the CPE dictionary, add that to likely match.
 				Double similarity = JWMatch(literal, vendor);
 				if (similarity.compareTo(Double.valueOf(0.9d)) > 0) {
 					likelyMatch.add(vendor);
 				}
 			}
 		}
+		//If vendor likely match not found with Group Artifact Verison info the iterate through other evidences and search for likely matches.
 		if(likelyMatch.size()==0) {
 			Engine.logger.warn("Vendor likely match not found. Searching with other evidences");
 			for (Evidence ev : evidences) {
@@ -145,9 +150,10 @@ public class FuzzySearchTool {
 		 }
 		
 		// List<CpeEntryModel> filteredCpes = new ArrayList<>();
+		//Retrieve the CPE entries for filtered likely vendors from the CPE Dictionary database.
 		List<CpeEntryModel> wrkEntries = entriesDao.getCpeEntriesForVendor(connection, likelyVendors);
-		 List<ScoredCpeEntryModel> scoredEntries = new ArrayList<>();
-		
+		List<ScoredCpeEntryModel> scoredEntries = new ArrayList<>();
+		//Iterate through CPE entries and match the product name with the artifact ID. Filter out the entries with threshold value greater than 0.7 and add it to scoredentries.
 		for (CpeEntryModel entry : wrkEntries) {
 			// Jaro-winkler similarity
 			Double similarity = JWMatch(artifactId, entry.getProduct());
@@ -156,7 +162,7 @@ public class FuzzySearchTool {
 			}
 		}
 		
-		 // Sort by similarity in descending order
+		 // Sort the scored entries by similarity in descending order and return the top 5 matches.
 	    scoredEntries.sort((a, b) -> Double.compare(b.similarity, a.similarity));
 		return scoredEntries.stream()
 				.limit(5)
