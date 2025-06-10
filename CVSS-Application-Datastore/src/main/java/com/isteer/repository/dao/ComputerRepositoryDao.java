@@ -1,19 +1,20 @@
 package com.isteer.repository.dao;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.isteer.entity.Computer;
 
 public interface ComputerRepositoryDao {
 	
-	public int save(Computer computer);
-	public List<Computer> findAll();
-	public Computer findByUuid(String uuid);
-	public Computer computerByUuid(String uuid);
-	public int update(String uuid, Computer computer);
-	public int softDelete(String uuid);
-	public int deactivate(String uuid);
-	public int activateComputer(String uuid);
+	 int save(Computer computer);
+	    List<Computer> findAll();
+	    Optional<Computer> findByUuid(String uuid);
+	    Optional<Computer> findByDeviceId(String deviceId);
+	    int update(String uuid, Computer computer);
+	    int softDelete(String uuid);
+	    int deactivate(String uuid);
+	    int activate(String uuid);
 	
 
 }

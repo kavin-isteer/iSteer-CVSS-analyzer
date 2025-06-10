@@ -52,7 +52,8 @@ public enum CVSSEnum {
     DEPENDENCY_NOT_ACTIVE(5015, "dependency.not.active"), // Code for inactive dependency
     VULNERABILITY_NOT_ACTIVE(5016, "vulnerability.not.active"), // Code for inactive vulnerability
     COMPUTER_INACTIVE(5017, "computer.inactive"), // Code for inactive computer
-    APPLICATION_NOT_ACTIVE(5018, "application.not.active"); // Code for inactive application
+    APPLICATION_NOT_ACTIVE(5018, "application.not.active"), COMPUTER_PAYLOAD_INVALID(2021, "Invaild.Computer.payload"), 
+    COMPUTER_APPLICATION_EXISTS(2091, "computer.application.exists"); // Code for inactive application
 
     // Private fields to store the status code and message key for each enum constant
     private final int statusCode; // Status code associated with the enum constant

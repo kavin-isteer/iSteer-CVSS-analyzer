@@ -1,10 +1,14 @@
 package com.isteer.exceptions.handler;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.validation.FieldError;
@@ -110,6 +114,14 @@ public class GlobalExceptionHandler {
         errorDto.setErrorMessage(errorMessage); // Set the error message
         logger.error("Validation error: {}", errorMessage); // Log the error message
         return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST); // Return BAD_REQUEST status
+    }
+    
+    @ExceptionHandler(HttpMessageConversionException.class)
+    public ResponseEntity<Map<String, String>> handleHttpMessageConversionException(HttpMessageConversionException ex) {
+        Map<String, String> response = new HashMap<>();
+        response.put("errorCode", "JSON_PARSE_ERROR");
+        response.put("message", "Failed to parse JSON payload: " + ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     // Handle data integrity violations and return appropriate responses
