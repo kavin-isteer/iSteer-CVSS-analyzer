@@ -30,6 +30,8 @@ public class ApplicationController {
 	@Autowired
 	ApplicationService applicationService; // Service layer dependency for business logic
 
+	
+	
 	@Autowired
 	StatusMessageUtil statusMessageUtil; // Utility for status messages
 
