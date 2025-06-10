@@ -129,5 +129,50 @@ public class DependencyHintDao {
 		return hints;
 	}
 	
-	
+	public int addDependencyHint(Connection con,DependencyHintModel hint) {
+	//	String query = "INSERT INTO dependency_hints (type, match_key, standardized_name, confidence, description, evidence_type) VALUES (?,?,?,?,?,?)";
+		 
+		 String checkQuery = "SELECT COUNT(*) FROM dependency_hints WHERE type = ? AND match_key = ? AND evidence_type=?";
+		 String insertQuery = "INSERT INTO dependency_hints (type, match_key, standardized_name, confidence, description, evidence_type) VALUES (?, ?, ?, ?, ?, ?)";
+		 String updateQuery = "UPDATE dependency_hints SET standardized_name = ?, confidence = ?, description = ?, evidence_type = ? WHERE type = ? AND match_key = ?";
+		
+		 try {
+		        // Step 1: Check if record exists
+		        try (PreparedStatement checkStmt = con.prepareStatement(checkQuery)) {
+		            checkStmt.setString(1, hint.getType());
+		            checkStmt.setString(2, hint.getMatch_key());
+		            checkStmt.setString(3, hint.getEvidenceType());
+
+		            ResultSet rs = checkStmt.executeQuery();
+		            if (rs.next() && rs.getInt(1) > 0) {
+		                // Step 2a: Record exists, perform update
+		                try (PreparedStatement updateStmt = con.prepareStatement(updateQuery)) {
+		                    updateStmt.setString(1, hint.getStandardized_name());
+		                    updateStmt.setString(2, hint.getConfidence());
+		                    updateStmt.setString(3, hint.getDescription());
+		                    updateStmt.setString(4, hint.getEvidenceType());
+		                    updateStmt.setString(5, hint.getType());
+		                    updateStmt.setString(6, hint.getMatch_key());
+
+		                    return updateStmt.executeUpdate(); // rows updated
+		                }
+		            } else {
+		                // Step 2b: Record does not exist, perform insert
+		                try (PreparedStatement insertStmt = con.prepareStatement(insertQuery)) {
+		                    insertStmt.setString(1, hint.getType());
+		                    insertStmt.setString(2, hint.getMatch_key());
+		                    insertStmt.setString(3, hint.getStandardized_name());
+		                    insertStmt.setString(4, hint.getConfidence());
+		                    insertStmt.setString(5, hint.getDescription());
+		                    insertStmt.setString(6, hint.getEvidenceType());
+
+		                    return insertStmt.executeUpdate(); // rows inserted
+		                }
+		            }
+		        }
+		    } catch (SQLException e) {
+		        e.printStackTrace();
+		        return -1;
+		    }
+	}
 }
