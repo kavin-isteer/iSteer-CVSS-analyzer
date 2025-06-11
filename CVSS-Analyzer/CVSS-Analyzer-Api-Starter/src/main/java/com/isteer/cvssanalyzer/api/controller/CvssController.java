@@ -1,7 +1,9 @@
 package com.isteer.cvssanalyzer.api.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -175,6 +177,8 @@ public class CvssController {
 			break;
 		}
 		}
-		return new ResponseEntity<>(statusMessage, HttpStatus.OK);
+		Map<String, String> responseMessage = new HashMap<>();
+        responseMessage.put("Status", statusMessage);
+        return new ResponseEntity<>(responseMessage, HttpStatus.OK);
 	}
 }
