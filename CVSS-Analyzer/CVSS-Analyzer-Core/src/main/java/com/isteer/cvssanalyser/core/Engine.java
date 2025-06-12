@@ -6,11 +6,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.isteer.cvssanalyser.core.cveclient.CveClient;
 import com.isteer.cvssanalyser.core.enums.EngineMode;
 import com.isteer.cvssanalyser.core.logging.EngineLogger;
+import com.isteer.cvssanalyser.core.logging.Slf4jEngineLogger;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
 import com.isteer.cvssanalyser.core.model.VulnerabilityCvssMetricsModel;
 import com.isteer.cvssanalyser.core.model.VulnerabilityDetailsModel;
@@ -19,7 +22,7 @@ import com.isteer.cvssanalyser.core.util.HtmlReportGenerator;
 public class Engine {
 	public static List<DependencyModel> dependencies;
 
-	public static EngineLogger logger;
+	public static EngineLogger logger=new Slf4jEngineLogger();
 
 	public static EngineMode analysisMode;
 
@@ -309,5 +312,49 @@ public class Engine {
 		 * +thresholdValue+". Check report for more details!!"); }
 		 */
 		return isThresholdExceeded;
+	}
+	public static void readAndAnalyzeUploadedPomFile(MultipartFile file,SseEmitter emitter) {
+		PomFileReader pomReader = new PomFileReader();
+		GAVAnalyzer gavAnalyzer = new GAVAnalyzer();
+		CPEEvidencesNormalizer normalizer = new CPEEvidencesNormalizer();
+		CveClient cveClient = new CveClient();
+		int dependencyCount = 0;
+		try {
+			dependencies = pomReader.analyzePomFile(file);
+			gavAnalyzer.collectGAVEvidencesFromDependencyName(dependencies);
+			//invoke normalizer to normalize the collected evidence to corresponding resolved value from dependency hints database.
+			normalizer.normalizeDependencyEvidences(dependencies);
+			//iterate through dependencies and fetch vulnerabilities by invoking NVD api.
+			for (DependencyModel dep : dependencies) {
+				cveClient.fetchVulnerabilitiesForDependency(dep);
+				dependencyCount++;
+				//For evry 6 dependencies wait for 1.5 seconds to avoid API rate limiting issue.
+				if (dependencyCount % 6 == 0 || dependencyCount == dependencies.size()) {
+					try {
+
+						String message = String.format("{\"fetchedDependencies\": %d, \"totalDependencies\": %d }",
+								dependencyCount, dependencies.size());
+						logger.info(message);
+						//send progress message as emitter event
+						emitter.send(SseEmitter.event().data(message));
+						Thread.sleep(1500);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					} 
+				}
+			}
+			for (DependencyModel dep : dependencies) {
+				if (dep.getVulnerabilities().size() > 0) {
+					logger.info("Found " + dep.getVulnerabilities().size() + " vulnerabilities for dependency:"
+							+ dep.getDependencyName());
+				} else {
+					logger.info("No vulnerabilities found for dependency: " + dep.getDependencyName());
+				}
+			}
+			doFuzzySearchAndGetLikelyCpes();
+		} catch (IOException | XmlPullParserException e) {
+			logger.info("Error reading and analyzing the uploaded pom file!!");
+			e.printStackTrace();
+		}
 	}
 }

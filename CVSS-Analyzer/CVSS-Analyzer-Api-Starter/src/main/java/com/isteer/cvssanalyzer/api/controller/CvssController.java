@@ -1,5 +1,8 @@
 package com.isteer.cvssanalyzer.api.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.isteer.cvssanalyser.core.DependencyHintService;
@@ -147,6 +151,14 @@ public class CvssController {
 		}
 	}
 
+	/**
+	 * Add GAV dependency hint for a dependency to correct false positives and false
+	 * negatives.
+	 * 
+	 * @param cpeName    Correct CPE Name for the dependency.
+	 * @param dependency dependency object to which the hint needs to be updated.
+	 * @return status of the hint updation.
+	 */
 	@PostMapping("/hint/addDependencyHint")
 	public ResponseEntity<Object> addDependencyHint(@RequestParam String cpeName,
 			@RequestBody DependencyModel dependency) {
@@ -175,6 +187,19 @@ public class CvssController {
 			break;
 		}
 		}
-		return new ResponseEntity<>(statusMessage, HttpStatus.OK);
+		Map<String, String> responseMessage = new HashMap<>();
+		responseMessage.put("Status", statusMessage);
+		return new ResponseEntity<>(responseMessage, HttpStatus.OK);
+	}
+
+	@PostMapping("/upload/pom")
+	public SseEmitter uploadPomFileForAnalysis(@RequestParam("file") MultipartFile file) {
+		SseEmitter emitter = new SseEmitter(0L);
+		new Thread(()->{try {
+			Engine.readAndAnalyzeUploadedPomFile(file, emitter);
+		} finally {
+			emitter.complete();
+		}}).start();
+		return emitter;
 	}
 }

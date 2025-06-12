@@ -108,7 +108,7 @@ public class CPEEvidencesNormalizer {
 					}
 				}
 				if (mostLikelyProduct == null) {
-					mostLikelyProduct = evidence.getEvidence();
+					mostLikelyProduct = evidence.getEvidence().toLowerCase();
 					mostLikelyProduct = mostLikelyProduct.replaceAll("[^a-z0-9_-]", "_");
 					mostLikelyProduct = mostLikelyProduct.replace("-", "_");
 					evidence.setResolvedValue(mostLikelyProduct);

@@ -15,7 +15,12 @@ public class DependencyModel {
 	private List<VulnerabilityDetailsModel> vulnerabilities = new ArrayList<>();
 	private List<CPENameModel> likelyCPEs=new ArrayList<>();
 	
-	
+	public DependencyModel() {
+		// TODO Auto-generated constructor stub
+	}
+	public DependencyModel(String gavName) {
+		this.dependencyName=gavName;
+	}
 	public String getDependencyName() {
 		return dependencyName;
 	}
