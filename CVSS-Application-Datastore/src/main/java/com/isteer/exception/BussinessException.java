@@ -16,6 +16,18 @@ public class BussinessException extends RuntimeException {
 		}
 		
 		
+	
+
+
+		public BussinessException(int statusCode, String message) {
+			this.error = null;
+			// TODO Auto-generated constructor stub
+		}
+
+
+
+
+
 		public  CVSSEnum getError() {
 			return error;
 		}
