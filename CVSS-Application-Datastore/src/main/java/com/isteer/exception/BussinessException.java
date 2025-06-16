@@ -15,19 +15,6 @@ public class BussinessException extends RuntimeException {
 			   this.error = IdException;
 		}
 		
-		
-	
-
-
-		public BussinessException(int statusCode, String message) {
-			this.error = null;
-			// TODO Auto-generated constructor stub
-		}
-
-
-
-
-
 		public  CVSSEnum getError() {
 			return error;
 		}

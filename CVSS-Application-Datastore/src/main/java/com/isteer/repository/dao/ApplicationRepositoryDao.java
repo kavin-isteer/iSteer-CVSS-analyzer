@@ -7,10 +7,7 @@ import com.isteer.entity.Application;
 
 public interface ApplicationRepositoryDao {
 	  int save(Application application);
-	    List<Application> findAll();
-	    Optional<Application> findByUuid(String uuid);
 	    Optional<Application> findByNameVersionVendor(String name, String version, String vendorName);
-	    int update(String uuid, Application application);
-	    int softDelete(String uuid);
-	    int softDeleteByNameAndVendor(String name, String vendorName, String excludeVersion);
-}
+	    List<Application> findByComputerUuid(String computerUuid);
+	    Optional<Application> findByUuidAndIsDeletedFalse(String uuid);
+		Optional<Application> findByComputerUuidAndNameVendor(String computerUuid, String name, String vendorName);}

@@ -20,6 +20,7 @@ public class ComputerRowMapper implements RowMapper<Computer> {
         computer.setLoggedInUser(rs.getString("logged_in_user"));
         computer.setLastUpdateCheck(rs.getTimestamp("last_update_check") != null ?
                 rs.getTimestamp("last_update_check").toLocalDateTime() : null);
+        computer.setTimestamp(rs.getTimestamp("timestamp").toLocalDateTime());
         computer.setDeleted(rs.getBoolean("is_deleted"));
         computer.setActive(rs.getBoolean("is_active"));
         computer.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
