@@ -1,48 +1,102 @@
 package com.isteer.service;
 
-import com.isteer.entity.ComputerApplication;
-import com.isteer.enums.CVSSEnum;
-import com.isteer.exception.BussinessException;
-import com.isteer.repository.dao.ComputerApplicationRepositoryDao;
-import com.isteer.service.dao.ComputerApplicationServiceDao;
-import com.isteer.util.StatusMessageUtil;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
-import org.springframework.dao.DataIntegrityViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.isteer.entity.ComputerApplication;
+import com.isteer.repository.dao.ComputerApplicationRepositoryDao;
+import com.isteer.service.dao.ComputerApplicationServiceDao;
+import com.isteer.util.UUIDUtil;
+
 @Service
 public class ComputerApplicationService implements ComputerApplicationServiceDao {
-    private final ComputerApplicationRepositoryDao computerApplicationRepository;
+	 private static final Logger logger = LoggerFactory.getLogger(ComputerApplicationService.class);
 
-    public ComputerApplicationService(ComputerApplicationRepositoryDao computerApplicationRepository) {
-        this.computerApplicationRepository = computerApplicationRepository;
-    }
+	    @Autowired
+	    private ComputerApplicationRepositoryDao computerApplicationRepository;
 
-    @Transactional
-    @Override
-    public void createComputerApplication(ComputerApplication computerApplication) {
-        try {
-            // Check if mapping exists
-            computerApplicationRepository.findByComputerAndApplicationUuid(
-                    computerApplication.getComputerUuid(), computerApplication.getApplicationUuid())
-                    .ifPresent(ca -> {
-                        throw new BussinessException(CVSSEnum.COMPUTER_APPLICATION_EXISTS.getStatusCode(),
-                                StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_APPLICATION_EXISTS));
-                    });
+	    @Transactional
+	    @Override
+	    public int createComputerApplication(String computerUuid, String applicationUuid, LocalDateTime installedDate) {
+	        logger.debug("Processing mapping for computer UUID: {} and application UUID: {}", computerUuid, applicationUuid);
 
-            int rows = computerApplicationRepository.save(computerApplication);
-            if (rows != 1) {
-            	throw new BussinessException(CVSSEnum.COMPUTER_APPLICATION_EXISTS.getStatusCode(),
-                        StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_APPLICATION_EXISTS));
-            }
-        } catch (DataIntegrityViolationException e) {
-            if (e.getMessage().contains("computer_applications_computer_uuid_application_uuid_uindex")) {
-            	throw new BussinessException(CVSSEnum.COMPUTER_APPLICATION_EXISTS.getStatusCode(),
-                        StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_APPLICATION_EXISTS));
-            }
-            throw new BussinessException(CVSSEnum.Internal_Server_Error.getStatusCode(),
-                    StatusMessageUtil.getMessage(CVSSEnum.Internal_Server_Error));
-        }
-    }
+	        // Check for existing active mapping
+	        Optional<ComputerApplication> existingMapping = computerApplicationRepository.findByComputerAndApplicationUuid(computerUuid, applicationUuid);
+	        if (existingMapping.isPresent() && !existingMapping.get().isDeleted()) {
+	            ComputerApplication mapping = existingMapping.get();
+	            // Update existing mapping if installed_date changed
+	            if (!mapping.getInstalledDate().equals(installedDate)) {
+	                mapping.setInstalledDate(installedDate);
+	                mapping.setUpdatedAt(LocalDateTime.now());
+	                int result = computerApplicationRepository.update(mapping);
+	                if (result != 1) {
+	                    logger.error("Failed to update mapping for computer UUID: {}, application UUID: {}", computerUuid, applicationUuid);
+	                    return -5; // Internal error
+	                }
+	                logger.info("Updated mapping for computer UUID: {}, application UUID: {}", computerUuid, applicationUuid);
+	            } else {
+	                logger.debug("No changes to mapping for computer UUID: {}, application UUID: {}", computerUuid, applicationUuid);
+	            }
+	            return 1; // Success (no change or updated)
+	        }
+
+	        // Create new mapping
+	        ComputerApplication ca = new ComputerApplication();
+	        ca.setUuid(UUIDUtil.generateUUID());
+	        ca.setComputerUuid(computerUuid);
+	        ca.setApplicationUuid(applicationUuid);
+	        ca.setInstalledDate(installedDate);
+	        ca.setDeleted(false);
+	        ca.setCreatedAt(LocalDateTime.now());
+
+	        int result = computerApplicationRepository.save(ca);
+	        if (result != 1) {
+	            logger.error("Failed to save mapping for computer UUID: {}, application UUID: {}", computerUuid, applicationUuid);
+	            return -5; // Internal error
+	        }
+
+	        logger.info("Created mapping for computer UUID: {}, application UUID: {}", computerUuid, applicationUuid);
+	        return 1; // Success
+	    }
+
+	    @Transactional
+	    @Override
+	    public int softDeleteMapping(String computerUuid, String applicationUuid) {
+	        int result = computerApplicationRepository.softDeleteByComputerAndApplicationUuid(computerUuid, applicationUuid);
+	        logger.debug("Soft deleted mapping for computer UUID: {}, application UUID: {}, updated rows: {}", computerUuid, applicationUuid, result);
+	        return result;
+	    }
+
+		@Override
+		public int reactivateMapping(String computerUuid,  String applicationUuid, LocalDateTime installedDate) {
+			 logger.debug("Reactivating mapping for computer UUID: {} and application UUID: {}", computerUuid, applicationUuid);
+		        int result = computerApplicationRepository.reactivateByComputerAndApplicationUuid(computerUuid, applicationUuid, installedDate);
+		        if (result != 1) {
+		            logger.error("Failed to reactivate mapping for computer UUID: {}, application UUID: {}", computerUuid, applicationUuid);
+		            return -5; // Internal error
+		        }
+		        logger.info("Reactivated mapping for computer UUID: {}, application UUID: {}", computerUuid, applicationUuid);
+		        return 1; // Success
+			
+		}
+		
+		@Transactional
+		@Override
+	    public int updateMapping(String computerUuid, String applicationUuid, LocalDateTime installedDate) {
+	        logger.debug("Updating mapping for computer UUID: {} and application UUID: {}", computerUuid, applicationUuid);
+	        int result = computerApplicationRepository.updateInstalledDate(computerUuid, applicationUuid, installedDate);
+	        if (result != 1) {
+	            logger.error("Failed to update mapping for computer UUID: {}, application UUID: {}", computerUuid, applicationUuid);
+	            return -5; // Internal error
+	        }
+	        logger.info("Updated mapping for computer UUID: {}, application UUID: {}", computerUuid, applicationUuid);
+	        return 1; // Success
+	    }
+
 }

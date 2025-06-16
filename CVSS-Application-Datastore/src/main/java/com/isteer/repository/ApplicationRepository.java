@@ -1,95 +1,95 @@
 package com.isteer.repository;
 
-import com.isteer.entity.Application;
-import com.isteer.repository.dao.ApplicationRepositoryDao;
-import com.isteer.util.ApplicationRowMapper;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import com.isteer.entity.Application;
+import com.isteer.repository.dao.ApplicationRepositoryDao;
+import com.isteer.util.RowMapperUtil;
+
 @Repository
 public class ApplicationRepository implements ApplicationRepositoryDao {
-    private final NamedParameterJdbcTemplate jdbcTemplate;
+	  private static final Logger logger = LoggerFactory.getLogger(ApplicationRepository.class);
 
-    public ApplicationRepository(NamedParameterJdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
+	    @Autowired
+	    private NamedParameterJdbcTemplate jdbcTemplate;
 
-    @Transactional
-    @Override
-    public int save(Application application) {
-        String sql = "INSERT INTO applications (uuid, name, version, vendor_name, installed_date, is_deleted, created_at) " +
-                "VALUES (:uuid, :name, :version, :vendorName, :installedDate, :isDeleted, :createdAt)";
-        MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("uuid", application.getUuid())
-                .addValue("name", application.getName())
-                .addValue("version", application.getVersion())
-                .addValue("vendorName", application.getVendorName())
-                .addValue("installedDate", application.getInstalledDate())
-                .addValue("isDeleted", application.isDeleted())
-                .addValue("createdAt", application.getCreatedAt());
-        return jdbcTemplate.update(sql, params);
-    }
+	    @Override
+	    public int save(Application application) {
+	        String sql = "INSERT INTO applications (uuid, name, version, vendor_name) " +
+	                "VALUES (:uuid, :name, :version, :vendorName)";
+	        MapSqlParameterSource params = new MapSqlParameterSource()
+	                .addValue("uuid", application.getUuid())
+	                .addValue("name", application.getName())
+	                .addValue("version", application.getVersion())
+	                .addValue("vendorName", application.getVendorName());
+	        logger.debug("Saving application with UUID: {}", application.getUuid());
+	        return jdbcTemplate.update(sql, params);
+	    }
 
-    @Override
-    public List<Application> findAll() {
-        String sql = "SELECT * FROM applications WHERE is_deleted = false";
-        return jdbcTemplate.query(sql, new ApplicationRowMapper());
-    }
+	    @Override
+	    public Optional<Application> findByNameVersionVendor(String name, String version, String vendorName) {
+	        String sql = "SELECT * FROM applications WHERE name = :name AND version = :version AND vendor_name = :vendorName";
+	        MapSqlParameterSource params = new MapSqlParameterSource()
+	                .addValue("name", name)
+	                .addValue("version", version)
+	                .addValue("vendorName", vendorName);
+	        try {
+	            Application application = jdbcTemplate.queryForObject(sql, params, RowMapperUtil::mapApplicationRow);
+	            return Optional.ofNullable(application);
+	        } catch (Exception e) {
+	            logger.debug("No application found for name: {}, version: {}, vendor: {}", name, version, vendorName);
+	            return Optional.empty();
+	        }
+	    }
 
-    @Override
-    public Optional<Application> findByUuid(String uuid) {
-        String sql = "SELECT * FROM applications WHERE uuid = :uuid AND is_deleted = false";
-        MapSqlParameterSource params = new MapSqlParameterSource().addValue("uuid", uuid);
-        return jdbcTemplate.query(sql, params, new ApplicationRowMapper())
-                .stream().findFirst();
-    }
+	    @Override
+	    public Optional<Application> findByComputerUuidAndNameVendor(String computerUuid, String name, String vendorName) {
+	        String sql = "SELECT a.* FROM applications a " +
+	                "JOIN computer_applications ca ON a.uuid = ca.application_uuid " +
+	                "WHERE ca.computer_uuid = :computerUuid AND a.name = :name AND a.vendor_name = :vendorName " +
+	                "AND ca.is_deleted = false";
+	        MapSqlParameterSource params = new MapSqlParameterSource()
+	                .addValue("computerUuid", computerUuid)
+	                .addValue("name", name)
+	                .addValue("vendorName", vendorName);
+	        try {
+	            Application application = jdbcTemplate.queryForObject(sql, params, RowMapperUtil::mapApplicationRow);
+	            return Optional.ofNullable(application);
+	        } catch (Exception e) {
+	            logger.debug("No application found for computer UUID: {}, name: {}, vendor: {}", computerUuid, name, vendorName);
+	            return Optional.empty();
+	        }
+	    }
 
-    @Override
-    public Optional<Application> findByNameVersionVendor(String name, String version, String vendorName) {
-        String sql = "SELECT * FROM applications WHERE name = :name AND version = :version AND vendor_name = :vendorName AND is_deleted = false";
-        MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("name", name)
-                .addValue("version", version)
-                .addValue("vendorName", vendorName);
-        return jdbcTemplate.query(sql, params, new ApplicationRowMapper())
-                .stream().findFirst();
-    }
+	    @Override
+	    public List<Application> findByComputerUuid(String computerUuid) {
+	        String sql = "SELECT a.* FROM applications a " +
+	                "JOIN computer_applications ca ON a.uuid = ca.application_uuid " +
+	                "JOIN computers c ON ca.computer_uuid = c.uuid " +
+	                "WHERE c.uuid = :computerUuid AND c.is_deleted = false AND ca.is_deleted = false";
+	        MapSqlParameterSource params = new MapSqlParameterSource("computerUuid", computerUuid);
+	        return jdbcTemplate.query(sql, params, RowMapperUtil::mapApplicationRow);
+	    }
 
-    @Transactional
-    @Override
-    public int update(String uuid, Application application) {
-        String sql = "UPDATE applications SET name = :name, version = :version, vendor_name = :vendorName, " +
-                "installed_date = :installedDate, updated_at = CURRENT_TIMESTAMP WHERE uuid = :uuid AND is_deleted = false";
-        MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("uuid", uuid)
-                .addValue("name", application.getName())
-                .addValue("version", application.getVersion())
-                .addValue("vendorName", application.getVendorName())
-                .addValue("installedDate", application.getInstalledDate());
-        return jdbcTemplate.update(sql, params);
-    }
+	    @Override
+	    public Optional<Application> findByUuidAndIsDeletedFalse(String uuid) {
+	        String sql = "SELECT * FROM applications WHERE uuid = :uuid";
+	        MapSqlParameterSource params = new MapSqlParameterSource("uuid", uuid);
+	        try {
+	            Application application = jdbcTemplate.queryForObject(sql, params, RowMapperUtil::mapApplicationRow);
+	            return Optional.ofNullable(application);
+	        } catch (Exception e) {
+	            logger.debug("No application found for UUID: {}", uuid);
+	            return Optional.empty();
+	        }
+	    }
 
-    @Transactional
-    @Override
-    public int softDelete(String uuid) {
-        String sql = "UPDATE applications SET is_deleted = true, updated_at = CURRENT_TIMESTAMP WHERE uuid = :uuid";
-        MapSqlParameterSource params = new MapSqlParameterSource().addValue("uuid", uuid);
-        return jdbcTemplate.update(sql, params);
-    }
-
-    @Transactional
-    @Override
-    public int softDeleteByNameAndVendor(String name, String vendorName, String excludeVersion) {
-        String sql = "UPDATE applications SET is_deleted = true, updated_at = CURRENT_TIMESTAMP " +
-                "WHERE name = :name AND vendor_name = :vendorName AND version != :excludeVersion AND is_deleted = false";
-        MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("name", name)
-                .addValue("vendorName", vendorName)
-                .addValue("excludeVersion", excludeVersion);
-        return jdbcTemplate.update(sql, params);
-    }
-}
+	  }

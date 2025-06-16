@@ -8,13 +8,9 @@ import com.isteer.entity.Computer;
 public interface ComputerRepositoryDao {
 	
 	 int save(Computer computer);
-	    List<Computer> findAll();
-	    Optional<Computer> findByUuid(String uuid);
-	    Optional<Computer> findByDeviceId(String deviceId);
-	    int update(String uuid, Computer computer);
-	    int softDelete(String uuid);
-	    int deactivate(String uuid);
-	    int activate(String uuid);
-	
+	    int update(Computer computer);
+	    Optional<Computer> findByDeviceIdAndIsDeletedFalse(String deviceId);
+	    Optional<Computer> findByUuidAndIsDeletedFalse(String uuid);
+	    List<Computer> findAllComputers();
 
 }

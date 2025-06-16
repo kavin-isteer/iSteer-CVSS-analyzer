@@ -1,67 +1,132 @@
 package com.isteer.service;
 
-import com.isteer.entity.Application;
-import com.isteer.enums.CVSSEnum;
-import com.isteer.exception.BussinessException;
-import com.isteer.repository.dao.ApplicationRepositoryDao;
-import com.isteer.service.dao.ApplicationServiceDao;
-
-import com.isteer.util.StatusMessageUtil;
-
+import java.util.List;
 import java.util.Optional;
 
-import org.springframework.dao.DataIntegrityViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.isteer.dto.ComputerPayloadDTO;
+import com.isteer.entity.Application;
+import com.isteer.entity.ComputerApplication;
+import com.isteer.enums.CVSSEnum;
+import com.isteer.exception.BussinessException;
+import com.isteer.repository.dao.ApplicationRepositoryDao;
+import com.isteer.repository.dao.ComputerApplicationRepositoryDao;
+import com.isteer.service.dao.ApplicationServiceDao;
+import com.isteer.service.dao.ComputerApplicationServiceDao;
+import com.isteer.util.UUIDUtil;
+
 @Service
 public class ApplicationService implements ApplicationServiceDao {
-    private final ApplicationRepositoryDao applicationRepository;
+	private static final Logger logger = LoggerFactory.getLogger(ApplicationService.class);
 
-    public ApplicationService(ApplicationRepositoryDao applicationRepository) {
-        this.applicationRepository = applicationRepository;
-    }
+	@Autowired
+	private ApplicationRepositoryDao applicationRepository;
 
-    @Transactional
-    @Override
-    public Application createApplication(Application application, String computerUuid) {
-        try {
-            // Check if application exists by name, version, vendor_name
-            Optional<Application> existingApp = applicationRepository.findByNameVersionVendor(
-                    application.getName(), application.getVersion(), application.getVendorName());
+	@Autowired
+	private ComputerApplicationRepositoryDao computerApplicationRepository;
 
-            if (existingApp.isPresent()) {
-                return existingApp.get(); // Skip insertion if exists
-            }
+	@Autowired
+	private ComputerApplicationServiceDao computerApplicationService;
 
-            // Soft delete previous versions
-            softDeletePreviousVersions(application.getName(), application.getVendorName(), application.getVersion());
+	@Transactional
+	@Override
+	public int createOrUpdateApplication(ComputerPayloadDTO.SoftwareDTO software, String computerUuid) {
+		logger.info("Processing application: {} version {} vendor: {} for computer UUID: {}", software.getName(),
+				software.getVersion(), software.getVendorName(), computerUuid);
 
-            // Save new application
-            int rows = applicationRepository.save(application);
-            if (rows != 1) {
-                throw new BussinessException(CVSSEnum.APPLICATION_ADD.getStatusCode(),
-                      StatusMessageUtil.getMessage(CVSSEnum.APPLICATION_ADD));
-            }
+		// Check for existing application (including soft-deleted mappings)
+		Optional<Application> existingApp = applicationRepository.findByNameVersionVendor(software.getName(),
+				software.getVersion(), software.getVendorName());
+		Application application;
 
-            return application;
-        } catch (DataIntegrityViolationException e) {
-            if (e.getMessage().contains("applications_name_version_vendor_name_uindex")) {
-                // Handle race condition: another thread inserted the same application
-                return applicationRepository.findByNameVersionVendor(
-                        application.getName(), application.getVersion(), application.getVendorName())
-                        .orElseThrow(() -> new BussinessException(CVSSEnum.APPLICATION_NOT_FOUND.getStatusCode(),
-                                StatusMessageUtil.getMessage(CVSSEnum.APPLICATION_NOT_FOUND)));
-            }
-            throw new BussinessException(CVSSEnum.INVALID_SQL_SYNTAX.getStatusCode(),
-					StatusMessageUtil.getMessage(CVSSEnum.INVALID_SQL_SYNTAX));
-		} catch (Exception e) {
-			throw new BussinessException(CVSSEnum.APPLICATION_ADD.getStatusCode(),StatusMessageUtil.getMessage(CVSSEnum.Internal_Server_Error));
-        }
-    }
+		if (existingApp.isPresent()) {
+			application = existingApp.get();
+			logger.debug("Reusing existing application with UUID: {}", application.getUuid());
 
-    @Override
-    public void softDeletePreviousVersions(String name, String vendorName, String version) {
-        applicationRepository.softDeleteByNameAndVendor(name, vendorName, version);
-    }
+			// Check if there's a mapping for this computer and application
+			Optional<ComputerApplication> existingMapping = computerApplicationRepository
+					.findByComputerAndApplicationUuid(computerUuid, application.getUuid());
+			if (existingMapping.isPresent()) {
+				// Reactivate soft-deleted mapping
+				if (existingMapping.get().isDeleted()) {
+					computerApplicationService.reactivateMapping(computerUuid, application.getUuid(),
+							software.getInstalledDate());
+					logger.debug("Reactivated mapping for application UUID: {}", application.getUuid());
+				} else {
+					// Update installed_date if changed
+					if (!existingMapping.get().getInstalledDate().equals(software.getInstalledDate())) {
+						computerApplicationService.updateMapping(computerUuid, application.getUuid(),
+								software.getInstalledDate());
+						logger.debug("Updated installed_date for mapping with application UUID: {}",
+								application.getUuid());
+					}
+				}
+			} else {
+				// Create new mapping
+				int mappingStatus = computerApplicationService.createComputerApplication(computerUuid,
+						application.getUuid(), software.getInstalledDate());
+				if (mappingStatus != 1) {
+					logger.warn("Failed to create mapping for application UUID: {}, status: {}", application.getUuid(),
+							mappingStatus);
+					return mappingStatus;
+				}
+			}
+		} else {
+			// Create new application
+			application = new Application();
+			application.setUuid(UUIDUtil.generateUUID());
+			application.setName(software.getName());
+			application.setVersion(software.getVersion());
+			application.setVendorName(software.getVendorName());
+
+			if (applicationRepository.save(application) != 1) {
+				logger.error("Failed to save application with UUID: {}", application.getUuid());
+				return -5; // Internal error
+			}
+			logger.info("Created new application with UUID: {}", application.getUuid());
+
+			// Create new mapping
+			int mappingStatus = computerApplicationService.createComputerApplication(computerUuid,
+					application.getUuid(), software.getInstalledDate());
+			if (mappingStatus != 1) {
+				logger.warn("Failed to create mapping for application UUID: {}, status: {}", application.getUuid(),
+						mappingStatus);
+				return mappingStatus;
+			}
+		}
+
+		// Soft-delete mappings for other applications with same name and vendor but
+		// different version
+		Optional<Application> currentMappedApp = applicationRepository.findByComputerUuidAndNameVendor(computerUuid,
+				software.getName(), software.getVendorName());
+		if (currentMappedApp.isPresent() && !currentMappedApp.get().getUuid().equals(application.getUuid())) {
+			computerApplicationService.softDeleteMapping(computerUuid, currentMappedApp.get().getUuid());
+			logger.debug("Soft deleted old mapping for application UUID: {}", currentMappedApp.get().getUuid());
+		}
+
+		logger.info("Created/updated application mapping for computer UUID: {}", computerUuid);
+		return 1; // Success
+	}
+
+	@Transactional(readOnly = true)
+	@Override
+	public List<Application> getApplicationsByComputerUuid(String computerUuid) {
+		logger.info("Fetching applications for computer UUID: {}", computerUuid);
+		return applicationRepository.findByComputerUuid(computerUuid);
+	}
+
+	@Transactional(readOnly = true)
+	@Override
+	public Application getApplicationByUuid(String uuid) {
+		logger.info("Fetching application with UUID: {}", uuid);
+		return applicationRepository.findByUuidAndIsDeletedFalse(uuid).orElseThrow(() -> {
+			logger.warn("Application not found for UUID: {}", uuid);
+			return new BussinessException(CVSSEnum.APPLICATION_NOT_FOUND);
+		});
+	}
 }
