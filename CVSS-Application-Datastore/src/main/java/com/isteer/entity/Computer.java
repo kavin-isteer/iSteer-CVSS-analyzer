@@ -3,39 +3,37 @@ package com.isteer.entity;
 import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 
 public class Computer {
 	private Long id;
 	private String uuid;
 
 	@NotBlank(message = "Device ID cannot be blank")
-	@Size(max = 50, message = "Device ID must be at most 50 characters")
+//	@Size(max = 50, message = "Device ID must be at most 50 characters")
 	private String deviceId;
 
-	@NotBlank(message = "Hostname cannot be blank")
-	@Size(max = 100, message = "Hostname must be at most 100 characters")
-	private String hostname;
+	@NotBlank(message = "Machine Name cannot be blank")
+//	@Size(max = 100, message = "Hostname must be at most 100 characters")
+	private String machineName;
 
 	@NotBlank(message = "IP address cannot be blank")
 //	@Pattern(regexp = "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$", message = "Invalid IPv4 address")
 	private String ipAddress;
 
 	@NotBlank(message = "OS version cannot be blank")
-	@Size(max = 50, message = "OS version must be at most 50 characters")
+//	@Size(max = 50, message = "OS version must be at most 50 characters")
 	private String osVersion;
 
 	@NotBlank(message = "Antivirus status cannot be blank")
-	@Size(max = 20, message = "Antivirus status must be at most 20 characters")
+//	@Size(max = 20, message = "Antivirus status must be at most 20 characters")
 	private String antivirusStatus;
 
 	@NotBlank(message = "Firewall status cannot be blank")
-	@Size(max = 20, message = "Firewall status must be at most 20 characters")
+//	@Size(max = 20, message = "Firewall status must be at most 20 characters")
 	private String firewallStatus;
 
 	@NotBlank(message = "Logged-in user cannot be blank")
-	@Size(max = 100, message = "Logged-in user must be at most 100 characters")
+//	@Size(max = 100, message = "Logged-in user must be at most 100 characters")
 	private String loggedInUser;
 
 	private LocalDateTime lastUpdateCheck;
@@ -70,12 +68,11 @@ public class Computer {
 		this.deviceId = deviceId;
 	}
 
-	public String getHostname() {
-		return hostname;
+	public String getMachineName() {
+		return machineName;
 	}
-
-	public void setHostname(String hostname) {
-		this.hostname = hostname;
+	public void setMachineName(String machineName) {
+		this.machineName = machineName;
 	}
 
 	public String getIpAddress() {

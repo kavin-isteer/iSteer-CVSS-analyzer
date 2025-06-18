@@ -1,9 +1,8 @@
 package com.isteer.service.dao;
 
 import java.util.List;
-import java.util.Optional;
 
-import com.isteer.dto.ComputerPayloadDTO.SoftwareDTO;
+import com.isteer.dto.SoftwareDTO;
 import com.isteer.entity.Application;
 
 public interface ApplicationServiceDao {

@@ -1,25 +1,28 @@
 package com.isteer.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
 public class Application {
 	private Long id;
 
 	@NotBlank(message = "UUID cannot be blank")
-	@Size(min = 36, max = 36, message = "UUID must be 36 characters")
+//	@Size(min = 36, max = 36, message = "UUID must be 36 characters")
 	private String uuid;
 
 	@NotBlank(message = "Name cannot be blank")
-	@Size(max = 100, message = "Name must be at most 100 characters")
+//	@Size(max = 100, message = "Name must be at most 100 characters")
 	private String name;
 
-	@Size(max = 50, message = "Version must be at most 50 characters")
+//	@Size(max = 50, message = "Version must be at most 50 characters")
 	private String version;
 
-	@NotBlank(message = "Vendor name cannot be blank")
-	@Size(max = 100, message = "Vendor name must be at most 100 characters")
+//	@NotBlank(message = "Vendor name cannot be blank")
+//	@Size(max = 100, message = "Vendor name must be at most 100 characters")
 	private String vendorName;
+	
+	private LocalDateTime createdAt;
 
 	public Long getId() {
 		return id;
@@ -60,6 +63,11 @@ public class Application {
 	public void setVendorName(String vendorName) {
 		this.vendorName = vendorName;
 	}
-
+	public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
 
 }

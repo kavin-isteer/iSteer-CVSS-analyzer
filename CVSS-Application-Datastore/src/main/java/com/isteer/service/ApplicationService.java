@@ -1,6 +1,8 @@
 package com.isteer.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -9,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.isteer.dto.ComputerPayloadDTO;
+import com.isteer.dto.SoftwareDTO;
 import com.isteer.entity.Application;
 import com.isteer.entity.ComputerApplication;
 import com.isteer.enums.CVSSEnum;
@@ -35,13 +37,17 @@ public class ApplicationService implements ApplicationServiceDao {
 
 	@Transactional
 	@Override
-	public int createOrUpdateApplication(ComputerPayloadDTO.SoftwareDTO software, String computerUuid) {
+	public int createOrUpdateApplication(SoftwareDTO software, String computerUuid) {
 		logger.info("Processing application: {} version {} vendor: {} for computer UUID: {}", software.getName(),
 				software.getVersion(), software.getVendorName(), computerUuid);
-
+		  // Normalize version: treat null or "null" as empty string
+        String version = software.getVersion() == null ? "" : software.getVersion();
+        
+        String vendorName = software.getVendorName() == null ? "" : software.getVendorName();
+		
 		// Check for existing application (including soft-deleted mappings)
 		Optional<Application> existingApp = applicationRepository.findByNameVersionVendor(software.getName(),
-				software.getVersion(), software.getVendorName());
+				version, vendorName);
 		Application application;
 
 		if (existingApp.isPresent()) {
@@ -58,13 +64,12 @@ public class ApplicationService implements ApplicationServiceDao {
 							software.getInstalledDate());
 					logger.debug("Reactivated mapping for application UUID: {}", application.getUuid());
 				} else {
-					// Update installed_date if changed
-					if (!existingMapping.get().getInstalledDate().equals(software.getInstalledDate())) {
-						computerApplicationService.updateMapping(computerUuid, application.getUuid(),
-								software.getInstalledDate());
-						logger.debug("Updated installed_date for mapping with application UUID: {}",
-								application.getUuid());
-					}
+					logger.debug("Found existing active mapping for application UUID: {}", application.getUuid());
+					 // Update installed_date if changed
+                    if (!Objects.equals(existingMapping.get().getInstalledDate(), software.getInstalledDate())) {
+                        computerApplicationService.updateMapping(computerUuid, application.getUuid(), software.getInstalledDate());
+                        logger.debug("Updated installed_date for mapping with application UUID: {}", application.getUuid());
+                    }
 				}
 			} else {
 				// Create new mapping
@@ -81,8 +86,9 @@ public class ApplicationService implements ApplicationServiceDao {
 			application = new Application();
 			application.setUuid(UUIDUtil.generateUUID());
 			application.setName(software.getName());
-			application.setVersion(software.getVersion());
-			application.setVendorName(software.getVendorName());
+			application.setVersion(version);
+			application.setVendorName(vendorName);
+			application.setCreatedAt(LocalDateTime.now());
 
 			if (applicationRepository.save(application) != 1) {
 				logger.error("Failed to save application with UUID: {}", application.getUuid());
@@ -103,7 +109,7 @@ public class ApplicationService implements ApplicationServiceDao {
 		// Soft-delete mappings for other applications with same name and vendor but
 		// different version
 		Optional<Application> currentMappedApp = applicationRepository.findByComputerUuidAndNameVendor(computerUuid,
-				software.getName(), software.getVendorName());
+				software.getName(), vendorName);
 		if (currentMappedApp.isPresent() && !currentMappedApp.get().getUuid().equals(application.getUuid())) {
 			computerApplicationService.softDeleteMapping(computerUuid, currentMappedApp.get().getUuid());
 			logger.debug("Soft deleted old mapping for application UUID: {}", currentMappedApp.get().getUuid());

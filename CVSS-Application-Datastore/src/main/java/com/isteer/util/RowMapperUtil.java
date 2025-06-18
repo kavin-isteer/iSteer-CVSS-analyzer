@@ -14,7 +14,7 @@ public class RowMapperUtil {
         computer.setId(rs.getLong("id"));
         computer.setUuid(rs.getString("uuid"));
         computer.setDeviceId(rs.getString("device_id"));
-        computer.setHostname(rs.getString("hostname"));
+        computer.setMachineName(rs.getString("hostname"));
         computer.setIpAddress(rs.getString("ip_address"));
         computer.setOsVersion(rs.getString("os_version"));
         computer.setAntivirusStatus(rs.getString("antivirus_status"));
@@ -38,6 +38,7 @@ public class RowMapperUtil {
         application.setName(rs.getString("name"));
         application.setVersion(rs.getString("version"));
         application.setVendorName(rs.getString("vendor_name"));
+        application.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
         return application;
     }
 
@@ -47,7 +48,8 @@ public class RowMapperUtil {
         ca.setUuid(rs.getString("uuid"));
         ca.setComputerUuid(rs.getString("computer_uuid"));
         ca.setApplicationUuid(rs.getString("application_uuid"));
-        ca.setInstalledDate(rs.getTimestamp("installed_date").toLocalDateTime());
+        ca.setInstalledDate(rs.getTimestamp("installed_date") != null ?
+				rs.getTimestamp("installed_date").toLocalDateTime() : null);
         ca.setDeleted(rs.getBoolean("is_deleted"));
         ca.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
         ca.setUpdatedAt(rs.getTimestamp("updated_at") != null ?

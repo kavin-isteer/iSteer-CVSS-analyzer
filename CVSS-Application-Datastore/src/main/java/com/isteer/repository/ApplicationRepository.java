@@ -23,20 +23,24 @@ public class ApplicationRepository implements ApplicationRepositoryDao {
 
 	    @Override
 	    public int save(Application application) {
-	        String sql = "INSERT INTO applications (uuid, name, version, vendor_name) " +
-	                "VALUES (:uuid, :name, :version, :vendorName)";
+	        String sql = "INSERT INTO applications (uuid, name, version, vendor_name, created_at) " +
+	                "VALUES (:uuid, :name, :version, :vendorName, :createdAt)";
 	        MapSqlParameterSource params = new MapSqlParameterSource()
 	                .addValue("uuid", application.getUuid())
 	                .addValue("name", application.getName())
 	                .addValue("version", application.getVersion())
-	                .addValue("vendorName", application.getVendorName());
+	                .addValue("vendorName", application.getVendorName())
+	                .addValue("createdAt", application.getCreatedAt());
 	        logger.debug("Saving application with UUID: {}", application.getUuid());
 	        return jdbcTemplate.update(sql, params);
 	    }
 
 	    @Override
 	    public Optional<Application> findByNameVersionVendor(String name, String version, String vendorName) {
-	        String sql = "SELECT * FROM applications WHERE name = :name AND version = :version AND vendor_name = :vendorName";
+	        String sql = "SELECT * FROM applications " +
+                    "WHERE name = :name " +
+                    "AND (version = :version OR (version IS NULL AND :version IS NULL)) " +
+                    "AND (vendor_name = :vendorName OR (vendor_name IS NULL AND :vendorName IS NULL)) ";
 	        MapSqlParameterSource params = new MapSqlParameterSource()
 	                .addValue("name", name)
 	                .addValue("version", version)
@@ -52,9 +56,11 @@ public class ApplicationRepository implements ApplicationRepositoryDao {
 
 	    @Override
 	    public Optional<Application> findByComputerUuidAndNameVendor(String computerUuid, String name, String vendorName) {
-	        String sql = "SELECT a.* FROM applications a " +
+	    	String sql = "SELECT a.* FROM applications a " +
 	                "JOIN computer_applications ca ON a.uuid = ca.application_uuid " +
-	                "WHERE ca.computer_uuid = :computerUuid AND a.name = :name AND a.vendor_name = :vendorName " +
+	                "WHERE ca.computer_uuid = :computerUuid " +
+	                "AND a.name = :name " +
+	                "AND (a.vendor_name = :vendorName OR (a.vendor_name IS NULL AND :vendorName IS NULL)) " +
 	                "AND ca.is_deleted = false";
 	        MapSqlParameterSource params = new MapSqlParameterSource()
 	                .addValue("computerUuid", computerUuid)
