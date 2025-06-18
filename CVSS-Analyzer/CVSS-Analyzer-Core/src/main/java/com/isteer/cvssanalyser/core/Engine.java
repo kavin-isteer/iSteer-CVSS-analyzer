@@ -22,7 +22,7 @@ import com.isteer.cvssanalyser.core.util.HtmlReportGenerator;
 public class Engine {
 	public static List<DependencyModel> dependencies;
 
-	public static EngineLogger logger=new Slf4jEngineLogger();
+	public static EngineLogger logger = new Slf4jEngineLogger();
 
 	public static EngineMode analysisMode;
 
@@ -47,13 +47,13 @@ public class Engine {
 		Engine.thresholdValue = threshold;
 		return;
 	}
-	
+
 	/**
-     * Starts the analysis based on the given engine mode.
-     * 
-     * @param analyzeMode The mode to run (POM or MAVEN_PLUGIN)
-     * @param emitter Optional SSE emitter to stream progress back to client.
-     */
+	 * Starts the analysis based on the given engine mode.
+	 * 
+	 * @param analyzeMode The mode to run (POM or MAVEN_PLUGIN)
+	 * @param emitter     Optional SSE emitter to stream progress back to client.
+	 */
 	public static void analyze(EngineMode analyzeMode, SseEmitter emitter) {
 		Engine.analysisMode = analyzeMode;
 		if (analyzeMode == EngineMode.POM) {
@@ -63,11 +63,11 @@ public class Engine {
 		}
 
 	}
-	
-	 /**
-     * Legacy version of POM analysis without live progress updates.
-     * Deprecated and replaced by analyzePom(SseEmitter).
-     */	
+
+	/**
+	 * Legacy version of POM analysis without live progress updates. Deprecated and
+	 * replaced by analyzePom(SseEmitter).
+	 */
 	@Deprecated
 	private static void analyzePom() {
 		GAVAnalyzer gavAnalyzer = new GAVAnalyzer();
@@ -112,55 +112,74 @@ public class Engine {
 		System.out.println("Unable to resolve CPE names for " + notResolvedCPEs + " dependencies.");
 		notResolvedCPEnames.forEach(System.out::println);
 	}
-	
+
 	/**
 	 * Performs vulnerability analysis in POM (Project Object Model) mode.
 	 * 
-	 * <p>This method is responsible for:</p>
+	 * <p>
+	 * This method is responsible for:
+	 * </p>
 	 * <ul>
-	 *  <li>Extracting all project dependencies using the Maven tree.</li>
-	 *  <li>Generating GAV (Group, Artifact, Version) evidence for each dependency.</li>
-	 *  <li>Normalizing CPE (Common Platform Enumeration) evidence to identify software products.</li>
-	 *  <li>Querying the NVD (National Vulnerability Database) API to fetch known vulnerabilities for each CPE.</li>
-	 *  </ul>
+	 * <li>Extracting all project dependencies using the Maven tree.</li>
+	 * <li>Generating GAV (Group, Artifact, Version) evidence for each
+	 * dependency.</li>
+	 * <li>Normalizing CPE (Common Platform Enumeration) evidence to identify
+	 * software products.</li>
+	 * <li>Querying the NVD (National Vulnerability Database) API to fetch known
+	 * vulnerabilities for each CPE.</li>
+	 * </ul>
 	 * 
-	 * <p>Additionally, this method uses Server-Sent Events (SSE) to provide real-time progress
-	 * updates to the frontend, which is useful for long-running operations.</p>
+	 * <p>
+	 * Additionally, this method uses Server-Sent Events (SSE) to provide real-time
+	 * progress updates to the frontend, which is useful for long-running
+	 * operations.
+	 * </p>
 	 * 
-	 * <p>Progress messages are sent as JSON every few dependencies processed, containing:</p>
+	 * <p>
+	 * Progress messages are sent as JSON every few dependencies processed,
+	 * containing:
+	 * </p>
 	 * <ul>
-	 *  <li>fetchedDependencies: The number of dependencies processed so far.</li>
-	 *  <li>totalDependencies: The total number of dependencies to process.</li>
-	 *  </ul>
+	 * <li>fetchedDependencies: The number of dependencies processed so far.</li>
+	 * <li>totalDependencies: The total number of dependencies to process.</li>
+	 * </ul>
 	 *
-	 * <p>Example JSON emitted: {"fetchedDependencies": 12, "totalDependencies": 36}</p>
+	 * <p>
+	 * Example JSON emitted: {"fetchedDependencies": 12, "totalDependencies": 36}
+	 * </p>
 	 * 
-	 * <p>This is useful in a web UI context where the client can display live progress to the user.</p>
+	 * <p>
+	 * This is useful in a web UI context where the client can display live progress
+	 * to the user.
+	 * </p>
 	 * 
-	 * @param emitter SSE emitter used to send real-time progress messages to the frontend
+	 * @param emitter SSE emitter used to send real-time progress messages to the
+	 *                frontend
 	 */
 	private static void analyzePom(SseEmitter emitter) {
 		GAVAnalyzer gavAnalyzer = new GAVAnalyzer();
 		CPEEvidencesNormalizer normalizer = new CPEEvidencesNormalizer();
 		CveClient cveClient = new CveClient();
 		int dependencyCount = 0;
-		//invoke analyzer to fetch the project dependencies from Maven tree.
+		// invoke analyzer to fetch the project dependencies from Maven tree.
 		dependencies = gavAnalyzer.fetchProjectDependenciesFromMavenTree();
 		gavAnalyzer.collectGAVEvidencesFromDependencyName(dependencies);
-		//invoke normalizer to normalize the collected evidence to corresponding resolved value from dependency hints database.
+		// invoke normalizer to normalize the collected evidence to corresponding
+		// resolved value from dependency hints database.
 		normalizer.normalizeDependencyEvidences(dependencies);
-		//iterate through dependencies and fetch vulnerabilities by invoking NVD api.
+		// iterate through dependencies and fetch vulnerabilities by invoking NVD api.
 		for (DependencyModel dep : dependencies) {
 			cveClient.fetchVulnerabilitiesForDependency(dep);
 			dependencyCount++;
-			//For evry 6 dependencies wait for 1.5 seconds to avoid API rate limiting issue.
+			// For evry 6 dependencies wait for 1.5 seconds to avoid API rate limiting
+			// issue.
 			if (dependencyCount % 6 == 0 || dependencyCount == dependencies.size()) {
 				try {
 
 					String message = String.format("{\"fetchedDependencies\": %d, \"totalDependencies\": %d }",
 							dependencyCount, dependencies.size());
 					logger.info(message);
-					//send progress message as emitter event
+					// send progress message as emitter event
 					emitter.send(SseEmitter.event().data(message));
 					Thread.sleep(1500);
 				} catch (InterruptedException e) {
@@ -179,17 +198,17 @@ public class Engine {
 			}
 		}
 	}
-	
+
 	/**
 	 * Analyzes dependencies when run as a Maven plugin.
 	 * <p>
 	 * Steps performed:
 	 * </p>
 	 * <ul>
-	 *   <li>Collect GAV (Group, Artifact, Version) evidences from dependencies.</li>
-	 *   <li>Extract evidences from JAR files.</li>
-	 *   <li>Normalize evidences into CPE names.</li>
-	 *   <li>Fetch vulnerabilities for dependencies with resolved CPEs.</li>
+	 * <li>Collect GAV (Group, Artifact, Version) evidences from dependencies.</li>
+	 * <li>Extract evidences from JAR files.</li>
+	 * <li>Normalize evidences into CPE names.</li>
+	 * <li>Fetch vulnerabilities for dependencies with resolved CPEs.</li>
 	 * </ul>
 	 * <p>
 	 * Requires an internet connection to access the NVD API.
@@ -200,24 +219,26 @@ public class Engine {
 		GAVAnalyzer gavAnalyser = new GAVAnalyzer();
 		CveClient cveClient = new CveClient();
 		int dependencyCount = 0;
-		//Invoke GAV analyser to collect GAV evidences from Dependency name
+		// Invoke GAV analyser to collect GAV evidences from Dependency name
 		gavAnalyser.collectGAVEvidencesFromDependencyName(dependencies);
-		//invoke Jar analyzer to collect manifest evidences from jar file
+		// invoke Jar analyzer to collect manifest evidences from jar file
 		jarAnalyzer.collectEvidencesFromJar(dependencies);
 
 		CPEEvidencesNormalizer normalizer = new CPEEvidencesNormalizer();
 		logger.info("Resolving evidences to CPE names.......");
-		//invoke normalizer to normalize dependency evidences to resolved value using hints database
+		// invoke normalizer to normalize dependency evidences to resolved value using
+		// hints database
 		normalizer.normalizeDependencyEvidences(dependencies);
 		logger.info(
 				"Fetching vulnerability details for the dependencies from the NVD api(This step requires Internet connection!!)");
-		//iterate through dependencies and fetch vulnerabilities by invoking NVD api.
+		// iterate through dependencies and fetch vulnerabilities by invoking NVD api.
 		for (DependencyModel dep : dependencies) {
 			if (dep.getCpeEnumeration() != null) {
 				dependencyCount++;
 				cveClient.fetchVulnerabilitiesForDependency(dep);
 			}
-			//For every 6 dependencies wait for 1.5 seconds to avoid API rate limiting issue.
+			// For every 6 dependencies wait for 1.5 seconds to avoid API rate limiting
+			// issue.
 			if (dependencyCount % 6 == 0) {
 				try {
 					logger.info("Fetched vulnerabilities for " + dependencyCount + " out of " + dependencies.size()
@@ -229,10 +250,11 @@ public class Engine {
 			}
 		}
 	}
-	
+
 	/**
-     * Generates an HTML report of all analyzed dependencies and their vulnerabilities.
-     */
+	 * Generates an HTML report of all analyzed dependencies and their
+	 * vulnerabilities.
+	 */
 	public static void GenerateReport() {
 		logger.info("Generating dependencies vulnerability report....");
 		File reportFile = new File("target/");
@@ -245,10 +267,11 @@ public class Engine {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
-	 * Performs a fuzzy search for likely CPEs for dependencies that have no vulnerabilities.
-	 * This is useful when the CPE could not be resolved or when no vulnerabilities were found.
+	 * Performs a fuzzy search for likely CPEs for dependencies that have no
+	 * vulnerabilities. This is useful when the CPE could not be resolved or when no
+	 * vulnerabilities were found.
 	 */
 	public static void doFuzzySearchAndGetLikelyCpes() {
 		for (DependencyModel dep : dependencies) {
@@ -257,7 +280,7 @@ public class Engine {
 						+ " Doing fuzzy search to find likely CPEs!!");
 				FuzzySearchTool fuzzySearchTool = new FuzzySearchTool();
 				try {
-					//invoke the fuzzy search tool and search for likely CPEs.
+					// invoke the fuzzy search tool and search for likely CPEs.
 					fuzzySearchTool.searchForLikelyCpes(dep);
 				} catch (SQLException e) {
 					// e.printStackTrace();
@@ -265,16 +288,19 @@ public class Engine {
 			}
 		}
 	}
-	
+
 	/**
-	 * Checks if any dependencies have vulnerabilities with a CVSS base score above the threshold value.
+	 * Checks if any dependencies have vulnerabilities with a CVSS base score above
+	 * the threshold value.
 	 * 
-	 * @return true if any dependency has a vulnerability with a base score above the threshold, false otherwise
+	 * @return true if any dependency has a vulnerability with a base score above
+	 *         the threshold, false otherwise
 	 */
 	public static boolean checkForVulnerabilityForDependencies() {
 		logger.info("Checking dependencies vulnerabilities with base score threshold value of " + thresholdValue);
 		boolean isThresholdExceeded = false;
-		//Iterate through the dependencies and check for vulnerabilities with score greater than the threshold value.
+		// Iterate through the dependencies and check for vulnerabilities with score
+		// greater than the threshold value.
 		for (DependencyModel dep : dependencies) {
 			if (dep.getVulnerabilities().size() > 0) {
 				logger.error("Found " + dep.getVulnerabilities().size() + " vulnerabilities for dependency:"
@@ -282,7 +308,7 @@ public class Engine {
 				for (VulnerabilityDetailsModel vulnerabilities : dep.getVulnerabilities()) {
 					logger.info(vulnerabilities.getCveId());
 					for (VulnerabilityCvssMetricsModel cvssMetrics : vulnerabilities.getCvssMetrics()) {
-						//FIXME: check whether these else conditions are needed
+						// FIXME: check whether these else conditions are needed
 						if (cvssMetrics.getBaseScore() >= thresholdValue) {
 							/*
 							 * getMavenLog().info(""); getMavenLog().
@@ -313,34 +339,61 @@ public class Engine {
 		 */
 		return isThresholdExceeded;
 	}
-	public static void readAndAnalyzeUploadedPomFile(MultipartFile file,SseEmitter emitter) {
+
+	public static void readAndAnalyzeUploadedPomFile(MultipartFile file, SseEmitter emitter) {
 		PomFileReader pomReader = new PomFileReader();
 		GAVAnalyzer gavAnalyzer = new GAVAnalyzer();
 		CPEEvidencesNormalizer normalizer = new CPEEvidencesNormalizer();
-		CveClient cveClient = new CveClient();
-		int dependencyCount = 0;
 		try {
 			dependencies = pomReader.analyzePomFile(file);
 			gavAnalyzer.collectGAVEvidencesFromDependencyName(dependencies);
-			//invoke normalizer to normalize the collected evidence to corresponding resolved value from dependency hints database.
+			// invoke normalizer to normalize the collected evidence to corresponding
+			// resolved value from dependency hints database.
 			normalizer.normalizeDependencyEvidences(dependencies);
-			//iterate through dependencies and fetch vulnerabilities by invoking NVD api.
+			fetchVulnerabilities(emitter);
+			doFuzzySearchAndGetLikelyCpes();
+		} catch (IOException | XmlPullParserException e) {
+			logger.info("Error reading and analyzing the uploaded pom file!!");
+			e.printStackTrace();
+		}
+	}
+	
+	public static void readAndAnalyzeUploadedNodePackageFile(String packageJsonFile,String packageLockJsonFile,SseEmitter emitter) {
+		NodePackageReader nodePackageReader = new NodePackageReader();
+		try {
+			dependencies = nodePackageReader.analyze(packageJsonFile, packageLockJsonFile);
+			fetchVulnerabilities(emitter);
+			doFuzzySearchAndGetLikelyCpes();
+		}catch (Exception e) {
+			e.printStackTrace();
+			logger.info("Error while reading and analysing uploaded node package file!!");
+		}
+	}
+
+	public static void fetchVulnerabilities(SseEmitter emitter) {
+		CveClient cveClient = new CveClient();
+		int dependencyCount = 0;
+		try {
+			// iterate through dependencies and fetch vulnerabilities by invoking NVD api.
 			for (DependencyModel dep : dependencies) {
 				cveClient.fetchVulnerabilitiesForDependency(dep);
 				dependencyCount++;
-				//For evry 6 dependencies wait for 1.5 seconds to avoid API rate limiting issue.
+				// For evry 6 dependencies wait for 1.5 seconds to avoid API rate limiting
+				// issue.
 				if (dependencyCount % 6 == 0 || dependencyCount == dependencies.size()) {
 					try {
 
 						String message = String.format("{\"fetchedDependencies\": %d, \"totalDependencies\": %d }",
 								dependencyCount, dependencies.size());
 						logger.info(message);
-						//send progress message as emitter event
-						emitter.send(SseEmitter.event().data(message));
+						if(emitter!=null) {
+							// send progress message as emitter event
+							emitter.send(SseEmitter.event().data(message));
+						}
 						Thread.sleep(1500);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
-					} 
+					}
 				}
 			}
 			for (DependencyModel dep : dependencies) {
@@ -351,10 +404,10 @@ public class Engine {
 					logger.info("No vulnerabilities found for dependency: " + dep.getDependencyName());
 				}
 			}
-			doFuzzySearchAndGetLikelyCpes();
-		} catch (IOException | XmlPullParserException e) {
-			logger.info("Error reading and analyzing the uploaded pom file!!");
+		} catch (Exception  e) {
+			logger.info("Error fetching vulnerability from NVD Api!!");
 			e.printStackTrace();
 		}
+
 	}
 }

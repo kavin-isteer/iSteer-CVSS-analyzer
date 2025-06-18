@@ -1,5 +1,7 @@
 package com.isteer.cvssanalyzer.api.controller;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -191,6 +193,13 @@ public class CvssController {
 		return new ResponseEntity<>(responseMessage, HttpStatus.OK);
 	}
 
+	/**
+	 * Extract dependencies for the uploaded POM file and do vulnerability analysis. This method returns event emitter as response, which emits
+	 * the status of the analysis
+	 * 
+	 * @param file pom.xml file for which the dependency vulnerability analysis need to be done.
+	 * @return event emitter which emitts the event of no of dependencies analysed.
+	 */
 	@PostMapping("/upload/pom")
 	public SseEmitter uploadPomFileForAnalysis(@RequestParam("file") MultipartFile file) {
 		SseEmitter emitter = new SseEmitter(0L);
@@ -200,5 +209,38 @@ public class CvssController {
 			emitter.complete();
 		}}).start();
 		return emitter;
+	}
+	
+	@PostMapping("/upload/nodePackage")
+	public SseEmitter uploadNodePackageFileForAnalysis(
+			@RequestParam(value="packageJson", required=false) MultipartFile packageJsonFile,
+			@RequestParam(value="packageLockJson", required=false) MultipartFile packageLockJsonFile) throws IOException {
+		
+		 final String packageJsonContents;
+		    final String packageLockJsonContents;
+
+		    if (packageJsonFile != null && !packageJsonFile.isEmpty()) {
+		        packageJsonContents = new String(packageJsonFile.getBytes(), StandardCharsets.UTF_8);
+		    } else {
+		        packageJsonContents = null;
+		    }
+
+		    if (packageLockJsonFile != null && !packageLockJsonFile.isEmpty()) {
+		        packageLockJsonContents = new String(packageLockJsonFile.getBytes(), StandardCharsets.UTF_8);
+		    } else {
+		        packageLockJsonContents = null;
+		    }
+
+		    SseEmitter emitter = new SseEmitter(0L);
+
+		    new Thread(() -> {
+		        try {
+		            Engine.readAndAnalyzeUploadedNodePackageFile(packageJsonContents, packageLockJsonContents, emitter);
+		        } finally {
+		            emitter.complete();
+		        }
+		    }).start();
+
+		    return emitter;
 	}
 }
