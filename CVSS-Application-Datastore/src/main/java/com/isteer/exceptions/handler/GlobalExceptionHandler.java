@@ -1,5 +1,6 @@
 package com.isteer.exceptions.handler;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.isteer.dto.ErrorMessageDto;
 import com.isteer.enums.CVSSEnum;
 import com.isteer.exception.BussinessException;
@@ -99,6 +100,15 @@ public class GlobalExceptionHandler {
                         StatusMessageUtil.getMessage(CVSSEnum.NULL_POINTER_EXCEPTION)),
                 HttpStatus.INTERNAL_SERVER_ERROR);
     }
+    
+    @ExceptionHandler(JsonMappingException.class)
+    public ResponseEntity<ErrorMessageDto> handleJsonMappingException(JsonMappingException ex) {
+		logger.error("JSON mapping error: {}", ex.getMessage());
+		return new ResponseEntity<>(
+				new ErrorMessageDto(CVSSEnum.COMPUTER_PAYLOAD_INVALID.getStatusCode(),
+						StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_PAYLOAD_INVALID)),
+				HttpStatus.BAD_REQUEST);
+	}
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorMessageDto> handleGeneralException(Exception ex) {

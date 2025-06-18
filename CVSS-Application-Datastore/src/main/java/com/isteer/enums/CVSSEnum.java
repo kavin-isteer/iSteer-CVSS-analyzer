@@ -45,7 +45,8 @@ public enum CVSSEnum {
     NULL_POINTER_EXCEPTION(5011, "null.pointer.exception"),
     INVALID_SQL_SYNTAX(5012, "invalid.sql.syntax"),
     ILLEGAL_ARGUMENT(5013, "illegal.argument.exception"),
-    Internal_Server_Error(9000, "internal.error");
+    Internal_Server_Error(9000, "internal.error"), 
+    INVALID_DATE_FORMAT(5014, "invalid.date.format"),;
 
     private final int statusCode;
     private final String messageKey;

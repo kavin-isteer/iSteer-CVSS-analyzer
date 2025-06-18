@@ -96,7 +96,7 @@ public class ComputerService implements ComputerServiceDao {
 	            computer = new Computer();
 	            computer.setUuid(UUIDUtil.generateUUID());
 	            computer.setDeviceId(payload.getDeviceId());
-	            computer.setHostname(payload.getMachineName());
+	            computer.setMachineName(payload.getMachineName());
 	            computer.setIpAddress(payload.getIpAddress());
 	            computer.setOsVersion(payload.getOsVersion());
 	            computer.setAntivirusStatus(payload.getAntivirusStatus());
@@ -128,7 +128,7 @@ public class ComputerService implements ComputerServiceDao {
 	    }
 
 	    private boolean isComputerUnchanged(Computer computer, ComputerPayloadDTO payload) {
-	        return computer.getHostname().equals(payload.getMachineName()) &&
+	        return computer.getMachineName().equals(payload.getMachineName()) &&
 	               computer.getIpAddress().equals(payload.getIpAddress()) &&
 	               computer.getOsVersion().equals(payload.getOsVersion()) &&
 	               (computer.getAntivirusStatus() == null ? payload.getAntivirusStatus() == null : computer.getAntivirusStatus().equals(payload.getAntivirusStatus())) &&
@@ -139,7 +139,7 @@ public class ComputerService implements ComputerServiceDao {
 	    }
 
 	    private void updateComputerDetails(Computer computer, ComputerPayloadDTO payload) {
-	        computer.setHostname(payload.getMachineName());
+	        computer.setMachineName(payload.getMachineName());
 	        computer.setIpAddress(payload.getIpAddress());
 	        computer.setOsVersion(payload.getOsVersion());
 	        computer.setAntivirusStatus(payload.getAntivirusStatus());

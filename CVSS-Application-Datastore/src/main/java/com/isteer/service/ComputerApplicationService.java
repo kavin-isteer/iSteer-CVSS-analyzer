@@ -1,6 +1,7 @@
 package com.isteer.service;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -26,13 +27,20 @@ public class ComputerApplicationService implements ComputerApplicationServiceDao
 	    public int createComputerApplication(String computerUuid, String applicationUuid, LocalDateTime installedDate) {
 	        logger.debug("Processing mapping for computer UUID: {} and application UUID: {}", computerUuid, applicationUuid);
 
+
+	        // Use null if installedDate is null
+	        LocalDateTime effectiveInstalledDate = installedDate != null ? installedDate : null;
+	        logger.debug("Effective installedDate: {}", effectiveInstalledDate);
+
+	        
 	        // Check for existing active mapping
 	        Optional<ComputerApplication> existingMapping = computerApplicationRepository.findByComputerAndApplicationUuid(computerUuid, applicationUuid);
 	        if (existingMapping.isPresent() && !existingMapping.get().isDeleted()) {
 	            ComputerApplication mapping = existingMapping.get();
 	            // Update existing mapping if installed_date changed
-	            if (!mapping.getInstalledDate().equals(installedDate)) {
-	                mapping.setInstalledDate(installedDate);
+	            // Compare installedDate safely
+	            if (!Objects.equals(mapping.getInstalledDate(), installedDate)) {
+	                mapping.setInstalledDate(installedDate); // Store null if installedDate is null
 	                mapping.setUpdatedAt(LocalDateTime.now());
 	                int result = computerApplicationRepository.update(mapping);
 	                if (result != 1) {

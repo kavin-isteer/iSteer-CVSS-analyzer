@@ -12,7 +12,7 @@ public class ComputerRowMapper implements RowMapper<Computer> {
         computer.setId(rs.getLong("id"));
         computer.setUuid(rs.getString("uuid"));
         computer.setDeviceId(rs.getString("device_id"));
-        computer.setHostname(rs.getString("hostname"));
+        computer.setMachineName(rs.getString("hostname"));
         computer.setIpAddress(rs.getString("ip_address"));
         computer.setOsVersion(rs.getString("os_version"));
         computer.setAntivirusStatus(rs.getString("antivirus_status"));

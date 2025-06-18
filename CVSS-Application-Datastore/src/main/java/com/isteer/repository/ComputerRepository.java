@@ -30,7 +30,7 @@ public class ComputerRepository implements ComputerRepositoryDao {
 	        MapSqlParameterSource params = new MapSqlParameterSource()
 	                .addValue("uuid", computer.getUuid())
 	                .addValue("deviceId", computer.getDeviceId())
-	                .addValue("hostname", computer.getHostname())
+	                .addValue("hostname", computer.getMachineName())
 	                .addValue("ipAddress", computer.getIpAddress())
 	                .addValue("osVersion", computer.getOsVersion())
 	                .addValue("antivirusStatus", computer.getAntivirusStatus())
@@ -53,7 +53,7 @@ public class ComputerRepository implements ComputerRepositoryDao {
 	                "WHERE uuid = :uuid AND is_deleted = false";
 	        MapSqlParameterSource params = new MapSqlParameterSource()
 	                .addValue("uuid", computer.getUuid())
-	                .addValue("hostname", computer.getHostname())
+	                .addValue("hostname", computer.getMachineName())
 	                .addValue("ipAddress", computer.getIpAddress())
 	                .addValue("osVersion", computer.getOsVersion())
 	                .addValue("antivirusStatus", computer.getAntivirusStatus())
