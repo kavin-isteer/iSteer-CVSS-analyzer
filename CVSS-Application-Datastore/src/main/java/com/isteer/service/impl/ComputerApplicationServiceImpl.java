@@ -1,11 +1,11 @@
-package com.isteer.service.dao;
+package com.isteer.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 import com.isteer.entity.ComputerApplication;
 
-public interface ComputerApplicationServiceDao {
+public interface ComputerApplicationServiceImpl {
   
 
 	int createComputerApplication(String computerUuid, String applicationUuid, LocalDateTime installedDate);

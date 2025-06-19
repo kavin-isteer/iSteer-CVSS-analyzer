@@ -3,14 +3,16 @@ package com.isteer.service;
 import com.isteer.entity.Application;
 import com.isteer.entity.Computer;
 import com.isteer.entity.ComputerApplication;
+import com.isteer.dto.ComputerDetailsResponseDTO;
 import com.isteer.dto.ComputerPayloadDTO;
 import com.isteer.enums.CVSSEnum;
 import com.isteer.exception.BussinessException;
 import com.isteer.repository.dao.ApplicationRepositoryDao;
 import com.isteer.repository.dao.ComputerApplicationRepositoryDao;
 import com.isteer.repository.dao.ComputerRepositoryDao;
-import com.isteer.service.dao.ApplicationServiceDao;
-import com.isteer.service.dao.ComputerServiceDao;
+import com.isteer.repository.dao.VulnerabilityRepositoryDao;
+import com.isteer.service.impl.ApplicationServiceImpl;
+import com.isteer.service.impl.ComputerServiceImpl;
 import com.isteer.util.UUIDUtil;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
@@ -27,7 +29,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-public class ComputerService implements ComputerServiceDao {
+public class ComputerService implements ComputerServiceImpl {
 	 private static final Logger logger = LoggerFactory.getLogger(ComputerService.class);
 
 	    @Autowired
@@ -37,10 +39,13 @@ public class ComputerService implements ComputerServiceDao {
 	    private ApplicationRepositoryDao applicationRepository;
 
 	    @Autowired
-	    private ApplicationServiceDao applicationService;
+	    private ApplicationServiceImpl applicationService;
 
 	    @Autowired
 	    private ComputerApplicationRepositoryDao computerApplicationRepository;
+	    
+	    @Autowired
+	    private VulnerabilityRepositoryDao vulnerabilityRepository;
 
 	    @Autowired
 	    private Validator validator;
@@ -56,6 +61,8 @@ public class ComputerService implements ComputerServiceDao {
 	        }
 
 	        Optional<Computer> existingComputer = computerRepository.findByDeviceIdAndIsDeletedFalse(payload.getDeviceId());
+	        boolean isComputerUpdated = false;
+	        boolean isApplicationsUpdated = false;
 	        Computer computer;
 	        boolean isUpdate = existingComputer.isPresent();
 
@@ -68,11 +75,12 @@ public class ComputerService implements ComputerServiceDao {
 	                updateComputerDetails(computer, payload);
 	                if (computerRepository.update(computer) != 1) {
 	                    logger.error("Failed to update computer with UUID: {}", computer.getUuid());
-	                    return -5; // Internal error
 	                }
+	                else {
+	                	isComputerUpdated = true;
 	                logger.info("Updated computer with UUID: {}", computer.getUuid());
 	            }
-
+	            }
 	            // Process application mappings
 	            List<ComputerApplication> currentMappings = computerApplicationRepository.findByComputerUuid(computer.getUuid());
 	            Set<String> newAppKeys = payload.getInstalledSoftware().stream()
@@ -110,7 +118,6 @@ public class ComputerService implements ComputerServiceDao {
 
 	            if (computerRepository.save(computer) != 1) {
 	                logger.error("Failed to save new computer with UUID: {}", computer.getUuid());
-	                return -5; // Internal error
 	            }
 	            logger.info("Created new computer with UUID: {}", computer.getUuid());
 	        }
@@ -118,13 +125,27 @@ public class ComputerService implements ComputerServiceDao {
 	        Set<Integer> appStatuses = payload.getInstalledSoftware().stream()
 	                .map(software -> applicationService.createOrUpdateApplication(software, computer.getUuid()))
 	                .collect(Collectors.toSet());
-
-	        if (appStatuses.contains(-5)) {
-	            logger.error("Internal error processing applications for computer UUID: {}", computer.getUuid());
-	            return -5; // Internal error
+	        	  isApplicationsUpdated = true;
+	            logger.info("Processed applications for computer UUID: {}", computer.getUuid());
+	            if (appStatuses.contains(-1)) {
+	                logger.error("Error processing applications for computer UUID: {}", computer.getUuid());
+	                return -4; // Error in application processing
+	            }
+	    
+	        if (!existingComputer.isPresent()) {
+	           return 1; // New computer created successfully
+	        } else if (isComputerUpdated && isApplicationsUpdated) {
+	           return 2; // Computer and applications updated successfully
+	        } else if (isComputerUpdated) {
+	          return 3; // Only computer updated successfully
+	        } else if (isApplicationsUpdated) {
+	          return 4; // Only applications updated successfully
+	        } else {
+	            logger.debug("No changes detected for computer with UUID: {}", computer.getUuid());
+	            return 0; // No changes made
 	        }
 
-	        return isUpdate ? 2 : 1; // 2 for update success, 1 for create success
+//	        return isUpdate ? 2 : 1; // 2 for update success, 1 for create success
 	    }
 
 	    private boolean isComputerUnchanged(Computer computer, ComputerPayloadDTO payload) {
@@ -166,5 +187,23 @@ public class ComputerService implements ComputerServiceDao {
 	    public List<Computer> getAllComputers() {
 	        logger.info("Fetching all computers");
 	        return computerRepository.findAllComputers();
+	    }
+	    
+	    @Override
+	    public ComputerDetailsResponseDTO getComputerDetailsByUuid(String uuid) {
+	        logger.info("Fetching computer details with UUID: {}", uuid);
+	        Computer computer = getComputerByUuid(uuid);
+	        List<Application> applications = applicationService.getApplicationsByComputerUuid(uuid);
+	        
+	        for (Application app : applications) {
+	            app.setVulnerabilities(vulnerabilityRepository.findByApplicationUuid(app.getUuid()));
+	        }
+
+	        ComputerDetailsResponseDTO response = new ComputerDetailsResponseDTO();
+	        response.setComputer(computer);
+	        response.setApplications(applications);
+
+	        logger.info("Returning computer details with UUID: {} and {} applications", uuid, applications.size());
+	        return response;
 	    }
 }

@@ -18,12 +18,12 @@ import com.isteer.enums.CVSSEnum;
 import com.isteer.exception.BussinessException;
 import com.isteer.repository.dao.ApplicationRepositoryDao;
 import com.isteer.repository.dao.ComputerApplicationRepositoryDao;
-import com.isteer.service.dao.ApplicationServiceDao;
-import com.isteer.service.dao.ComputerApplicationServiceDao;
+import com.isteer.service.impl.ApplicationServiceImpl;
+import com.isteer.service.impl.ComputerApplicationServiceImpl;
 import com.isteer.util.UUIDUtil;
 
 @Service
-public class ApplicationService implements ApplicationServiceDao {
+public class ApplicationService implements ApplicationServiceImpl {
 	private static final Logger logger = LoggerFactory.getLogger(ApplicationService.class);
 
 	@Autowired
@@ -33,7 +33,7 @@ public class ApplicationService implements ApplicationServiceDao {
 	private ComputerApplicationRepositoryDao computerApplicationRepository;
 
 	@Autowired
-	private ComputerApplicationServiceDao computerApplicationService;
+	private ComputerApplicationServiceImpl computerApplicationService;
 
 	@Transactional
 	@Override
@@ -48,9 +48,12 @@ public class ApplicationService implements ApplicationServiceDao {
 		// Check for existing application (including soft-deleted mappings)
 		Optional<Application> existingApp = applicationRepository.findByNameVersionVendor(software.getName(),
 				version, vendorName);
+		logger.debug("Checking for existing application with name: {}, version: {}, vendor: {}", software.getName(),
+				version, vendorName);
 		Application application;
 
 		if (existingApp.isPresent()) {
+			
 			application = existingApp.get();
 			logger.debug("Reusing existing application with UUID: {}", application.getUuid());
 
@@ -92,7 +95,7 @@ public class ApplicationService implements ApplicationServiceDao {
 
 			if (applicationRepository.save(application) != 1) {
 				logger.error("Failed to save application with UUID: {}", application.getUuid());
-				return -5; // Internal error
+				return -1; // Internal error
 			}
 			logger.info("Created new application with UUID: {}", application.getUuid());
 

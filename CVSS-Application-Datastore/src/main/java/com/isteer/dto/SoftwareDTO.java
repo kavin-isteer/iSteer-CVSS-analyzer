@@ -28,8 +28,9 @@ public  class SoftwareDTO {
 //        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         @JsonProperty("InstalledDate")
         @JsonDeserialize(using = CustomLocalDateTimeDeserializer.class)
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
         private LocalDateTime installedDate;
-        
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
         private LocalDateTime createdAt;
 
 		public String getName() {
