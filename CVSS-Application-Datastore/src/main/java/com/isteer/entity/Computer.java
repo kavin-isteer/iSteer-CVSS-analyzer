@@ -2,6 +2,8 @@ package com.isteer.entity;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import jakarta.validation.constraints.NotBlank;
 
 public class Computer {
@@ -35,13 +37,16 @@ public class Computer {
 	@NotBlank(message = "Logged-in user cannot be blank")
 //	@Size(max = 100, message = "Logged-in user must be at most 100 characters")
 	private String loggedInUser;
-
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime lastUpdateCheck;
 	@NotBlank(message = "Timestamp cannot be blank")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime timestamp;
 	private boolean isDeleted;
 	private boolean isActive;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime createdAt;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime updatedAt;
 
 	public Long getId() {

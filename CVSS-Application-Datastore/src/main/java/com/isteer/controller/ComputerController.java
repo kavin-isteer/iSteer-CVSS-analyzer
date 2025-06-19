@@ -16,14 +16,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.isteer.dto.ComputerDetailsResponseDTO;
 import com.isteer.dto.ComputerPayloadDTO;
 import com.isteer.dto.ErrorMessageDto;
 import com.isteer.dto.StatusMessageDto;
 import com.isteer.entity.Application;
 import com.isteer.entity.Computer;
 import com.isteer.enums.CVSSEnum;
-import com.isteer.service.dao.ApplicationServiceDao;
-import com.isteer.service.dao.ComputerServiceDao;
+import com.isteer.service.impl.ApplicationServiceImpl;
+import com.isteer.service.impl.ComputerServiceImpl;
 import com.isteer.util.StatusMessageUtil;
 
 import jakarta.validation.Valid;
@@ -35,10 +36,10 @@ public class ComputerController {
     private static final Logger logger = LoggerFactory.getLogger(ComputerController.class);
 
     @Autowired
-    private ComputerServiceDao computerService;
+    private ComputerServiceImpl computerService;
 
     @Autowired
-    private ApplicationServiceDao applicationService;
+    private ApplicationServiceImpl applicationService;
 
     @PostMapping("/computers")
     public ResponseEntity<?> createComputer(@Valid @RequestBody ComputerPayloadDTO payload) {
@@ -51,20 +52,37 @@ public class ComputerController {
                 return ResponseEntity.ok(new StatusMessageDto(CVSSEnum.COMPUTER_ADD.getStatusCode(),
                         StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_ADD)));
             case 2:
-                logger.info("Computer updated successfully");
-                return ResponseEntity.ok(new StatusMessageDto(CVSSEnum.COMPUTER_UPDATE.getStatusCode(),
-                        StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_UPDATE)));
+                logger.info("Computer and applications updated successfully");
+                return ResponseEntity.ok(new StatusMessageDto(CVSSEnum.COMPUTER_APP_UPDATE.getStatusCode(),
+                        StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_APP_UPDATE)));
+                case 3:
+                	logger.info("Computer updated successfully");
+                	return ResponseEntity.ok(new StatusMessageDto(CVSSEnum.COMPUTER_UPDATE.getStatusCode(),
+						StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_UPDATE)));
+                	case 4:
+				logger.info("Applications updated successfully");
+				return ResponseEntity.ok(new StatusMessageDto(CVSSEnum.APPLICATION_UPDATE.getStatusCode(),
+						StatusMessageUtil.getMessage(CVSSEnum.APPLICATION_UPDATE)));
+							case 0:
+				logger.info("No changes made to the computer or applications");
+				return ResponseEntity.ok(new StatusMessageDto(CVSSEnum.NO_CHANGES.getStatusCode(),
+						StatusMessageUtil.getMessage(CVSSEnum.NO_CHANGES)));
             case -1:
                 logger.warn("Invalid payload received");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                         new ErrorMessageDto(CVSSEnum.COMPUTER_PAYLOAD_INVALID.getStatusCode(),
                                 StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_PAYLOAD_INVALID)));
             case -3:
-                logger.warn("Device ID already exists");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                        new ErrorMessageDto(CVSSEnum.COMPUTER_DEVICE_ID_EXISTS.getStatusCode(),
-                                StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_DEVICE_ID_EXISTS)));
-
+				logger.warn("Computer with deviceId already exists");
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+						new ErrorMessageDto(CVSSEnum.COMPUTER_DEVICE_ID_EXISTS.getStatusCode(),
+								StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_DEVICE_ID_EXISTS)));
+							case -4:
+				logger.warn("Error processing applications for computer");
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body( 
+						new ErrorMessageDto(CVSSEnum.COMPUTER_APPLICATION_EXISTS.getStatusCode(),	
+								StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_APPLICATION_EXISTS)));
+        
             default:
                 logger.error("Unexpected error during computer creation/update");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
@@ -81,18 +99,28 @@ public class ComputerController {
         return ResponseEntity.ok(computers);
     }
 
-    @GetMapping("/computers/{uuid}")
-    public ResponseEntity<Map<String, Object>> getComputer(
+//    @GetMapping("/computers/{uuid}")
+//    public ResponseEntity<Map<String, Object>> getComputer(
+//            @PathVariable @NotBlank(message = "UUID cannot be blank") String uuid) {
+//        logger.info("Received request to fetch computer with UUID: {}", uuid);
+//        Computer computer = computerService.getComputerByUuid(uuid);
+//        List<Application> applications = applicationService.getApplicationsByComputerUuid(uuid);
+//
+//        Map<String, Object> response = new HashMap<>();
+//        response.put("computer", computer);
+//        response.put("applications", applications);
+//
+//        logger.info("Returning computer with UUID: {} and {} applications", uuid, applications.size());
+//        return ResponseEntity.ok(response);
+//    }
+    
+
+    @GetMapping("computers/{uuid}")
+    public ResponseEntity<ComputerDetailsResponseDTO> getComputer(
             @PathVariable @NotBlank(message = "UUID cannot be blank") String uuid) {
         logger.info("Received request to fetch computer with UUID: {}", uuid);
-        Computer computer = computerService.getComputerByUuid(uuid);
-        List<Application> applications = applicationService.getApplicationsByComputerUuid(uuid);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("computer", computer);
-        response.put("applications", applications);
-
-        logger.info("Returning computer with UUID: {} and {} applications", uuid, applications.size());
+        ComputerDetailsResponseDTO response = computerService.getComputerDetailsByUuid(uuid);
+        logger.info("Returning computer with UUID: {} and {} applications", uuid, response.getApplications().size());
         return ResponseEntity.ok(response);
     }
 

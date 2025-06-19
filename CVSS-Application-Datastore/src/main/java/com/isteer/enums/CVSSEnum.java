@@ -4,6 +4,7 @@ public enum CVSSEnum {
     // Computer-related operations
     COMPUTER_ADD(2000, "computer.add"),
     COMPUTER_UPDATE(2002, "computer.update"),
+    COMPUTER_APP_UPDATE(2006, "computer.application.update"),
     COMPUTER_DELETE(2003, "computer.delete"),
     COMPUTER_NOT_FOUND(2004, "computer.notfound"),
     COMPUTER_UUID_EMPTY(2007, "computer.uuid.empty"),
@@ -46,7 +47,8 @@ public enum CVSSEnum {
     INVALID_SQL_SYNTAX(5012, "invalid.sql.syntax"),
     ILLEGAL_ARGUMENT(5013, "illegal.argument.exception"),
     Internal_Server_Error(9000, "internal.error"), 
-    INVALID_DATE_FORMAT(5014, "invalid.date.format"),;
+    INVALID_DATE_FORMAT(5014, "invalid.date.format"), 
+    NO_CHANGES(2033, "no.changes.detected");
 
     private final int statusCode;
     private final String messageKey;

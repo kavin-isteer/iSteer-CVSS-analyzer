@@ -12,11 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.isteer.entity.ComputerApplication;
 import com.isteer.repository.dao.ComputerApplicationRepositoryDao;
-import com.isteer.service.dao.ComputerApplicationServiceDao;
+import com.isteer.service.impl.ComputerApplicationServiceImpl;
 import com.isteer.util.UUIDUtil;
 
 @Service
-public class ComputerApplicationService implements ComputerApplicationServiceDao {
+public class ComputerApplicationService implements ComputerApplicationServiceImpl {
 	 private static final Logger logger = LoggerFactory.getLogger(ComputerApplicationService.class);
 
 	    @Autowired
