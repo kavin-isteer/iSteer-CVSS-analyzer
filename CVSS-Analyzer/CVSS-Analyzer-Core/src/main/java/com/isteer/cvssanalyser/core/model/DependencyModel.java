@@ -69,4 +69,12 @@ public class DependencyModel {
 	public void setArtifact(Artifact artifact) {
 		this.artifact = artifact;
 	}
+	@Override
+	public String toString() {
+		return "DependencyModel [dependencyName=" + dependencyName + ", artifact=" + artifact + ", vendorEvidences="
+				+ vendorEvidences + ", productEvidences=" + productEvidences + ", versionEvidences=" + versionEvidences
+				+ ", cpeEnumeration=" + cpeEnumeration + ", vulnerabilities=" + vulnerabilities + ", likelyCPEs="
+				+ likelyCPEs + "]";
+	}
+	
 }

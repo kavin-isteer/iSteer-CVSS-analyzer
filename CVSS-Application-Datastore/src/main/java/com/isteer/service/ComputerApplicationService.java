@@ -2,6 +2,7 @@ package com.isteer.service;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -12,8 +13,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.isteer.cvssanalyser.core.OsSoftwareAnalyzer;
+import com.isteer.cvssanalyser.core.OsSoftwareAnalyzerAndNormalizer;
+import com.isteer.cvssanalyser.core.cveclient.CveClient;
 import com.isteer.cvssanalyser.core.model.ApplicationModel;
+import com.isteer.cvssanalyser.core.model.DependencyModel;
 import com.isteer.entity.Application;
 import com.isteer.entity.ComputerApplication;
 import com.isteer.repository.dao.ComputerApplicationRepositoryDao;
@@ -120,8 +123,12 @@ public class ComputerApplicationService implements ComputerApplicationServiceImp
 				applications.setApplicationName(application.getName());
 				applications.setApplicationVendor(application.getVendorName());
 				applications.setApplicationVersion(application.getVersion());
-				logger.info("Calling the resloution method");
-				new OsSoftwareAnalyzer().resolveOsSoftwareNames(applications);
+//				logger.info("Calling the resloution method");
+				List<DependencyModel> normalizedApplications = new OsSoftwareAnalyzerAndNormalizer().resolveOsSoftwareNames(applications);
+				for( DependencyModel normalizedApplication : normalizedApplications) {
+					DependencyModel vuln = new CveClient().fetchVulnerabilitiesForDependency(normalizedApplication);
+					System.out.println(vuln);
+				}
 			}catch (SQLException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
