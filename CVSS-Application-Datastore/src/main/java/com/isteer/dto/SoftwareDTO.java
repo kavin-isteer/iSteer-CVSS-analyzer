@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.isteer.util.CustomLocalDateTimeDeserializer;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
 public  class SoftwareDTO {
 	
@@ -22,7 +21,7 @@ public  class SoftwareDTO {
 //        @NotBlank(message = "Vendor name cannot be blank")
 //        @Size(max = 100, message = "Vendor name must be at most 100 characters")
         @JsonProperty("VendorName")
-        private String vendorName;
+        private String vendorName;	
         
 //        @NotNull(message = "Installed date cannot be null")
 //        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")

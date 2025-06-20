@@ -3,8 +3,6 @@ package com.isteer.entity;
 import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
 public class ComputerApplication {
 	private Long id;
