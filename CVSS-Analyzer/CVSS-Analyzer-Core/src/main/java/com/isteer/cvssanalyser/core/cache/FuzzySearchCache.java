@@ -27,20 +27,21 @@ public class FuzzySearchCache {
 
     // Access cached data
     public static List<CpeEntryModel> getCachedWords() {
+    	Engine.logger.info("Fetching CPE entries from cache");
         return cachedCpeEntries.get();
     }
 
     // Optionally refresh manually or on a schedule
     public static void refreshCacheFromDb() {
         List<CpeEntryModel> freshData=new ArrayList<>();
-		try {
-			Engine.logger.info("Refreshing entries from db for cache.");
-			freshData = entriesDao.getAllCpeEntries(connection);
-			Engine.logger.info("In memory cache finished.");
-		} catch (SQLException e) {
-			e.printStackTrace();
-			Engine.logger.info("");
-		}
+        try {
+        	Engine.logger.info("Refreshing CPE entries cache from database");
+            freshData = entriesDao.getAllCpeEntries(connection);
+            Engine.logger.info("Fetched " + freshData.size() + " CPE entries from database");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Engine.logger.error("Error fetching CPE entries from database: " + e.getMessage());
+        }
         loadCache(freshData);
     }
 }

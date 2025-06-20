@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.text.similarity.JaroWinklerSimilarity;
 
+import com.isteer.cvssanalyser.core.cache.FuzzySearchCache;
 import com.isteer.cvssanalyser.core.dao.CPEEntriesDao;
 import com.isteer.cvssanalyser.core.enums.EvidenceType;
 import com.isteer.cvssanalyser.core.model.CPENameModel;
@@ -203,5 +204,49 @@ public class FuzzySearchTool {
 		JaroWinklerSimilarity jaroWinkler = new JaroWinklerSimilarity();
 		double similarity = jaroWinkler.apply(input1, input2);
 		return similarity;
+	}
+
+	public CpeEntryModel searchForCpeEntry(String vendor, String product) throws SQLException {
+		if (product == null || vendor == null) {
+			return null;
+		}
+		String[] numberOfWords = (product + " " + vendor).split("[\\s_]");
+		Double tempTotalSimilarity = 0.0d;
+		CpeEntryModel similarCpeEntry = null;
+		Double defaultSimilarity = 0.5d;
+		if (numberOfWords.length > 2 && numberOfWords.length <= 4) {
+			defaultSimilarity = 0.8d;
+		} else if (numberOfWords.length > 4 && numberOfWords.length <= 8) {
+			defaultSimilarity = 0.7d;
+		}
+
+		List<CpeEntryModel> cpeEntries = FuzzySearchCache.getCachedWords();
+
+		for (CpeEntryModel entry : cpeEntries) {
+			Double productSimilarity = JWMatch(normalizeNames(product), normalizeNames(entry.getProduct()));
+			Double vendorSimilarity = JWMatch(normalizeNames(vendor), normalizeNames(entry.getVendor()));
+			Double totalSimilarity = (productSimilarity + vendorSimilarity) / 2;
+			if (totalSimilarity.compareTo(defaultSimilarity) > 0) {
+				if (totalSimilarity.compareTo(tempTotalSimilarity) > 0) {
+					tempTotalSimilarity = totalSimilarity;
+					similarCpeEntry = entry;
+					if ((productSimilarity.compareTo(1.0d) > 0) && (vendorSimilarity.compareTo(1.0d) > 0)) {
+						// If the title or vendor similarity is greater than 0.9, then return the entry
+						return similarCpeEntry;
+					}
+				}
+			}
+		}
+		return similarCpeEntry;
+	}
+
+	public String normalizeNames(String name) {
+		// This method will normalize the product name by removing special characters
+		// and
+		// converting it to lowercase.
+		if (name == null || name.isEmpty()) {
+			return null;
+		}
+		return name.replaceAll("\\s*\\([^)]*\\)", "").replaceAll("[^a-zA-Z0-9\\s]", "").toLowerCase().trim();
 	}
 }
