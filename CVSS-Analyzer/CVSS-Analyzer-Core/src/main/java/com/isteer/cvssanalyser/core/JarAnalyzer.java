@@ -18,7 +18,6 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.logging.Log;
 
 import com.isteer.cvssanalyser.core.dao.DependencyHintDao;
 import com.isteer.cvssanalyser.core.enums.EvidenceType;

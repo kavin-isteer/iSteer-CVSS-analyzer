@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.util.regex.Pattern;
 
 import com.isteer.cvssanalyser.core.dao.DependencyHintDao;
+import com.isteer.cvssanalyser.core.enums.HintAddedBy;
 import com.isteer.cvssanalyser.core.model.DependencyHintModel;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
 import com.isteer.cvssanalyser.core.util.DbUtil;
@@ -41,6 +42,7 @@ public class DependencyHintService {
 		hintToSave.setConfidence("HIGH");
 		hintToSave.setDescription("Hint added through add hint api!");
 		hintToSave.setEvidenceType("GAV");
+		hintToSave.setAddedBy(HintAddedBy.CLIENT_USER);
 		int rows = hintDao.addDependencyHint(connection, hintToSave);
 		if(rows>0) {
 			hintToSave.setType("product");
@@ -49,6 +51,7 @@ public class DependencyHintService {
 			hintToSave.setConfidence("HIGH");
 			hintToSave.setDescription("Hint added through add hint api!");
 			hintToSave.setEvidenceType("GAV");
+			hintToSave.setAddedBy(HintAddedBy.CLIENT_USER);
 			rows = hintDao.addDependencyHint(connection, hintToSave);
 			if(rows>0) {
 				return 1;

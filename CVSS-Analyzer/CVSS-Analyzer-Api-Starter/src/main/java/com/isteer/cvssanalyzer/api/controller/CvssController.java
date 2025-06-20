@@ -8,6 +8,7 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +24,7 @@ import com.isteer.cvssanalyser.core.exception.NvdApiException;
 import com.isteer.cvssanalyser.core.logging.Slf4jEngineLogger;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
 import com.isteer.cvssanalyzer.api.service.CvssService;
+import com.isteer.cvssanalyzer.api.service.JobTrackerService;
 
 @RestController
 @RequestMapping("/cvss")
@@ -194,53 +196,58 @@ public class CvssController {
 	}
 
 	/**
-	 * Extract dependencies for the uploaded POM file and do vulnerability analysis. This method returns event emitter as response, which emits
-	 * the status of the analysis
+	 * Handles the upload of a file for dependency analysis based on the file type (e.g., Maven or Node).
+	 * <p>
+	 * This method accepts a multipart file and its type, processes it, and returns a unique job ID
+	 * if the analysis starts successfully. In case of errors or invalid file types, it returns an error message.
 	 * 
-	 * @param file pom.xml file for which the dependency vulnerability analysis need to be done.
-	 * @return event emitter which emitts the event of no of dependencies analysed.
+	 * @param fileType    the type of the uploaded file (e.g., "pom", "package.json", etc.). Required.
+	 * @param uploadedFile the multipart file uploaded for analysis. Required.
+	 * @return a ResponseEntity containing:
+	 *         - a JSON object with the generated {@code jobId} on success,
+	 *         - or a JSON object with an {@code error} message if the file type is invalid or an error occurred.
 	 */
-	@PostMapping("/upload/pom")
-	public SseEmitter uploadPomFileForAnalysis(@RequestParam("file") MultipartFile file) {
-		SseEmitter emitter = new SseEmitter(0L);
-		new Thread(()->{try {
-			Engine.readAndAnalyzeUploadedPomFile(file, emitter);
-		} finally {
-			emitter.complete();
-		}}).start();
-		return emitter;
+	@PostMapping("/upload/file")
+	public ResponseEntity<?> uploadNodePackageFileForAnalysis(
+			@RequestParam(value="fileType",required = true)String fileType,
+			@RequestParam(value="file", required=true) MultipartFile uploadedFile) {
+		
+		Map<String,String> jobIdResponse = new HashMap<>();
+		Map<String,String> errorResponse = new HashMap<>();
+		String jobId="";
+		try {
+			jobId = service.doAnalysisForUploadedFile(fileType, uploadedFile);
+			if(jobId.equals("INVALID_FILE_TYPE")) {
+				errorResponse.put("error", "Invalid file type!!");
+				return ResponseEntity.ok(errorResponse);
+			}else if(jobId.equals("ERROR")) {
+				errorResponse.put("error", "Error while analysing uploaded file!!");
+				return ResponseEntity.ok(errorResponse);
+			}
+			jobIdResponse.put("jobId", jobId);
+		} catch (IOException e) {
+			errorResponse.put("error", "Unknown Error!");
+			return ResponseEntity.ok(errorResponse);
+		}
+		return ResponseEntity.ok(jobIdResponse);
 	}
 	
-	@PostMapping("/upload/nodePackage")
-	public SseEmitter uploadNodePackageFileForAnalysis(
-			@RequestParam(value="packageJson", required=false) MultipartFile packageJsonFile,
-			@RequestParam(value="packageLockJson", required=false) MultipartFile packageLockJsonFile) throws IOException {
-		
-		 final String packageJsonContents;
-		    final String packageLockJsonContents;
-
-		    if (packageJsonFile != null && !packageJsonFile.isEmpty()) {
-		        packageJsonContents = new String(packageJsonFile.getBytes(), StandardCharsets.UTF_8);
-		    } else {
-		        packageJsonContents = null;
-		    }
-
-		    if (packageLockJsonFile != null && !packageLockJsonFile.isEmpty()) {
-		        packageLockJsonContents = new String(packageLockJsonFile.getBytes(), StandardCharsets.UTF_8);
-		    } else {
-		        packageLockJsonContents = null;
-		    }
-
-		    SseEmitter emitter = new SseEmitter(0L);
-
-		    new Thread(() -> {
-		        try {
-		            Engine.readAndAnalyzeUploadedNodePackageFile(packageJsonContents, packageLockJsonContents, emitter);
-		        } finally {
-		            emitter.complete();
-		        }
-		    }).start();
-
-		    return emitter;
+	/**
+	 * Subscribes the client to server-sent events (SSE) for a specific job ID.
+	 * <p>
+	 * This endpoint allows the frontend to receive real-time analysis updates for the job initiated
+	 * via file upload. It returns an {@link SseEmitter} tied to the given job ID.
+	 * 
+	 * @param jobId the ID of the analysis job to subscribe to.
+	 * @return a ResponseEntity containing the {@link SseEmitter} for streaming job status events,
+	 *         or a 404 Not Found response if the job ID does not exist or has expired.
+	 */
+	@GetMapping("/events/status/{jobId}")
+	public ResponseEntity<SseEmitter> subscribeToJob(@PathVariable String jobId) {
+	    SseEmitter emitter = service.getEventStatus(jobId);
+	    if (emitter == null) {
+	        return ResponseEntity.notFound().build();
+	    }
+	    return ResponseEntity.ok(emitter);
 	}
 }

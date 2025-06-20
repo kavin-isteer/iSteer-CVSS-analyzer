@@ -1,6 +1,5 @@
 package com.isteer.cvssanalyser.core.dao;
 
-import java.security.Timestamp;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -8,11 +7,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.isteer.cvssanalyser.core.enums.HintAddedBy;
 import com.isteer.cvssanalyser.core.model.DependencyHintModel;
 
 public class DependencyHintDao {
 	public List<DependencyHintModel> getAllDependencyHints(Connection con) {
-		String query = "SELECT id,type,match_key,standardized_name,confidence,description,created_at,updated_at FROM dependency_hints";
+		String query = "SELECT id,type,match_key,standardized_name,confidence,description,created_at,updated_at,addedBy FROM dependency_hints";
 		List<DependencyHintModel> hints = new ArrayList<>();
 		try {
 			PreparedStatement psc = con.prepareStatement(query);
@@ -31,7 +31,9 @@ public class DependencyHintDao {
 				if (rs.getTimestamp(8) != null) {
 					hint.setUpdatedAt(rs.getTimestamp(8).toLocalDateTime());
 				}
+				hint.setAddedBy(HintAddedBy.fromId(rs.getInt(9)));
 				hints.add(hint);
+				
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -61,6 +63,7 @@ public class DependencyHintDao {
 				if (rs.getTimestamp(8) != null) {
 					hint.setUpdatedAt(rs.getTimestamp(8).toLocalDateTime());
 				}
+				hint.setAddedBy(HintAddedBy.fromId(rs.getInt(9)));
 				hints.add(hint);
 			}
 		} catch (SQLException e) {
@@ -70,7 +73,7 @@ public class DependencyHintDao {
 	}
 	
 	public List<DependencyHintModel> getAllVendorDependencyHints(Connection con) {
-		String query = "SELECT id,type,match_key,standardized_name,confidence,description,created_at,updated_at,evidence_type FROM dependency_hints WHERE type = ?";
+		String query = "SELECT id,type,match_key,standardized_name,confidence,description,created_at,updated_at,evidence_type,addedBy FROM dependency_hints WHERE type = ?";
 		List<DependencyHintModel> hints = new ArrayList<>();
 		try {
 			PreparedStatement psc = con.prepareStatement(query);
@@ -91,6 +94,7 @@ public class DependencyHintDao {
 					hint.setUpdatedAt(rs.getTimestamp(8).toLocalDateTime());
 				}
 				hint.setEvidenceType(rs.getString(9));
+				hint.setAddedBy(HintAddedBy.fromId(rs.getInt(10)));
 				hints.add(hint);
 			}
 		} catch (SQLException e) {
@@ -100,7 +104,7 @@ public class DependencyHintDao {
 	}
 	
 	public List<DependencyHintModel> getAllProductDependencyHints(Connection con,String evidence_type) {
-		String query = "SELECT id,type,match_key,standardized_name,confidence,description,created_at,updated_at FROM dependency_hints WHERE type = ? AND evidence_type=?";
+		String query = "SELECT id,type,match_key,standardized_name,confidence,description,created_at,updated_at,addedBy FROM dependency_hints WHERE type = ? AND evidence_type=?";
 		List<DependencyHintModel> hints = new ArrayList<>();
 		try {
 			PreparedStatement psc = con.prepareStatement(query);
@@ -121,6 +125,7 @@ public class DependencyHintDao {
 				if (rs.getTimestamp(8) != null) {
 					hint.setUpdatedAt(rs.getTimestamp(8).toLocalDateTime());
 				}
+				hint.setAddedBy(HintAddedBy.fromId(rs.getInt(9)));
 				hints.add(hint);
 			}
 		} catch (SQLException e) {
@@ -133,7 +138,7 @@ public class DependencyHintDao {
 	//	String query = "INSERT INTO dependency_hints (type, match_key, standardized_name, confidence, description, evidence_type) VALUES (?,?,?,?,?,?)";
 		 
 		 String checkQuery = "SELECT COUNT(*) FROM dependency_hints WHERE type = ? AND match_key = ? AND evidence_type=?";
-		 String insertQuery = "INSERT INTO dependency_hints (type, match_key, standardized_name, confidence, description, evidence_type) VALUES (?, ?, ?, ?, ?, ?)";
+		 String insertQuery = "INSERT INTO dependency_hints (type, match_key, standardized_name, confidence, description, evidence_type,addedBy) VALUES (?, ?, ?, ?, ?, ?,?)";
 		 String updateQuery = "UPDATE dependency_hints SET standardized_name = ?, confidence = ?, description = ?, evidence_type = ? WHERE type = ? AND match_key = ?";
 		
 		 try {
@@ -165,6 +170,7 @@ public class DependencyHintDao {
 		                    insertStmt.setString(4, hint.getConfidence());
 		                    insertStmt.setString(5, hint.getDescription());
 		                    insertStmt.setString(6, hint.getEvidenceType());
+		                    insertStmt.setInt(7, hint.getAddedBy().getId());
 
 		                    return insertStmt.executeUpdate(); // rows inserted
 		                }

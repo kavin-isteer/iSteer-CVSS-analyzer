@@ -2,6 +2,8 @@ package com.isteer.cvssanalyser.core.model;
 
 import java.time.LocalDateTime;
 
+import com.isteer.cvssanalyser.core.enums.HintAddedBy;
+
 public class DependencyHintModel {
 	private Integer id;
 	private String type;
@@ -12,6 +14,7 @@ public class DependencyHintModel {
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
 	private String evidenceType;
+	private HintAddedBy addedBy;
 	public Integer getId() {
 		return id;
 	}
@@ -65,5 +68,11 @@ public class DependencyHintModel {
 	}
 	public void setEvidenceType(String evidenceType) {
 		this.evidenceType = evidenceType;
+	}
+	public HintAddedBy getAddedBy() {
+		return addedBy;
+	}
+	public void setAddedBy(HintAddedBy addedBy) {
+		this.addedBy = addedBy;
 	}
 }

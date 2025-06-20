@@ -1,5 +1,9 @@
 package com.isteer.cvssanalyzer.api.service;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -7,12 +11,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.isteer.cvssanalyser.core.cveclient.CveClient;
 import com.isteer.cvssanalyser.core.exception.NvdApiException;
 
 @Service
 public class CvssService {
+	
+	@Autowired
+	JobTrackerService jobTracker;
+	
+	@Autowired
+	UploadFileAnalysisService fileAnalysisService;
 
     private final String CVE_API_BASE_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0";
     private final String CPE_API_BASE_URL = "https://services.nvd.nist.gov/rest/json/cpes/2.0";
@@ -162,5 +174,35 @@ public class CvssService {
         HttpHeaders headers = new HttpHeaders();
         headers.set("apiKey", apiKey);
         return new HttpEntity<>(headers);
+    }
+    
+    public String doAnalysisForUploadedFile(String fileType, MultipartFile uploadedFile) throws IOException {
+    	String response="ERROR";
+    	if(fileType.equals("POM")) {
+    		response=fileAnalysisService.doPomFileAnalysis(uploadedFile);
+    	}else if(fileType.equals("PACKAGE_JSON")) {
+    		String packageJsonContents=null;
+    		if (uploadedFile != null && !uploadedFile.isEmpty()) {
+		        packageJsonContents = new String(uploadedFile.getBytes(), StandardCharsets.UTF_8);
+		    }
+    		if(packageJsonContents!=null) {
+    			response=fileAnalysisService.doNodePackageAnalysis(packageJsonContents, null);
+    		}
+    	}else if(fileType.equals("PACKAGE_LOCK_JSON")) {
+    		String packageLockJsonContents=null;
+    		if (uploadedFile != null && !uploadedFile.isEmpty()) {
+    			packageLockJsonContents = new String(uploadedFile.getBytes(), StandardCharsets.UTF_8);
+		    }
+    		if(packageLockJsonContents!=null) {
+    			response=fileAnalysisService.doNodePackageAnalysis(null, packageLockJsonContents);
+    		}
+    	}else {
+    		response = "INVALID_FILE_TYPE";
+    	}
+    	return response;
+    }
+    
+    public SseEmitter getEventStatus(String jobId) {
+    	return jobTracker.get(jobId);
     }
 }

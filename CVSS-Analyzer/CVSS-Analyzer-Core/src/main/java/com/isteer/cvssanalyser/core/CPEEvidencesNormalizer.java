@@ -1,12 +1,15 @@
 package com.isteer.cvssanalyser.core;
 
 import java.sql.Connection;
-import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.isteer.cvssanalyser.core.dao.DependencyHintDao;
-import com.isteer.cvssanalyser.core.enums.EngineMode;
+import com.isteer.cvssanalyser.core.enums.CpeField;
 import com.isteer.cvssanalyser.core.enums.EvidenceType;
+import com.isteer.cvssanalyser.core.enums.HintAddedBy;
+import com.isteer.cvssanalyser.core.enums.ResolveMethod;
 import com.isteer.cvssanalyser.core.model.CPENameModel;
 import com.isteer.cvssanalyser.core.model.DependencyHintModel;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
@@ -31,17 +34,20 @@ public class CPEEvidencesNormalizer {
 		
 		for (DependencyModel dependencyModel : dependencies) {
 			//normalize the vendor evidences name from collected evidences and resolve it to a standardized name.
-			String vendor = normalizeVendorEvidences(dependencyModel.getVendorEvidences());
+			Map<String,Object> vendor = normalizeVendorEvidences(dependencyModel.getVendorEvidences());
 			//normalize the product evidences name from collected evidences and resolve it to a standardized name.
-			String product = normalizeProductEvidences(dependencyModel.getProductEvidences());
+			Map<String,Object> product = normalizeProductEvidences(dependencyModel.getProductEvidences());
 			//normalize the version evidences from collected evidences and resolve it to a standardized name.
-			String version = normalizeVersionEvidences(dependencyModel.getVersionEvidences());
-			if (vendor != null && product != null && version != null) {
+			Map<String,Object> version = normalizeVersionEvidences(dependencyModel.getVersionEvidences());
+			if (vendor.get("value") != null && product.get("value") != null && version.get("value") != null) {
 				//create CPE name model from the collected resolved value.
 				CPENameModel cpe = new CPENameModel();
-				cpe.setVendor(vendor);
-				cpe.setProduct(product);
-				cpe.setVersion(version);
+				cpe.setVendor((String)vendor.get("value"));
+				cpe.addResolveMethod(CpeField.VENDOR,(ResolveMethod)vendor.get("resolveMethod"));
+				cpe.setProduct((String)product.get("value"));
+				cpe.addResolveMethod(CpeField.PRODUCT,(ResolveMethod)product.get("resolveMethod"));
+				cpe.setVersion((String)version.get("value"));
+				cpe.addResolveMethod(CpeField.VERSION,(ResolveMethod)version.get("resolveMethod"));
 				dependencyModel.setCpeEnumeration(cpe);
 			} 
 		}
@@ -55,10 +61,12 @@ public class CPEEvidencesNormalizer {
      * </ul>
      *
      * @param evidences list of vendor evidences (from manifest or GAV)
-     * @return the most likely standardized vendor name, or null if not found
+     * @return Map of 2 entries. First one will be the most likely standardized vendor name and second one will be the resolve method of the vendor name.
      */
-	public String normalizeVendorEvidences(List<Evidence> evidences) {
+	public Map<String, Object> normalizeVendorEvidences(List<Evidence> evidences) {
 		String mostLikelyVendor = null;
+		ResolveMethod resolveMethod=null;
+		Map<String, Object> resolvedValue = new HashMap<>();
 		//get all dependency hints for Vendor from the database.
 		List<DependencyHintModel> hints = hintDao.getAllVendorDependencyHints(connection);
 		for (Evidence evidence : evidences) {
@@ -68,6 +76,11 @@ public class CPEEvidencesNormalizer {
 							&& evidence.getEvidence().startsWith(hint.getMatch_key())) {
 						mostLikelyVendor = hint.getStandardized_name();
 						evidence.setResolvedValue(mostLikelyVendor);
+						if(hint.getAddedBy()==HintAddedBy.CLIENT_USER) {
+							resolveMethod=ResolveMethod.HINT_BY_CLIENT_USER;
+						}else if(hint.getAddedBy()==HintAddedBy.DEVELOPER) {
+							resolveMethod=ResolveMethod.HINT_BY_DEVELOPER;
+						}
 					}
 				}
 			}
@@ -79,11 +92,18 @@ public class CPEEvidencesNormalizer {
 							&& evidence.getEvidence().startsWith(hint.getMatch_key())) {
 						mostLikelyVendor = hint.getStandardized_name();
 						evidence.setResolvedValue(mostLikelyVendor);
+						if(hint.getAddedBy()==HintAddedBy.CLIENT_USER) {
+							resolveMethod=ResolveMethod.HINT_BY_CLIENT_USER;
+						}else if(hint.getAddedBy()==HintAddedBy.DEVELOPER) {
+							resolveMethod=ResolveMethod.HINT_BY_DEVELOPER;
+						}
 					}
 				}
 			}
 		}
-		return mostLikelyVendor;
+		resolvedValue.put("value", mostLikelyVendor);
+		resolvedValue.put("resolveMethod", resolveMethod);
+		return resolvedValue;
 	}
 	
 	 /**
@@ -93,10 +113,12 @@ public class CPEEvidencesNormalizer {
      * </p>
      *
      * @param evidences list of product evidences (typically from artifactId)
-     * @return the most likely standardized product name
+     * @return Map of 2 entries. First one will be the most likely standardized product name and second one will be the resolve method of the product name.
      */
-	public String normalizeProductEvidences(List<Evidence> evidences) {
+	public Map<String, Object> normalizeProductEvidences(List<Evidence> evidences) {
 		String mostLikelyProduct = null;
+		ResolveMethod resolveMethod=null;
+		Map<String, Object> resolvedValue = new HashMap<>();
 		List<DependencyHintModel> hints = hintDao.getAllProductDependencyHints(connection, "GAV");
 		for (Evidence evidence : evidences) {
 			if (evidence.getEvidenceType() == EvidenceType.ARTIFACT_ID) {
@@ -104,6 +126,11 @@ public class CPEEvidencesNormalizer {
 					if (evidence.getEvidence().startsWith(hint.getMatch_key())) {
 						mostLikelyProduct = hint.getStandardized_name();
 						evidence.setResolvedValue(mostLikelyProduct);
+						if(hint.getAddedBy()==HintAddedBy.CLIENT_USER) {
+							resolveMethod=ResolveMethod.HINT_BY_CLIENT_USER;
+						}else if(hint.getAddedBy()==HintAddedBy.DEVELOPER) {
+							resolveMethod=ResolveMethod.HINT_BY_DEVELOPER;
+						}
 						break;
 					}
 				}
@@ -112,10 +139,13 @@ public class CPEEvidencesNormalizer {
 					mostLikelyProduct = mostLikelyProduct.replaceAll("[^a-z0-9_-]", "_");
 					mostLikelyProduct = mostLikelyProduct.replace("-", "_");
 					evidence.setResolvedValue(mostLikelyProduct);
+					resolveMethod=ResolveMethod.ARBITRARY;
 				}
 			}
 		}
-		return mostLikelyProduct;
+		resolvedValue.put("value", mostLikelyProduct);
+		resolvedValue.put("resolveMethod", resolveMethod);
+		return resolvedValue;
 	}
 	
 	/**
@@ -125,16 +155,21 @@ public class CPEEvidencesNormalizer {
      * </p>
      *
      * @param evidences list of version evidences
-     * @return the detected version string
+     * @return Map of 2 entries. First one will be the detected version and second one will be the resolve method of the version.
      */
-	public String normalizeVersionEvidences(List<Evidence> evidences) {
+	public Map<String, Object> normalizeVersionEvidences(List<Evidence> evidences) {
 		String mostLikelyVersion = null;
+		ResolveMethod resolveMethod=null;
+		Map<String, Object> resolvedValue = new HashMap<>();
 		for (Evidence evidence : evidences) {
 			if (evidence.getEvidenceType() == EvidenceType.VERSION) {
 				mostLikelyVersion = evidence.getEvidence();
 				evidence.setResolvedValue(mostLikelyVersion);
+				resolveMethod=ResolveMethod.ARBITRARY;
 			}
 		}
-		return mostLikelyVersion;
+		resolvedValue.put("value", mostLikelyVersion);
+		resolvedValue.put("resolveMethod", resolveMethod);
+		return resolvedValue;
 	}
 }

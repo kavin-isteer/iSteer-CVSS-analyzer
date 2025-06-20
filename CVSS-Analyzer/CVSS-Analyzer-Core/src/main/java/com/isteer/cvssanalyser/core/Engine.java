@@ -5,13 +5,16 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.isteer.cvssanalyser.core.cveclient.CveClient;
+import com.isteer.cvssanalyser.core.enums.CpeField;
 import com.isteer.cvssanalyser.core.enums.EngineMode;
+import com.isteer.cvssanalyser.core.enums.ResolveMethod;
 import com.isteer.cvssanalyser.core.logging.EngineLogger;
 import com.isteer.cvssanalyser.core.logging.Slf4jEngineLogger;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
@@ -275,6 +278,23 @@ public class Engine {
 	 */
 	public static void doFuzzySearchAndGetLikelyCpes() {
 		for (DependencyModel dep : dependencies) {
+			if(dep.getCpeEnumeration()!=null) {
+				boolean conditionToSkip =false;
+				
+				Map<CpeField, ResolveMethod> resolveMethod = dep.getCpeEnumeration().getResolveMethod();
+				ResolveMethod vendorMethod = resolveMethod.get(CpeField.VENDOR);
+				ResolveMethod productMethod = resolveMethod.get(CpeField.PRODUCT);
+
+				if (isUserHint(vendorMethod)) {
+					if(isUserHint(productMethod)) {
+					    conditionToSkip = true;
+					}
+				}
+				if (conditionToSkip) {
+					continue;
+				}
+			}
+			
 			if (dep.getVulnerabilities().size() == 0) {
 				logger.info("No vulnerabilities found for dependency: " + dep.getDependencyName()
 						+ " Doing fuzzy search to find likely CPEs!!");
@@ -287,6 +307,10 @@ public class Engine {
 				}
 			}
 		}
+	}
+	
+	private static boolean isUserHint(ResolveMethod method) {
+	    return method == ResolveMethod.HINT_BY_CLIENT_USER || method == ResolveMethod.HINT_BY_DEVELOPER;
 	}
 
 	/**
@@ -352,19 +376,22 @@ public class Engine {
 			normalizer.normalizeDependencyEvidences(dependencies);
 			fetchVulnerabilities(emitter);
 			doFuzzySearchAndGetLikelyCpes();
+			emitter.send(SseEmitter.event().data("Analysis Completed"));
 		} catch (IOException | XmlPullParserException e) {
 			logger.info("Error reading and analyzing the uploaded pom file!!");
 			e.printStackTrace();
 		}
 	}
-	
-	public static void readAndAnalyzeUploadedNodePackageFile(String packageJsonFile,String packageLockJsonFile,SseEmitter emitter) {
+
+	public static void readAndAnalyzeUploadedNodePackageFile(String packageJsonFile, String packageLockJsonFile,
+			SseEmitter emitter) {
 		NodePackageReader nodePackageReader = new NodePackageReader();
 		try {
 			dependencies = nodePackageReader.analyze(packageJsonFile, packageLockJsonFile);
 			fetchVulnerabilities(emitter);
 			doFuzzySearchAndGetLikelyCpes();
-		}catch (Exception e) {
+			emitter.send(SseEmitter.event().data("Analysis Completed"));
+		} catch (Exception e) {
 			e.printStackTrace();
 			logger.info("Error while reading and analysing uploaded node package file!!");
 		}
@@ -386,7 +413,7 @@ public class Engine {
 						String message = String.format("{\"fetchedDependencies\": %d, \"totalDependencies\": %d }",
 								dependencyCount, dependencies.size());
 						logger.info(message);
-						if(emitter!=null) {
+						if (emitter != null) {
 							// send progress message as emitter event
 							emitter.send(SseEmitter.event().data(message));
 						}
@@ -404,7 +431,7 @@ public class Engine {
 					logger.info("No vulnerabilities found for dependency: " + dep.getDependencyName());
 				}
 			}
-		} catch (Exception  e) {
+		} catch (Exception e) {
 			logger.info("Error fetching vulnerability from NVD Api!!");
 			e.printStackTrace();
 		}

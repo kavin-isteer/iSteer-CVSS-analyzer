@@ -1,5 +1,11 @@
 package com.isteer.cvssanalyser.core.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import com.isteer.cvssanalyser.core.enums.CpeField;
+import com.isteer.cvssanalyser.core.enums.ResolveMethod;
+
 public class CPENameModel {
 	private static final String CPE23_URI_FORMAT = "cpe:2.3:a:%s:%s:%s:%s:*:*:*:*:*:*";
 	private String vendor;
@@ -7,10 +13,13 @@ public class CPENameModel {
 	private String version;
 	private String update="*";
 	private boolean isValidCpe;
-	
+	private Map<CpeField,ResolveMethod> resolveMethod=new HashMap<>();
+
 	public String getVendor() {
 		return vendor;
 	}
+
+
 
 	public void setVendor(String vendor) {
 		this.vendor = vendor;
@@ -41,7 +50,7 @@ public class CPENameModel {
 	}
 
 
-	
+
 	public String getUpdate() {
 		return update;
 	}
@@ -61,6 +70,17 @@ public class CPENameModel {
 
 	public void setValidCpe(boolean isValidCpe) {
 		this.isValidCpe = isValidCpe;
+	}
+
+
+	public Map<CpeField, ResolveMethod> getResolveMethod() {
+		return resolveMethod;
+	}
+
+
+
+	public void addResolveMethod(CpeField cpeField, ResolveMethod resolveMethod) {
+		this.resolveMethod.put(cpeField, resolveMethod);
 	}
 
 
