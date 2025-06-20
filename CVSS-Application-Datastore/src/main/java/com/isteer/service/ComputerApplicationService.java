@@ -1,5 +1,6 @@
 package com.isteer.service;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
@@ -7,9 +8,13 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.isteer.cvssanalyser.core.OsSoftwareAnalyzer;
+import com.isteer.cvssanalyser.core.model.ApplicationModel;
+import com.isteer.entity.Application;
 import com.isteer.entity.ComputerApplication;
 import com.isteer.repository.dao.ComputerApplicationRepositoryDao;
 import com.isteer.service.impl.ComputerApplicationServiceImpl;
@@ -106,5 +111,21 @@ public class ComputerApplicationService implements ComputerApplicationServiceImp
 	        logger.info("Updated mapping for computer UUID: {}, application UUID: {}", computerUuid, applicationUuid);
 	        return 1; // Success
 	    }
+
+		@Override
+		@Async("asyncExecutor")
+		public void sampleService(Application application) {
+			try {
+				ApplicationModel applications = new ApplicationModel();
+				applications.setApplicationName(application.getName());
+				applications.setApplicationVendor(application.getVendorName());
+				applications.setApplicationVersion(application.getVersion());
+				logger.info("Calling the resloution method");
+				new OsSoftwareAnalyzer().resolveOsSoftwareNames(applications);
+			}catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 
 }

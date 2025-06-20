@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import com.isteer.cvssanalyser.core.Engine;
 import com.isteer.cvssanalyser.core.model.CpeEntryModel;
 
 public class CPEEntriesDao {
@@ -65,8 +66,7 @@ public class CPEEntriesDao {
 				ps.addBatch();
 			}
 			ps.executeBatch();
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			System.err.println("Error executing query: " + e.getMessage());
 		}
 
@@ -79,7 +79,6 @@ public class CPEEntriesDao {
 //          long start = System.currentTimeMillis();
 //          try (ResultSet rs = ps.executeQuery()) {
 //                              System.out.println("15-6");
-
 
 			while (rs.next()) {
 				CpeEntryModel entry = new CpeEntryModel();
@@ -101,7 +100,8 @@ public class CPEEntriesDao {
 
 		return entries;
 	}
-	public List<CpeEntryModel> getAllCpeEntries(Connection con) throws SQLException{
+
+	public List<CpeEntryModel> getAllCpeEntries(Connection con) throws SQLException {
 		String sql = "SELECT id, cpe_name, cpe_title, vendor, product, version, update_date, deprecated "
 				+ "FROM cpe_entries c ";
 		List<CpeEntryModel> entries = new ArrayList<>();
@@ -118,6 +118,33 @@ public class CPEEntriesDao {
 				entry.setDeprecated(rs.getBoolean(8));
 				entries.add(entry);
 			}
+		}
+		return entries;
+	}
+
+	public List<CpeEntryModel> getCpeEntries(Connection con, int lastId) throws SQLException {
+		System.out.println(lastId);
+		List<CpeEntryModel> entries = new ArrayList<>();
+		String sql = "SELECT id, cpe_name, cpe_title, vendor, product, version, update_date, deprecated FROM cpe_entries WHERE id > ? ORDER BY id LIMIT 100000";
+
+		try (PreparedStatement ps = con.prepareStatement(sql)) {
+			ps.setInt(1, lastId);
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					CpeEntryModel entry = new CpeEntryModel();
+					entry.setEntryId(rs.getInt(1));
+					entry.setCpeName(rs.getString(2));
+					entry.setCpeTitle(rs.getString(3));
+					entry.setVendor(rs.getString(4));
+					entry.setProduct(rs.getString(5));
+					entry.setVersion(rs.getString(6));
+					entry.setUpdatedDate(rs.getTimestamp(7).toLocalDateTime());
+					entry.setDeprecated(rs.getBoolean(8));
+					entries.add(entry);
+				}
+			}
+		} catch (SQLException e) {
+			Engine.logger.error("Error fetching CPE entries: " + e.getMessage());
 		}
 		return entries;
 	}

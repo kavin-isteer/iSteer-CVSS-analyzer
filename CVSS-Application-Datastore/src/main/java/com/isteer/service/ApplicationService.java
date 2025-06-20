@@ -40,20 +40,20 @@ public class ApplicationService implements ApplicationServiceImpl {
 	public int createOrUpdateApplication(SoftwareDTO software, String computerUuid) {
 		logger.info("Processing application: {} version {} vendor: {} for computer UUID: {}", software.getName(),
 				software.getVersion(), software.getVendorName(), computerUuid);
-		  // Normalize version: treat null or "null" as empty string
-        String version = software.getVersion() == null ? "" : software.getVersion();
-        
-        String vendorName = software.getVendorName() == null ? "" : software.getVendorName();
-		
+		// Normalize version: treat null or "null" as empty string
+		String version = software.getVersion() == null ? "" : software.getVersion();
+
+		String vendorName = software.getVendorName() == null ? "" : software.getVendorName();
+
 		// Check for existing application (including soft-deleted mappings)
-		Optional<Application> existingApp = applicationRepository.findByNameVersionVendor(software.getName(),
-				version, vendorName);
+		Optional<Application> existingApp = applicationRepository.findByNameVersionVendor(software.getName(), version,
+				vendorName);
 		logger.debug("Checking for existing application with name: {}, version: {}, vendor: {}", software.getName(),
 				version, vendorName);
 		Application application;
 
 		if (existingApp.isPresent()) {
-			
+
 			application = existingApp.get();
 			logger.debug("Reusing existing application with UUID: {}", application.getUuid());
 
@@ -68,11 +68,13 @@ public class ApplicationService implements ApplicationServiceImpl {
 					logger.debug("Reactivated mapping for application UUID: {}", application.getUuid());
 				} else {
 					logger.debug("Found existing active mapping for application UUID: {}", application.getUuid());
-					 // Update installed_date if changed
-                    if (!Objects.equals(existingMapping.get().getInstalledDate(), software.getInstalledDate())) {
-                        computerApplicationService.updateMapping(computerUuid, application.getUuid(), software.getInstalledDate());
-                        logger.debug("Updated installed_date for mapping with application UUID: {}", application.getUuid());
-                    }
+					// Update installed_date if changed
+					if (!Objects.equals(existingMapping.get().getInstalledDate(), software.getInstalledDate())) {
+						computerApplicationService.updateMapping(computerUuid, application.getUuid(),
+								software.getInstalledDate());
+						logger.debug("Updated installed_date for mapping with application UUID: {}",
+								application.getUuid());
+					}
 				}
 			} else {
 				// Create new mapping
@@ -98,6 +100,13 @@ public class ApplicationService implements ApplicationServiceImpl {
 				return -1; // Internal error
 			}
 			logger.info("Created new application with UUID: {}", application.getUuid());
+
+			try {
+				computerApplicationService.sampleService(application);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 
 			// Create new mapping
 			int mappingStatus = computerApplicationService.createComputerApplication(computerUuid,
