@@ -14,17 +14,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.isteer.cvssanalyser.core.cache.FuzzySearchCache;
 import com.isteer.cvssapplication.datastore.dto.ComputerDetailsResponseDTO;
 import com.isteer.cvssapplication.datastore.dto.ComputerPayloadDTO;
+import com.isteer.cvssapplication.datastore.dto.ErrorMessageDTO;
+import com.isteer.cvssapplication.datastore.dto.StatusMessageDTO;
 import com.isteer.cvssapplication.datastore.entity.Application;
 import com.isteer.cvssapplication.datastore.entity.Computer;
 import com.isteer.cvssapplication.datastore.enums.CVSSEnum;
 import com.isteer.cvssapplication.datastore.service.impl.ApplicationServiceImpl;
 import com.isteer.cvssapplication.datastore.service.impl.ComputerServiceImpl;
 import com.isteer.cvssapplication.datastore.util.StatusMessageUtil;
-import com.isteer.cvssapplication.datastore.dto.StatusMessageDTO;
-import com.isteer.cvssapplication.datastore.dto.ErrorMessageDTO;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 
@@ -41,8 +41,8 @@ public class ComputerController {
 
 	@PostMapping("/computers")
 	public ResponseEntity<?> createComputer(@Valid @RequestBody ComputerPayloadDTO payload) {
-		new FuzzySearchCache();
-		FuzzySearchCache.refreshCacheFromDb(); // Refresh cache before processing request
+//		new FuzzySearchCache();
+//		FuzzySearchCache.refreshCacheFromDb(); // Refresh cache before processing request
 		logger.info("Received request to create/update computer with deviceId: {}", payload.getDeviceId());
 		int status = computerService.createComputer(payload);
 
@@ -99,20 +99,7 @@ public class ComputerController {
 		return ResponseEntity.ok(computers);
 	}
 
-//    @GetMapping("/computers/{uuid}")
-//    public ResponseEntity<Map<String, Object>> getComputer(
-//            @PathVariable @NotBlank(message = "UUID cannot be blank") String uuid) {
-//        logger.info("Received request to fetch computer with UUID: {}", uuid);
-//        Computer computer = computerService.getComputerByUuid(uuid);
-//        List<Application> applications = applicationService.getApplicationsByComputerUuid(uuid);
-//
-//        Map<String, Object> response = new HashMap<>();
-//        response.put("computer", computer);
-//        response.put("applications", applications);
-//
-//        logger.info("Returning computer with UUID: {} and {} applications", uuid, applications.size());
-//        return ResponseEntity.ok(response);
-//    }
+  
 
 	@GetMapping("computers/{uuid}")
 	public ResponseEntity<ComputerDetailsResponseDTO> getComputer(
