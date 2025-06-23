@@ -154,100 +154,80 @@ public class CvssController {
 		}
 	}
 
-	/**
-	 * Add GAV dependency hint for a dependency to correct false positives and false
-	 * negatives.
+	/*	*//**
+			 * Add GAV dependency hint for a dependency to correct false positives and false
+			 * negatives.
+			 * 
+			 * @param cpeName    Correct CPE Name for the dependency.
+			 * @param dependency dependency object to which the hint needs to be updated.
+			 * @return status of the hint updation.
+			 */
+	/*
+	 * @PostMapping("/hint/addDependencyHint") public ResponseEntity<Object>
+	 * addDependencyHint(@RequestParam String cpeName,
 	 * 
-	 * @param cpeName    Correct CPE Name for the dependency.
-	 * @param dependency dependency object to which the hint needs to be updated.
-	 * @return status of the hint updation.
-	 */
-	@PostMapping("/hint/addDependencyHint")
-	public ResponseEntity<Object> addDependencyHint(@RequestParam String cpeName,
-			@RequestBody DependencyModel dependency) {
-		DependencyHintService hintService = new DependencyHintService();
-		int status = hintService.addGAVDependencyHint(cpeName, dependency);
-		String statusMessage = "";
-		switch (status) {
-		case 1: {
-			statusMessage = "Hint added Successfully!!";
-			break;
-		}
-		case -1: {
-			statusMessage = "CPE name is not valid!!";
-			break;
-		}
-		case -2: {
-			statusMessage = "Error whlie adding product hint!!";
-			break;
-		}
-		case -3: {
-			statusMessage = "Error whlie adding vendor hint!!";
-			break;
-		}
-		default: {
-			statusMessage = "Error whlie adding dependnecy hint!!";
-			break;
-		}
-		}
-		Map<String, String> responseMessage = new HashMap<>();
-		responseMessage.put("Status", statusMessage);
-		return new ResponseEntity<>(responseMessage, HttpStatus.OK);
-	}
-
-	/**
-	 * Handles the upload of a file for dependency analysis based on the file type (e.g., Maven or Node).
-	 * <p>
-	 * This method accepts a multipart file and its type, processes it, and returns a unique job ID
-	 * if the analysis starts successfully. In case of errors or invalid file types, it returns an error message.
+	 * @RequestBody DependencyModel dependency) { DependencyHintService hintService
+	 * = new DependencyHintService(); int status =
+	 * hintService.addGAVDependencyHint(cpeName, dependency); String statusMessage =
+	 * ""; switch (status) { case 1: { statusMessage = "Hint added Successfully!!";
+	 * break; } case -1: { statusMessage = "CPE name is not valid!!"; break; } case
+	 * -2: { statusMessage = "Error whlie adding product hint!!"; break; } case -3:
+	 * { statusMessage = "Error whlie adding vendor hint!!"; break; } default: {
+	 * statusMessage = "Error whlie adding dependnecy hint!!"; break; } }
+	 * Map<String, String> responseMessage = new HashMap<>();
+	 * responseMessage.put("Status", statusMessage); return new
+	 * ResponseEntity<>(responseMessage, HttpStatus.OK); }
 	 * 
-	 * @param fileType    the type of the uploaded file (e.g., "pom", "package.json", etc.). Required.
-	 * @param uploadedFile the multipart file uploaded for analysis. Required.
-	 * @return a ResponseEntity containing:
-	 *         - a JSON object with the generated {@code jobId} on success,
-	 *         - or a JSON object with an {@code error} message if the file type is invalid or an error occurred.
-	 */
-	@PostMapping("/upload/file")
-	public ResponseEntity<?> uploadNodePackageFileForAnalysis(
-			@RequestParam(value="fileType",required = true)String fileType,
-			@RequestParam(value="file", required=true) MultipartFile uploadedFile) {
-		
-		Map<String,String> jobIdResponse = new HashMap<>();
-		Map<String,String> errorResponse = new HashMap<>();
-		String jobId="";
-		try {
-			jobId = service.doAnalysisForUploadedFile(fileType, uploadedFile);
-			if(jobId.equals("INVALID_FILE_TYPE")) {
-				errorResponse.put("error", "Invalid file type!!");
-				return ResponseEntity.ok(errorResponse);
-			}else if(jobId.equals("ERROR")) {
-				errorResponse.put("error", "Error while analysing uploaded file!!");
-				return ResponseEntity.ok(errorResponse);
-			}
-			jobIdResponse.put("jobId", jobId);
-		} catch (IOException e) {
-			errorResponse.put("error", "Unknown Error!");
-			return ResponseEntity.ok(errorResponse);
-		}
-		return ResponseEntity.ok(jobIdResponse);
-	}
-	
-	/**
-	 * Subscribes the client to server-sent events (SSE) for a specific job ID.
-	 * <p>
-	 * This endpoint allows the frontend to receive real-time analysis updates for the job initiated
-	 * via file upload. It returns an {@link SseEmitter} tied to the given job ID.
+	 *//**
+		 * Handles the upload of a file for dependency analysis based on the file type
+		 * (e.g., Maven or Node).
+		 * <p>
+		 * This method accepts a multipart file and its type, processes it, and returns
+		 * a unique job ID if the analysis starts successfully. In case of errors or
+		 * invalid file types, it returns an error message.
+		 * 
+		 * @param fileType     the type of the uploaded file (e.g., "pom",
+		 *                     "package.json", etc.). Required.
+		 * @param uploadedFile the multipart file uploaded for analysis. Required.
+		 * @return a ResponseEntity containing: - a JSON object with the generated
+		 *         {@code jobId} on success, - or a JSON object with an {@code error}
+		 *         message if the file type is invalid or an error occurred.
+		 */
+	/*
+	 * @PostMapping("/upload/file") public ResponseEntity<?>
+	 * uploadNodePackageFileForAnalysis(
 	 * 
-	 * @param jobId the ID of the analysis job to subscribe to.
-	 * @return a ResponseEntity containing the {@link SseEmitter} for streaming job status events,
-	 *         or a 404 Not Found response if the job ID does not exist or has expired.
-	 */
-	@GetMapping("/events/status/{jobId}")
-	public ResponseEntity<SseEmitter> subscribeToJob(@PathVariable String jobId) {
-	    SseEmitter emitter = service.getEventStatus(jobId);
-	    if (emitter == null) {
-	        return ResponseEntity.notFound().build();
-	    }
-	    return ResponseEntity.ok(emitter);
-	}
+	 * @RequestParam(value="fileType",required = true)String fileType,
+	 * 
+	 * @RequestParam(value="file", required=true) MultipartFile uploadedFile) {
+	 * 
+	 * Map<String,String> jobIdResponse = new HashMap<>(); Map<String,String>
+	 * errorResponse = new HashMap<>(); String jobId=""; try { jobId =
+	 * service.doAnalysisForUploadedFile(fileType, uploadedFile);
+	 * if(jobId.equals("INVALID_FILE_TYPE")) { errorResponse.put("error",
+	 * "Invalid file type!!"); return ResponseEntity.ok(errorResponse); }else
+	 * if(jobId.equals("ERROR")) { errorResponse.put("error",
+	 * "Error while analysing uploaded file!!"); return
+	 * ResponseEntity.ok(errorResponse); } jobIdResponse.put("jobId", jobId); }
+	 * catch (IOException e) { errorResponse.put("error", "Unknown Error!"); return
+	 * ResponseEntity.ok(errorResponse); } return ResponseEntity.ok(jobIdResponse);
+	 * }
+	 * 
+	 *//**
+		 * Subscribes the client to server-sent events (SSE) for a specific job ID.
+		 * <p>
+		 * This endpoint allows the frontend to receive real-time analysis updates for
+		 * the job initiated via file upload. It returns an {@link SseEmitter} tied to
+		 * the given job ID.
+		 * 
+		 * @param jobId the ID of the analysis job to subscribe to.
+		 * @return a ResponseEntity containing the {@link SseEmitter} for streaming job
+		 *         status events, or a 404 Not Found response if the job ID does not
+		 *         exist or has expired.
+		 *//*
+			 * @GetMapping("/events/status/{jobId}") public ResponseEntity<SseEmitter>
+			 * subscribeToJob(@PathVariable String jobId) { SseEmitter emitter =
+			 * service.getEventStatus(jobId); if (emitter == null) { return
+			 * ResponseEntity.notFound().build(); } return ResponseEntity.ok(emitter); }
+			 */
 }

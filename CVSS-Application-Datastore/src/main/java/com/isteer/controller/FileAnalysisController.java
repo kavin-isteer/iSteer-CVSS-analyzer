@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.isteer.cvssanalyser.core.Engine;
 import com.isteer.service.FileAnalysisService;
 
 @RestController
@@ -76,5 +77,15 @@ public class FileAnalysisController {
 	        return ResponseEntity.notFound().build();
 	    }
 	    return ResponseEntity.ok(emitter);
+	}
+	
+	/**
+	 * Returns the list of all analyzed dependencies and their vulnerabilities.
+	 *
+	 * @return ResponseEntity containing the analysis results.
+	 */
+	@GetMapping("/vulnerabilities")
+	public ResponseEntity<Object> getAllVulnerabilities() {
+		return ResponseEntity.ok(Engine.dependencies);
 	}
 }
