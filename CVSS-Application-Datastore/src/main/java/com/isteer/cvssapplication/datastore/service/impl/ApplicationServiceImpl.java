@@ -1,7 +1,11 @@
 package com.isteer.cvssapplication.datastore.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -35,103 +39,104 @@ public class ApplicationServiceImpl implements ApplicationService {
 	@Autowired
 	private ComputerApplicationService computerApplicationService;
 
-	@Transactional
-	@Override
-	public int createOrUpdateApplication(SoftwareDTO software, String computerUuid) {
-		logger.info("Processing application: {} version {} vendor: {} for computer UUID: {}", software.getName(),
-				software.getVersion(), software.getVendorName(), computerUuid);
+	
+	public int createOrUpdateApplication(List<SoftwareDTO> softwares, String computerUuid) {
+		logger.debug("Processing {} applications for computer UUID: {}", softwares.size(), computerUuid);
+		// Check existence of all applications in one query
+        Map<String, Application> appExistenceMap = applicationRepository.isRecordExists(softwares);
+        List<Application> newApplications = new ArrayList<>();
+        Map<SoftwareDTO, String> appUuids = new HashMap<>();
 		// Normalize version: treat null or "null" as empty string
-		String version = software.getVersion() == null ? "" : software.getVersion();
 
-		String vendorName = software.getVendorName() == null ? "" : software.getVendorName();
+        // Process each software
+        for (SoftwareDTO software : softwares) {
+            String version = software.getVersion() == null ? "" : software.getVersion();
+            String vendorName = software.getVendorName() == null ? "" : software.getVendorName();
+            String key = software.getName() + "|" + version + "|" + vendorName;
+            Application existingApp = appExistenceMap.get(key);
 
-		// Check for existing application (including soft-deleted mappings)
-		Optional<Application> existingApp = applicationRepository.findByNameVersionVendor(software.getName(), version,
-				vendorName);
-		logger.debug("Checking for existing application with name: {}, version: {}, vendor: {}", software.getName(),
-				version, vendorName);
-		Application application;
+            if (existingApp != null) {
+                appUuids.put(software, existingApp.getUuid());
+            } else {
+                Application application = new Application();
+                application.setUuid(UUIDUtil.generateUUID());
+                application.setName(software.getName());
+                application.setVersion(version);
+                application.setVendorName(vendorName);
+                application.setCreatedAt(LocalDateTime.now());
+                newApplications.add(application);
+                appUuids.put(software, application.getUuid());
+            }
+        }
 
-		if (existingApp.isPresent()) {
+        // Batch save new applications
+        if (!newApplications.isEmpty()) {
+            int[] results = applicationRepository.batchSave(newApplications);
+            for (int result : results) {
+                if (result != 1) {
+                    logger.error("Failed to save some applications");
+                    return -1; // Internal error
+                }
+            }
+            logger.info("Batch saved {} new applications", newApplications.size());
+        }
+//        try {
+//            computerApplicationService.sampleService(application);
+//        } catch (Exception e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
 
-			application = existingApp.get();
-			logger.debug("Reusing existing application with UUID: {}", application.getUuid());
+        // Process mappings
+        for (SoftwareDTO software : softwares) {
+            String version = software.getVersion() == null ? "" : software.getVersion();
+            String vendorName = software.getVendorName() == null ? "" : software.getVendorName();
+            String appUuid = appUuids.get(software);
 
-			// Check if there's a mapping for this computer and application
-			Optional<ComputerApplication> existingMapping = computerApplicationRepository
-					.findByComputerAndApplicationUuid(computerUuid, application.getUuid());
-			if (existingMapping.isPresent()) {
-				// Reactivate soft-deleted mapping
-				if (existingMapping.get().isDeleted()) {
-					computerApplicationService.reactivateMapping(computerUuid, application.getUuid(),
-							software.getInstalledDate());
-					logger.debug("Reactivated mapping for application UUID: {}", application.getUuid());
-				} else {
-					logger.debug("Found existing active mapping for application UUID: {}", application.getUuid());
-					// Update installed_date if changed
-					if (!Objects.equals(existingMapping.get().getInstalledDate(), software.getInstalledDate())) {
-						computerApplicationService.updateMapping(computerUuid, application.getUuid(),
-								software.getInstalledDate());
-						logger.debug("Updated installed_date for mapping with application UUID: {}",
-								application.getUuid());
-					}
-				}
-			} else {
-				// Create new mapping
-				int mappingStatus = computerApplicationService.createComputerApplication(computerUuid,
-						application.getUuid(), software.getInstalledDate());
-				if (mappingStatus != 1) {
-					logger.warn("Failed to create mapping for application UUID: {}, status: {}", application.getUuid(),
-							mappingStatus);
-					return mappingStatus;
-				}
-			}
-		} else {
-			// Create new application
-			application = new Application();
-			application.setUuid(UUIDUtil.generateUUID());
-			application.setName(software.getName());
-			application.setVersion(version);
-			application.setVendorName(vendorName);
-			application.setCreatedAt(LocalDateTime.now());
+            // Check for existing mapping
+            Optional<ComputerApplication> existingMapping = computerApplicationRepository
+                    .findByComputerAndApplicationUuid(computerUuid, appUuid);
+            if (existingMapping.isPresent()) {
+                // Reactivate soft-deleted mapping
+                if (existingMapping.get().isDeleted()) {
+                    computerApplicationService.reactivateMapping(computerUuid, appUuid, software.getInstalledDate());
+                    logger.debug("Reactivated mapping for application UUID: {}", appUuid);
+                } else if (!Objects.equals(existingMapping.get().getInstalledDate(), software.getInstalledDate())) {
+                    // Update installed_date if changed
+                    computerApplicationService.updateMapping(computerUuid, appUuid, software.getInstalledDate());
+                    logger.debug("Updated installed_date for mapping with application UUID: {}", appUuid);
+                }
+            } else {
+                // Create new mapping
+                int mappingStatus = computerApplicationService.createComputerApplication(computerUuid, appUuid, software.getInstalledDate());
+                if (mappingStatus != 1) {
+                    logger.warn("Failed to create mapping for application UUID: {}, status: {}", appUuid, mappingStatus);
+                    return mappingStatus;
+                }
+            }
 
-			if (applicationRepository.save(application) != 1) {
-				logger.error("Failed to save application with UUID: {}", application.getUuid());
-				return -1; // Internal error
-			}
-			logger.info("Created new application with UUID: {}", application.getUuid());
+            // Soft-delete mappings for other applications with same name and vendor but different version
+            Optional<Application> currentMappedApp = applicationRepository.findByComputerUuidAndNameVendor(computerUuid,
+                    software.getName(), vendorName);
+            if (currentMappedApp.isPresent() && !currentMappedApp.get().getUuid().equals(appUuid)) {
+                computerApplicationService.softDeleteMapping(computerUuid, currentMappedApp.get().getUuid());
+                logger.debug("Soft deleted old mapping for application UUID: {}", currentMappedApp.get().getUuid());
+            }
+            
+           
+        }
 
-			try {
-				computerApplicationService.sampleService(application);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-			// Create new mapping
-			int mappingStatus = computerApplicationService.createComputerApplication(computerUuid,
-					application.getUuid(), software.getInstalledDate());
-			if (mappingStatus != 1) {
-				logger.warn("Failed to create mapping for application UUID: {}, status: {}", application.getUuid(),
-						mappingStatus);
-				return mappingStatus;
-			}
-		}
-
-		// Soft-delete mappings for other applications with same name and vendor but
-		// different version
-		Optional<Application> currentMappedApp = applicationRepository.findByComputerUuidAndNameVendor(computerUuid,
-				software.getName(), vendorName);
-		if (currentMappedApp.isPresent() && !currentMappedApp.get().getUuid().equals(application.getUuid())) {
-			computerApplicationService.softDeleteMapping(computerUuid, currentMappedApp.get().getUuid());
-			logger.debug("Soft deleted old mapping for application UUID: {}", currentMappedApp.get().getUuid());
-		}
-
-		logger.info("Created/updated application mapping for computer UUID: {}", computerUuid);
-		return 1; // Success
+        logger.info("Created/updated application mappings for computer UUID: {}", computerUuid);
+        return 1; // Success
 	}
-
-	@Transactional(readOnly = true)
+	
+	@Override
+    public int createOrUpdateApplication(SoftwareDTO software, String computerUuid) {
+        // Delegate to batch method for single application
+        return createOrUpdateApplication(Collections.singletonList(software), computerUuid);
+	}
+	
+	
 	@Override
 	public List<Application> getApplicationsByComputerUuid(String computerUuid) {
 		logger.info("Fetching applications for computer UUID: {}", computerUuid);

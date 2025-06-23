@@ -15,7 +15,7 @@ public interface ComputerApplicationService {
 
 	int updateMapping(String computerUuid, String applicationUuid, LocalDateTime installedDate);
 
-	void sampleService(Application application);
+//	void sampleService(Application application);
 
 
 }

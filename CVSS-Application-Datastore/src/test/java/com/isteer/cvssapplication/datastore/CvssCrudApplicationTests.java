@@ -1,4 +1,4 @@
-package com.example.isteer;
+package com.isteer.cvssapplication.datastore;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

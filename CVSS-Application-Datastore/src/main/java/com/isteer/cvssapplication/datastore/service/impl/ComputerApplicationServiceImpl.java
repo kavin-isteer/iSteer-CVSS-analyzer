@@ -115,24 +115,24 @@ public class ComputerApplicationServiceImpl implements ComputerApplicationServic
 	        return 1; // Success
 	    }
 
-		@Override
-		@Async("asyncExecutor")
-		public void sampleService(Application application) {
-			try {
-				ApplicationModel applications = new ApplicationModel();
-				applications.setApplicationName(application.getName());
-				applications.setApplicationVendor(application.getVendorName());
-				applications.setApplicationVersion(application.getVersion());
-//				logger.info("Calling the resloution method");
-				List<DependencyModel> normalizedApplications = new OsSoftwareAnalyzerAndNormalizer().resolveOsSoftwareNames(applications);
-				for( DependencyModel normalizedApplication : normalizedApplications) {
-					DependencyModel vuln = new CveClient().fetchVulnerabilitiesForDependency(normalizedApplication);
-					System.out.println(vuln);
-				}
-			}catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
+//		@Override
+//		@Async("asyncExecutor")
+//		public void sampleService(Application application) {
+//			try {
+//				ApplicationModel applications = new ApplicationModel();
+//				applications.setApplicationName(application.getName());
+//				applications.setApplicationVendor(application.getVendorName());
+//				applications.setApplicationVersion(application.getVersion());
+////				logger.info("Calling the resloution method");
+//				List<DependencyModel> normalizedApplications = new OsSoftwareAnalyzerAndNormalizer().resolveOsSoftwareNames(applications);
+//				for( DependencyModel normalizedApplication : normalizedApplications) {
+//					DependencyModel vuln = new CveClient().fetchVulnerabilitiesForDependency(normalizedApplication);
+//					System.out.println(vuln);
+//				}
+//			}catch (SQLException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//		}
 
 }

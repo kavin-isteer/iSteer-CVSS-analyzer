@@ -1,8 +1,10 @@
 package com.isteer.cvssapplication.datastore.dao;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import com.isteer.cvssapplication.datastore.dto.SoftwareDTO;
 import com.isteer.cvssapplication.datastore.entity.Application;
 
 public interface ApplicationDao {
@@ -10,4 +12,8 @@ public interface ApplicationDao {
 	    Optional<Application> findByNameVersionVendor(String name, String version, String vendorName);
 	    List<Application> findByComputerUuid(String computerUuid);
 	    Optional<Application> findByUuidAndIsDeletedFalse(String uuid);
-		Optional<Application> findByComputerUuidAndNameVendor(String computerUuid, String name, String vendorName);}
+		Optional<Application> findByComputerUuidAndNameVendor(String computerUuid, String name, String vendorName);
+		Map<String, Application> isRecordExists(List<SoftwareDTO> applications);
+		int[] batchSave(List<Application> applications);	
+		
+}

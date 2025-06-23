@@ -14,6 +14,8 @@ public interface ApplicationService {
 
 		List<Application> getApplicationsByComputerUuid(String computerUuid);
 
+		int createOrUpdateApplication(List<SoftwareDTO> list, String computerUuid);
+
 		int createOrUpdateApplication(SoftwareDTO software, String computerUuid);
 
 }

@@ -55,7 +55,7 @@ public class ComputerServiceImpl implements ComputerService {
 	    @Transactional
 	    @Override
 	    public int createComputer(ComputerPayloadDTO payload) {
-	        logger.info("Processing computer with deviceId: {}", payload.getDeviceId());
+	        logger.debug("Processing computer with deviceId: {}", payload.getDeviceId());
 	        Set<ConstraintViolation<ComputerPayloadDTO>> violations = validator.validate(payload);
 	        if (!violations.isEmpty()) {
 	            logger.warn("Validation errors: {}", violations.stream().map(ConstraintViolation::getMessage).collect(Collectors.joining("; ")));
@@ -77,21 +77,20 @@ public class ComputerServiceImpl implements ComputerService {
 	                updateComputerDetails(computer, payload);
 	                if (computerRepository.update(computer) != 1) {
 	                    logger.error("Failed to update computer with UUID: {}", computer.getUuid());
+	                    return -1; // Internal error
 	                }
-	                else {
-	                	isComputerUpdated = true;
+	                isComputerUpdated = true;
 	                logger.info("Updated computer with UUID: {}", computer.getUuid());
 	            }
-	            }
-	            // Process application mappings
+	            // Soft-delete outdated mappings
 	            List<ComputerApplication> currentMappings = computerApplicationRepository.findByComputerUuid(computer.getUuid());
 	            Set<String> newAppKeys = payload.getInstalledSoftware().stream()
-	                    .map(s -> s.getName() + ":" + s.getVendorName() + ":" + s.getVersion())
+	                    .map(s -> s.getName() + ":" + (s.getVendorName() == null ? "" : s.getVendorName()) + ":" + (s.getVersion() == null ? "" : s.getVersion()))
 	                    .collect(Collectors.toSet());
 	            for (ComputerApplication mapping : currentMappings) {
 	                Application app = applicationRepository.findByUuidAndIsDeletedFalse(mapping.getApplicationUuid()).orElse(null);
 	                if (app != null) {
-	                    String appKey = app.getName() + ":" + app.getVendorName() + ":" + app.getVersion();
+	                    String appKey = app.getName() + ":" + (app.getVendorName() == null ? "" : app.getVendorName()) + ":" + (app.getVersion() == null ? "" : app.getVersion());
 	                    if (!newAppKeys.contains(appKey)) {
 	                        computerApplicationRepository.softDeleteByComputerAndApplicationUuid(computer.getUuid(), app.getUuid());
 	                        logger.debug("Soft deleted mapping for application UUID: {}", app.getUuid());
@@ -120,45 +119,43 @@ public class ComputerServiceImpl implements ComputerService {
 
 	            if (computerRepository.save(computer) != 1) {
 	                logger.error("Failed to save new computer with UUID: {}", computer.getUuid());
+	                return -1; // Internal error
 	            }
 	            logger.info("Created new computer with UUID: {}", computer.getUuid());
 	        }
 
-	        Set<Integer> appStatuses = payload.getInstalledSoftware().stream()
-	                .map(software -> applicationService.createOrUpdateApplication(software, computer.getUuid()))
-	                .collect(Collectors.toSet());
-	        	  isApplicationsUpdated = true;
-	            logger.info("Processed applications for computer UUID: {}", computer.getUuid());
-	            if (appStatuses.contains(-1)) {
-	                logger.error("Error processing applications for computer UUID: {}", computer.getUuid());
-	                return -4; // Error in application processing
-	            }
-	    
+	        // Process all applications in a batch
+	        int appStatus = applicationService.createOrUpdateApplication(payload.getInstalledSoftware(), computer.getUuid());
+	        isApplicationsUpdated = true;
+	        logger.info("Processed applications for computer UUID: {}", computer.getUuid());
+	        if (appStatus == -1) {
+	            logger.error("Error processing applications for computer UUID: {}", computer.getUuid());
+	            return -4; // Error in application processing
+	        }
+
 	        if (!existingComputer.isPresent()) {
-	           return 1; // New computer created successfully
+	            return 1; // New computer created successfully
 	        } else if (isComputerUpdated && isApplicationsUpdated) {
-	           return 2; // Computer and applications updated successfully
+	            return 2; // Computer and applications updated successfully
 	        } else if (isComputerUpdated) {
-	          return 3; // Only computer updated successfully
+	            return 3; // Only computer updated successfully
 	        } else if (isApplicationsUpdated) {
-	          return 4; // Only applications updated successfully
+	            return 4; // Only applications updated successfully
 	        } else {
 	            logger.debug("No changes detected for computer with UUID: {}", computer.getUuid());
 	            return 0; // No changes made
 	        }
-
-//	        return isUpdate ? 2 : 1; // 2 for update success, 1 for create success
 	    }
 
 	    private boolean isComputerUnchanged(Computer computer, ComputerPayloadDTO payload) {
 	        return computer.getMachineName().equals(payload.getMachineName()) &&
-	               computer.getIpAddress().equals(payload.getIpAddress()) &&
-	               computer.getOsVersion().equals(payload.getOsVersion()) &&
-	               (computer.getAntivirusStatus() == null ? payload.getAntivirusStatus() == null : computer.getAntivirusStatus().equals(payload.getAntivirusStatus())) &&
-	               (computer.getFirewallStatus() == null ? payload.getFirewallStatus() == null : computer.getFirewallStatus().equals(payload.getFirewallStatus())) &&
-	               (computer.getLoggedInUser() == null ? payload.getLoggedInUser() == null : computer.getLoggedInUser().equals(payload.getLoggedInUser())) &&
-	               computer.getLastUpdateCheck().equals(payload.getLastUpdateCheck())
-	               && computer.getTimestamp().equals(payload.getTimestamp());
+	                computer.getIpAddress().equals(payload.getIpAddress()) &&
+	                computer.getOsVersion().equals(payload.getOsVersion()) &&
+	                (computer.getAntivirusStatus() == null ? payload.getAntivirusStatus() == null : computer.getAntivirusStatus().equals(payload.getAntivirusStatus())) &&
+	                (computer.getFirewallStatus() == null ? payload.getFirewallStatus() == null : computer.getFirewallStatus().equals(payload.getFirewallStatus())) &&
+	                (computer.getLoggedInUser() == null ? payload.getLoggedInUser() == null : computer.getLoggedInUser().equals(payload.getLoggedInUser())) &&
+	                computer.getLastUpdateCheck().equals(payload.getLastUpdateCheck()) &&
+	                computer.getTimestamp().equals(payload.getTimestamp());
 	    }
 
 	    private void updateComputerDetails(Computer computer, ComputerPayloadDTO payload) {
@@ -190,13 +187,13 @@ public class ComputerServiceImpl implements ComputerService {
 	        logger.info("Fetching all computers");
 	        return computerRepository.findAllComputers();
 	    }
-	    
+
 	    @Override
 	    public ComputerDetailsResponseDTO getComputerDetailsByUuid(String uuid) {
 	        logger.info("Fetching computer details with UUID: {}", uuid);
 	        Computer computer = getComputerByUuid(uuid);
 	        List<Application> applications = applicationService.getApplicationsByComputerUuid(uuid);
-	        
+
 	        for (Application app : applications) {
 	            app.setVulnerabilities(vulnerabilityRepository.findByApplicationUuid(app.getUuid()));
 	        }
