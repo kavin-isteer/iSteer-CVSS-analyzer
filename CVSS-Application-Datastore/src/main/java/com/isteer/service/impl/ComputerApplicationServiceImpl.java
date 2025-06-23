@@ -1,10 +1,8 @@
 package com.isteer.service.impl;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 import com.isteer.entity.Application;
-import com.isteer.entity.ComputerApplication;
 
 public interface ComputerApplicationServiceImpl {
   

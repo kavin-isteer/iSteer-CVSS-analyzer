@@ -19,7 +19,7 @@ public class UploadFileAnalysisService {
 	    
 	    jobTracker.register(jobId, emitter);
 		new Thread(()->{try {
-			Engine.readAndAnalyzeUploadedPomFile(uploadFile, emitter);
+		//	Engine.readAndAnalyzeUploadedPomFile(uploadFile, emitter);
 		} finally {
 			jobTracker.complete(jobId);
 		}}).start();

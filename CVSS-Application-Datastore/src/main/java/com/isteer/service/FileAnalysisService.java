@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.isteer.cvssanalyser.core.Engine;
+
 
 @Service
 public class FileAnalysisService {
@@ -20,6 +22,15 @@ public class FileAnalysisService {
 	 public String doAnalysisForUploadedFile(String fileType, MultipartFile uploadedFile) throws IOException {
 	    	String response="ERROR";
 	    	if(fileType.equals("POM")) {
+	    		if (uploadedFile.isEmpty()) {
+	    			Engine.logger.error("Uploaded file is empty.");
+	    			return "FILE_EMPTY";
+	    		}
+	    		if (!uploadedFile.getOriginalFilename().endsWith(".xml")) {
+	    			Engine.logger
+	    					.info("Warning: Uploaded file does not have a .xml extension: " + uploadedFile.getOriginalFilename());
+	    			return "INVALID_FILE_TYPE";
+	    		}
 	    		response=fileAnalysisService.doPomFileAnalysis(uploadedFile);
 	    	}else if(fileType.equals("PACKAGE_JSON")) {
 	    		String packageJsonContents=null;

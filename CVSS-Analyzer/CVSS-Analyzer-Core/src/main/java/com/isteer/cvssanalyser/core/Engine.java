@@ -364,7 +364,7 @@ public class Engine {
 		return isThresholdExceeded;
 	}
 
-	public static void readAndAnalyzeUploadedPomFile(MultipartFile file, SseEmitter emitter) {
+	public static void readAndAnalyzeUploadedPomFile(byte[] file, SseEmitter emitter)  {
 		PomFileReader pomReader = new PomFileReader();
 		GAVAnalyzer gavAnalyzer = new GAVAnalyzer();
 		CPEEvidencesNormalizer normalizer = new CPEEvidencesNormalizer();

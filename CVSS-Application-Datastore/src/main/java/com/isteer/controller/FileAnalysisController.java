@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +24,7 @@ import com.isteer.service.FileAnalysisService;
 public class FileAnalysisController {
 	@Autowired
 	FileAnalysisService service;
+	
 	/**
 	 * Handles the upload of a file for dependency analysis based on the file type (e.g., Maven or Node).
 	 * <p>
@@ -47,10 +49,16 @@ public class FileAnalysisController {
 			jobId = service.doAnalysisForUploadedFile(fileType, uploadedFile);
 			if(jobId.equals("INVALID_FILE_TYPE")) {
 				errorResponse.put("error", "Invalid file type!!");
-				return ResponseEntity.ok(errorResponse);
+				return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
 			}else if(jobId.equals("ERROR")) {
 				errorResponse.put("error", "Error while analysing uploaded file!!");
-				return ResponseEntity.ok(errorResponse);
+				return new ResponseEntity<>(errorResponse,HttpStatus.EXPECTATION_FAILED);
+			}else if(jobId.equals("FILE_EMPTY")) {
+				errorResponse.put("error", "Uploaded file is empty!!");
+				return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
+			}else if(jobId.endsWith("INVALID_POM_FILE")) {
+				errorResponse.put("error", "Invalid POM file!!");
+				return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
 			}
 			jobIdResponse.put("jobId", jobId);
 		} catch (IOException e) {
