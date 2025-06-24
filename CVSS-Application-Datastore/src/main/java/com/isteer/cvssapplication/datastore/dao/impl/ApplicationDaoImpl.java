@@ -15,6 +15,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import com.isteer.cvssapplication.datastore.dao.ApplicationDao;
+import com.isteer.cvssapplication.datastore.dao.rowmapper.ApplicationRowMapper;
 import com.isteer.cvssapplication.datastore.dao.rowmapper.RowMapper;
 import com.isteer.cvssapplication.datastore.dto.SoftwareDTO;
 import com.isteer.cvssapplication.datastore.entity.Application;
@@ -25,7 +26,7 @@ public class ApplicationDaoImpl implements ApplicationDao {
 
 	@Autowired
 	private NamedParameterJdbcTemplate jdbcTemplate;
-
+	
 	@Override
 	public int save(Application application) {
 		String sql = "INSERT INTO applications (uuid, name, version, vendor_name, created_at) "
@@ -96,8 +97,27 @@ public class ApplicationDaoImpl implements ApplicationDao {
 	}
 
 	@Override
-	public Map<String, Application> isRecordExists(List<SoftwareDTO> applications) {
-		return null;
+	public Map<Application, Boolean> isRecordExists(List<SoftwareDTO> applications) {
+		Map<Application, Boolean> result = new HashMap<>();
+		String sql = "SELECT id, uuid, name, version, vendor_name, created_at FROM applications WHERE (name,version,vendor_name) IN (:name,:version,:vendor)";
+		for(SoftwareDTO app:applications) {
+			MapSqlParameterSource params = new MapSqlParameterSource();
+			params.addValue("name", app.getName());
+			params.addValue("version", app.getVersion());
+			params.addValue("vendor", app.getVendorName());
+			try {
+			Application appFromDb = jdbcTemplate.queryForObject(sql, params, RowMapper::mapApplicationRow);
+			result.put(appFromDb, true);
+			}catch (Exception e) {
+				Application wrkApp = new Application();
+				wrkApp.setName(app.getName());
+				wrkApp.setVendorName(app.getVendorName());
+				wrkApp.setVersion(app.getVersion());
+				wrkApp.setInstalledDate(app.getInstalledDate());
+			result.put(wrkApp, false);
+			}
+		}
+		return result;
 	}
 	
 	public Map<String, Application> isRecordExists1(List<SoftwareDTO> applications) {
@@ -121,7 +141,8 @@ public class ApplicationDaoImpl implements ApplicationDao {
 			vendorNames.add(software.getVendorName() == null ? "" : software.getVendorName());
 		}
 
-		String sql = "SELECT uuid, name, version, vendor_name, created_at " + "FROM applications "
+		String sql = "SELECT uuid, name, version, vendor_name, created_at " 
+				+ "FROM applications "
 				+ "WHERE (name, COALESCE(version, ''), COALESCE(vendor_name, '')) IN (:values)";
 		MapSqlParameterSource params = new MapSqlParameterSource();
 		List<List<String>> valueTuples = new ArrayList<>();
