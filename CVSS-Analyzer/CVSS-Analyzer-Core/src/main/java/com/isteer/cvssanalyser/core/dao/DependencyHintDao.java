@@ -143,7 +143,7 @@ public class DependencyHintDao {
 
 		String checkQuery = "SELECT COUNT(*) FROM dependency_hints WHERE type = ? AND match_key = ? AND evidence_type=?";
 		String insertQuery = "INSERT INTO dependency_hints (type, match_key, standardized_name, confidence, description, evidence_type,addedBy) VALUES (?, ?, ?, ?, ?, ?,?)";
-		String updateQuery = "UPDATE dependency_hints SET standardized_name = ?, confidence = ?, description = ?, evidence_type = ? WHERE type = ? AND match_key = ?";
+		String updateQuery = "UPDATE dependency_hints SET standardized_name = ?, confidence = ?, description = ?, evidence_type = ? , addedBy=? WHERE type = ? AND match_key = ?";
 
 		try {
 			// Step 1: Check if record exists
@@ -160,8 +160,9 @@ public class DependencyHintDao {
 						updateStmt.setString(2, hint.getConfidence());
 						updateStmt.setString(3, hint.getDescription());
 						updateStmt.setString(4, hint.getEvidenceType());
-						updateStmt.setString(5, hint.getType());
-						updateStmt.setString(6, hint.getMatch_key());
+						updateStmt.setInt(5, hint.getAddedBy().getId());
+						updateStmt.setString(6, hint.getType());
+						updateStmt.setString(7, hint.getMatch_key());
 
 						return updateStmt.executeUpdate(); // rows updated
 					}

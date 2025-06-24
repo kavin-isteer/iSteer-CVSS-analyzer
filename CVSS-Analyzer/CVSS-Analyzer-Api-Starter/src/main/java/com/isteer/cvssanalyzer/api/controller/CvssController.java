@@ -1,30 +1,17 @@
 package com.isteer.cvssanalyzer.api.controller;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import com.isteer.cvssanalyser.core.DependencyHintService;
 import com.isteer.cvssanalyser.core.Engine;
 import com.isteer.cvssanalyser.core.enums.EngineMode;
 import com.isteer.cvssanalyser.core.exception.NvdApiException;
 import com.isteer.cvssanalyser.core.logging.Slf4jEngineLogger;
-import com.isteer.cvssanalyser.core.model.DependencyModel;
 import com.isteer.cvssanalyzer.api.service.CvssService;
-import com.isteer.cvssanalyzer.api.service.JobTrackerService;
 
 @RestController
 @RequestMapping("/cvss")
@@ -53,7 +40,7 @@ public class CvssController {
 				Engine.withLogger(new Slf4jEngineLogger());
 				Engine.analyze(EngineMode.POM, emitter);
 				Engine.doFuzzySearchAndGetLikelyCpes();
-				emitter.send(SseEmitter.event().data("Analysis completed"));
+				emitter.send(SseEmitter.event().data("Analysis Completed"));
 			} catch (Exception e) {
 				emitter.completeWithError(e);
 			} finally {
