@@ -24,6 +24,7 @@ public class Application {
 //	@NotBlank(message = "Vendor name cannot be blank")
 //	@Size(max = 100, message = "Vendor name must be at most 100 characters")
 	private String vendorName;
+
 	public LocalDateTime getInstalledDate() {
 		return installedDate;
 	}
@@ -95,5 +96,4 @@ public class Application {
 	public void setVulnerabilities(List<Vulnerability> vulnerabilities) {
 		this.vulnerabilities = vulnerabilities;
 	}
-
 }

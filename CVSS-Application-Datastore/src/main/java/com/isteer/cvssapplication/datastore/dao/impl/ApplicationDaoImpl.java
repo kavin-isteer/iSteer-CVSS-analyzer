@@ -127,6 +127,7 @@ public class ApplicationDaoImpl implements ApplicationDao {
 		return result;
 	}
 	
+	@Override
 	public Map<Application, Boolean> isRecordExists1(List<SoftwareDTO> applications) {
 		 Map<Application, Boolean> result = new LinkedHashMap<>();
 		    
@@ -168,11 +169,12 @@ public class ApplicationDaoImpl implements ApplicationDao {
 		        app.setName((String)row.get("name"));
 		        app.setVersion((String)row.get("version"));
 		        app.setVendorName((String)row.get("vendor_name"));
-		        Timestamp createdAt = (Timestamp)row.get("created_at");
-		        app.setCreatedAt(createdAt.toLocalDateTime());
+//		        Timestamp createdAt = (Timestamp)row.get("created_at") != null ? (Timestamp)row.get("created_at") : null;
+		        app.setCreatedAt(row.get("created_at") != null ? ((Timestamp)row.get("created_at")).toLocalDateTime() : null);
 		        
-		        boolean exists = (Boolean)row.get("exists_flag");
-		        result.put(app, exists);
+		        Long exists = (Long)row.get("exists_flag");
+		        //FIXME: This should be Boolean, but the query returns Long. Dont do like this.
+		        result.put(app, Boolean.valueOf(exists.toString()));
 		    }
 		    
 		    // Clean up
