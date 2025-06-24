@@ -1,7 +1,10 @@
 package com.isteer.cvssapplication.datastore.dao.impl;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -10,6 +13,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -26,6 +30,9 @@ public class ApplicationDaoImpl implements ApplicationDao {
 
 	@Autowired
 	private NamedParameterJdbcTemplate jdbcTemplate;
+	
+	@Autowired
+	private JdbcTemplate template;
 	
 	@Override
 	public int save(Application application) {
@@ -120,48 +127,58 @@ public class ApplicationDaoImpl implements ApplicationDao {
 		return result;
 	}
 	
-	public Map<String, Application> isRecordExists1(List<SoftwareDTO> applications) {
-		logger.debug("Checking existence of {} applications in a single query", applications.size());
-		Map<String, Application> result = new HashMap<>();
-		// Initialize map with all applications set to null (non-existing)
-		applications.forEach(software -> {
-			String version = software.getVersion() == null ? "" : software.getVersion();
-			String vendorName = software.getVendorName() == null ? "" : software.getVendorName();
-			String key = software.getName() + "|" + version + "|" + vendorName;
-			result.put(key, null);
-		});
+	public Map<Application, Boolean> isRecordExists1(List<SoftwareDTO> applications) {
+		 Map<Application, Boolean> result = new LinkedHashMap<>();
+		    
+		    if (applications.isEmpty()) {
+		        return result;
+		    }
 
-		// Prepare parameters for IN clause
-		List<String> names = new ArrayList<>();
-		List<String> versions = new ArrayList<>();
-		List<String> vendorNames = new ArrayList<>();
-		for (SoftwareDTO software : applications) {
-			names.add(software.getName());
-			versions.add(software.getVersion() == null ? "" : software.getVersion());
-			vendorNames.add(software.getVendorName() == null ? "" : software.getVendorName());
-		}
+		    // Create temporary table
+		    template.execute("CREATE TEMPORARY TABLE IF NOT EXISTS temp_apps_to_check (" +
+		        "name VARCHAR(255), " +
+		        "version VARCHAR(255), " +
+		        "vendor_name VARCHAR(255))");
 
-		String sql = "SELECT uuid, name, version, vendor_name, created_at " 
-				+ "FROM applications "
-				+ "WHERE (name, COALESCE(version, ''), COALESCE(vendor_name, '')) IN (:values)";
-		MapSqlParameterSource params = new MapSqlParameterSource();
-		List<List<String>> valueTuples = new ArrayList<>();
-		for (int i = 0; i < applications.size(); i++) {
-			valueTuples.add(List.of(names.get(i), versions.get(i), vendorNames.get(i)));
-		}
-		params.addValue("values", valueTuples);
-		
-		List<Application> existingApps = jdbcTemplate.query(sql, params, RowMapper::mapApplicationRow);
-		existingApps.forEach(app -> {
-			String key = app.getName() + "|" + (app.getVersion() == null ? "" : app.getVersion()) + "|"
-					+ (app.getVendorName() == null ? "" : app.getVendorName());
-			result.put(key, app);
-		});
-	
+		    // Clear previous data
+		    template.execute("TRUNCATE TABLE temp_apps_to_check");
 
+		    // Batch insert all applications to check
+		    template.batchUpdate(
+		        "INSERT INTO temp_apps_to_check (name, version, vendor_name) VALUES (?, ?, ?)",
+		        applications.stream()
+		            .map(app -> new Object[]{app.getName(), app.getVersion(), app.getVendorName()})
+		            .collect(Collectors.toList())
+		    );
 
-		logger.debug("Found {} existing applications", existingApps.size());
-		return result;
+		    
+		    List<Map<String, Object>> rows = template.queryForList(
+		        "SELECT a.id, a.uuid, t.name, t.version, t.vendor_name, " +
+		        "a.created_at, CASE WHEN a.id IS NULL THEN FALSE ELSE TRUE END AS exists_flag " +
+		        "FROM temp_apps_to_check t " +
+		        "LEFT JOIN applications a ON " +
+		        "a.name = t.name AND a.version = t.version AND a.vendor_name = t.vendor_name"
+		    );
+
+		 // Process results
+		    for (Map<String, Object> row : rows) {
+		        Application app = new Application();
+		        app.setId(row.get("id") != null ? ((Number)row.get("id")).longValue() : null);
+		        app.setUuid((String)row.get("uuid"));
+		        app.setName((String)row.get("name"));
+		        app.setVersion((String)row.get("version"));
+		        app.setVendorName((String)row.get("vendor_name"));
+		        Timestamp createdAt = (Timestamp)row.get("created_at");
+		        app.setCreatedAt(createdAt.toLocalDateTime());
+		        
+		        boolean exists = (Boolean)row.get("exists_flag");
+		        result.put(app, exists);
+		    }
+		    
+		    // Clean up
+		    template.execute("DROP TEMPORARY TABLE IF EXISTS temp_apps_to_check");
+
+		    return result;
 	}
 
 	@Override
