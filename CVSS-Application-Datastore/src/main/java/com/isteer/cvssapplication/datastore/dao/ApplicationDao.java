@@ -14,6 +14,7 @@ public interface ApplicationDao {
 	    Optional<Application> findByUuidAndIsDeletedFalse(String uuid);
 		Optional<Application> findByComputerUuidAndNameVendor(String computerUuid, String name, String vendorName);
 		Map<Application, Boolean> isRecordExists(List<SoftwareDTO> applications);
-		int[] batchSave(List<Application> applications);	
+		int[] batchSave(List<Application> applications);
+		Map<Application, Boolean> isRecordExists1(List<SoftwareDTO> applications);	
 		
 }

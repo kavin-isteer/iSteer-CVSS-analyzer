@@ -3,6 +3,7 @@ package com.isteer.cvssapplication.datastore.dao.rowmapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import com.isteer.cvssapplication.datastore.dto.ComputerApplicationDTO;
 import com.isteer.cvssapplication.datastore.entity.Application;
 import com.isteer.cvssapplication.datastore.entity.Computer;
 import com.isteer.cvssapplication.datastore.entity.ComputerApplication;
@@ -55,5 +56,18 @@ public class RowMapper {
         ca.setUpdatedAt(rs.getTimestamp("updated_at") != null ?
                 rs.getTimestamp("updated_at").toLocalDateTime() : null);
         return ca;
+    }
+    
+    public static ComputerApplicationDTO mapComputerApplicationDetailsRow(ResultSet rs, int rowNum) throws SQLException {
+    	ComputerApplicationDTO dto = new ComputerApplicationDTO();
+    	dto.setUuid(rs.getString("uuid"));
+    	dto.setComputerUuid(rs.getString("computer_uuid"));
+    	dto.setApplicationUuid(rs.getString("application_uuid"));
+    	dto.setInstalledDate(rs.getTimestamp("installed_date") != null ? rs.getTimestamp("installed_date").toLocalDateTime() : null);
+    	dto.setDeleted(rs.getBoolean("is_deleted"));
+    	dto.setApplicationName(rs.getString("name"));
+    	dto.setApplicationVersion(rs.getString("version"));
+    	dto.setApplicationVendorName(rs.getString("vendor_name"));
+    	return dto;
     }
 }

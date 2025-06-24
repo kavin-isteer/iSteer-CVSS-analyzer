@@ -1,12 +1,12 @@
 package com.isteer.cvssanalyser.core;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import com.isteer.cvssanalyser.core.cveclient.CveClient;
 import com.isteer.cvssanalyser.core.dao.DependencyHintDao;
 import com.isteer.cvssanalyser.core.enums.CpeField;
 import com.isteer.cvssanalyser.core.enums.EvidenceType;
@@ -20,14 +20,38 @@ import com.isteer.cvssanalyser.core.util.DbUtil;
 
 public class OsSoftwareAnalyzerAndNormalizer {
 
-	public List<DependencyModel> resolveOsSoftwareNames(ApplicationModel application) throws SQLException {
+	public Map<String, DependencyModel> softwareAnalyzerAndNormalizer(List<ApplicationModel> applications) {
+		CveClient cveClient = new CveClient();
+		Map<String, DependencyModel> insertedApplications = new HashMap<>();
+		for (ApplicationModel application : applications) {
+			if (!application.isExists() && application.getApplicationUuid() != null) {
+				try {
+					DependencyModel resolvedApplication = resolveOsSoftwareNames(application);
+					if (resolvedApplication.getCpeEnumeration() != null
+							&& resolvedApplication.getCpeEnumeration().getCPE23Uri() != null) {
+						cveClient.fetchVulnerabilitiesForDependency(resolvedApplication);
+						if (resolvedApplication.getVulnerabilities() != null
+								&& resolvedApplication.getVulnerabilities().size() > 0) {
+							insertedApplications.put(application.getApplicationUuid(), resolvedApplication);
+						}
+					}
+				} catch (Exception e) {
+					// TODO: handle exception
+					Engine.logger.error("Error while resolving OS software names for application: "
+							+ application.getApplicationName() + " - " + e.getMessage());
+				}
+			}
+		}
+		return insertedApplications;
+	}
+
+	public DependencyModel resolveOsSoftwareNames(ApplicationModel application) throws SQLException {
 		// This method will resolve the OS software names from the list of applications
 		// and return a list of DependencyModel objects.
 		DependencyHintDao hintDao = new DependencyHintDao();
 		DbUtil dbUtil = new DbUtil();
 		FuzzySearchTool fuzzySearchTool = new FuzzySearchTool();
-		List<DependencyModel> resolvedApplications = new ArrayList<>();
-		DependencyModel dependency = new DependencyModel();
+		DependencyModel resolvedApplication = new DependencyModel();
 
 		Evidence productEvidence = new Evidence();
 		Evidence vendorEvidence = new Evidence();
@@ -85,13 +109,12 @@ public class OsSoftwareAnalyzerAndNormalizer {
 			cpe.addResolveMethod(CpeField.VERSION, ResolveMethod.ARBITRARY);
 		}
 
-		dependency.addVendorEvidence(vendorEvidence);
-		dependency.addProductEvidences(productEvidence);
-		dependency.addVersionEvidences(versionEvidence);
-		dependency.setCpeEnumeration(cpe);
+		resolvedApplication.addVendorEvidence(vendorEvidence);
+		resolvedApplication.addProductEvidences(productEvidence);
+		resolvedApplication.addVersionEvidences(versionEvidence);
+		resolvedApplication.setCpeEnumeration(cpe);
 
-		resolvedApplications.add(dependency);
 //		System.out.println(resolvedApplications);
-		return resolvedApplications;
+		return resolvedApplication;
 	}
 }

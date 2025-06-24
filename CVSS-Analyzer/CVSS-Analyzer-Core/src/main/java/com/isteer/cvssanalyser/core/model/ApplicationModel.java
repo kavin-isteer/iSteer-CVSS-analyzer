@@ -1,13 +1,19 @@
 package com.isteer.cvssanalyser.core.model;
 
-import java.time.LocalDateTime;
-
 public class ApplicationModel {
 	
+	private String applicationUuid;
 	private String applicationName;
 	private String applicationVersion;
 	private String applicationVendor;
-	private LocalDateTime installedDate;
+	private boolean isExists;
+	
+	public String getApplicationUuid() {
+		return applicationUuid;
+	}
+	public void setApplicationUuid(String applicationUuid) {
+		this.applicationUuid = applicationUuid;
+	}
 	public String getApplicationName() {
 		return applicationName;
 	}
@@ -26,17 +32,18 @@ public class ApplicationModel {
 	public void setApplicationVendor(String applicationVendor) {
 		this.applicationVendor = applicationVendor;
 	}
-	public LocalDateTime getInstalledDate() {
-		return installedDate;
+	public boolean isExists() {
+		return isExists;
 	}
-	public void setInstalledDate(LocalDateTime installedDate) {
-		this.installedDate = installedDate;
+	public void setExists(boolean isExists) {
+		this.isExists = isExists;
 	}
 	
 	@Override
 	public String toString() {
-		return "ApplicationModel [applicationName=" + applicationName + ", applicationVersion=" + applicationVersion
-				+ ", applicationVendor=" + applicationVendor + ", installedDate=" + installedDate + "]";
+		return "ApplicationModel [applicationUuid=" + applicationUuid + ", applicationName=" + applicationName
+				+ ", applicationVersion=" + applicationVersion + ", applicationVendor=" + applicationVendor
+				+ ", isExists=" + isExists + "]";
 	}
-
+	
 }

@@ -3,6 +3,7 @@ package com.isteer.cvssapplication.datastore.dao.impl;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +14,10 @@ import org.springframework.stereotype.Repository;
 
 import com.isteer.cvssapplication.datastore.dao.ComputerApplicationDao;
 import com.isteer.cvssapplication.datastore.dao.rowmapper.RowMapper;
+import com.isteer.cvssapplication.datastore.dto.ComputerApplicationDTO;
+import com.isteer.cvssapplication.datastore.entity.Application;
 import com.isteer.cvssapplication.datastore.entity.ComputerApplication;
+import com.isteer.cvssapplication.datastore.util.UUIDUtil;
 
 @Repository
 public class ComputerApplicationDaoImpl implements ComputerApplicationDao {
@@ -63,12 +67,23 @@ public class ComputerApplicationDaoImpl implements ComputerApplicationDao {
 	        logger.debug("Soft deleted mapping for computer UUID: {}, application UUID: {}, updated rows: {}", computerUuid, applicationUuid, updated);
 	        return updated;
 	    }
+	    
+	    @Override
+	    public int softDeleteByComputerAndApplicationUuid(String uuid) {
+	        String sql = "UPDATE computer_applications SET is_deleted = true, updated_at = CURRENT_TIMESTAMP " +
+	                "WHERE uuid = :uuid AND is_deleted = false";
+	        MapSqlParameterSource params = new MapSqlParameterSource()
+	                .addValue("uuid", uuid);
+	        int updated = jdbcTemplate.update(sql, params);
+	        logger.debug("Soft deleted the mapping for UUID: {}, updated rows: {}", uuid, updated);
+	        return updated;
+	    }
 
 	    @Override
-	    public List<ComputerApplication> findByComputerUuid(String computerUuid) {
-	        String sql = "SELECT * FROM computer_applications WHERE computer_uuid = :computerUuid AND is_deleted = false";
+	    public List<ComputerApplicationDTO> findByComputerUuid(String computerUuid) {
+	        String sql = "SELECT ca.uuid, ca.computer_uuid, ca.application_uuid, ca.installed_date, ca.is_deleted, a.name, a.version, a.vendor_name FROM computer_applications ca JOIN applications a ON ca.application_uuid = a.uuid WHERE ca.computer_uuid = :computerUuid ORDER BY ca.installed_date DESC";
 	        MapSqlParameterSource params = new MapSqlParameterSource("computerUuid", computerUuid);
-	        return jdbcTemplate.query(sql, params, RowMapper::mapComputerApplicationRow);
+	        return jdbcTemplate.query(sql, params, RowMapper::mapComputerApplicationDetailsRow);
 	    }
 
 		@Override
@@ -108,6 +123,24 @@ public class ComputerApplicationDaoImpl implements ComputerApplicationDao {
 				  return -1; // No rows updated
 			  }
 		}
+		
+		@Override
+		public int reactivateByComputerAndApplicationUuid(String uuid, LocalDateTime installedDate) {
+			  String sql = "UPDATE computer_applications SET is_deleted = false, installed_date = :installedDate, updated_at = :updatedAt WHERE uuid = :uuid";
+			  MapSqlParameterSource params = new MapSqlParameterSource()
+					  .addValue("uuid", uuid)
+					  .addValue("installedDate", installedDate)
+					  .addValue("updatedAt", LocalDateTime.now());
+			  logger.debug("Reactivating mapping for UUID: {}", uuid);
+			  int updatedRows = jdbcTemplate.update(sql, params);
+			  if (updatedRows > 0) {
+				  logger.info("Successfully reactivated mapping with uuid {}", uuid);
+				  return 1; // Success
+			  } else {
+				  logger.warn("No mapping found to reactivate for UUID: {}", uuid);
+				  return -1; // No rows updated
+			  }
+		}
 
 		@Override
 		public int updateInstalledDate(String computerUuid, String applicationUuid, LocalDateTime installedDate) {
@@ -127,5 +160,29 @@ public class ComputerApplicationDaoImpl implements ComputerApplicationDao {
 				return -1; // No rows updated
 			}
 		}
+
+		@Override
+		public int[] batchMapApplicaitonAndComputer(List<Application> applications, String computerUuid) {
+			String query = "INSERT INTO computer_applications (uuid, computer_uuid, application_uuid, installed_date, is_deleted, created_at) "
+					+ "VALUES (:uuid, :computer, :application, :installedDate, :isDeleted, :createdAt)";
+	    	List<MapSqlParameterSource> paramsList = applications.stream()
+	    			.map(app -> new MapSqlParameterSource()
+	    			.addValue("uuid", UUIDUtil.generateUUID())
+	    			.addValue("computer", computerUuid)
+		    		.addValue("application", app.getUuid())
+		    		.addValue("installedDate", app.getInstalledDate())
+		    		.addValue("isDeleted", false)
+		    		.addValue("createdAt", LocalDateTime.now()))
+		    			.collect(Collectors.toList());
+	    	
+	    	logger.debug("Batch mapping {} applications to computer UUID: {}", applications.size(), computerUuid);
+	    	
+	    	int[] updateCounts = jdbcTemplate.batchUpdate(query, paramsList.toArray(new MapSqlParameterSource[0]));
+	    	
+	    	logger.info("Batch mapping completed with {} applications mapped to computer UUID: {}", updateCounts.length, computerUuid);
+	    	return updateCounts;
+	    			
+		}
+
 		
 }

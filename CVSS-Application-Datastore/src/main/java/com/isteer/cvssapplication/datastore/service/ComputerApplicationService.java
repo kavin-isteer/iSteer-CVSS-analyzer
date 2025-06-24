@@ -1,6 +1,7 @@
 package com.isteer.cvssapplication.datastore.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.isteer.cvssapplication.datastore.entity.Application;
 
@@ -15,7 +16,7 @@ public interface ComputerApplicationService {
 
 	int updateMapping(String computerUuid, String applicationUuid, LocalDateTime installedDate);
 
-//	void sampleService(Application application);
+	void sampleService(List<Application> application);
 
 
 }

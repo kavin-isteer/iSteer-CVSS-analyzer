@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.isteer.cvssanalyser.core.cache.FuzzySearchCache;
 import com.isteer.cvssapplication.datastore.dto.ComputerDetailsResponseDTO;
 import com.isteer.cvssapplication.datastore.dto.ComputerPayloadDTO;
 import com.isteer.cvssapplication.datastore.dto.ErrorMessageDTO;
@@ -41,8 +42,8 @@ public class ComputerController {
 
 	@PostMapping("/computers")
 	public ResponseEntity<?> createComputer(@Valid @RequestBody ComputerPayloadDTO payload) {
-//		new FuzzySearchCache();
-//		FuzzySearchCache.refreshCacheFromDb(); // Refresh cache before processing request
+		new FuzzySearchCache();
+		FuzzySearchCache.refreshCacheFromDb(); // Refresh cache before processing request
 		logger.info("Received request to create/update computer with deviceId: {}", payload.getDeviceId());
 		int status = computerService.createComputer(payload);
 
