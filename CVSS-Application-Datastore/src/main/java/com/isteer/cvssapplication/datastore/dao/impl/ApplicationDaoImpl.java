@@ -97,6 +97,10 @@ public class ApplicationDaoImpl implements ApplicationDao {
 
 	@Override
 	public Map<String, Application> isRecordExists(List<SoftwareDTO> applications) {
+		return null;
+	}
+	
+	public Map<String, Application> isRecordExists1(List<SoftwareDTO> applications) {
 		logger.debug("Checking existence of {} applications in a single query", applications.size());
 		Map<String, Application> result = new HashMap<>();
 		// Initialize map with all applications set to null (non-existing)
