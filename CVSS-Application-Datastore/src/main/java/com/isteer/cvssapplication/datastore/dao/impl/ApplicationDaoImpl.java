@@ -195,4 +195,13 @@ public class ApplicationDaoImpl implements ApplicationDao {
 		logger.debug("Batch saving {} applications", applications.size());
 		return jdbcTemplate.batchUpdate(sql, paramsList.toArray(new MapSqlParameterSource[0]));
 	}
+
+	@Override
+	public List<Application> findAll() {
+		String query = "SELECT id, uuid, name, version, vendor_name, created_at FROM applications";
+		logger.debug("Fetching all applications");
+		List<Application> applications = jdbcTemplate.query(query, new ApplicationRowMapper());
+		logger.debug("Found {} applications", applications.size());
+		return applications;
+	}
 }

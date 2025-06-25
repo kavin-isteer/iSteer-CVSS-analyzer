@@ -3,8 +3,10 @@ package com.isteer.cvssapplication.datastore.service.impl;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -13,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.isteer.cvssapplication.datastore.dao.ApplicationDao;
 import com.isteer.cvssapplication.datastore.dao.ComputerApplicationDao;
 import com.isteer.cvssapplication.datastore.dao.ComputerDao;
 import com.isteer.cvssapplication.datastore.dao.VulnerabilityDao;
@@ -41,9 +42,6 @@ public class ComputerServiceImpl implements ComputerService {
 	private ComputerDao computerRepository;
 
 	@Autowired
-	private ApplicationDao applicationRepository;
-
-	@Autowired
 	private ApplicationService applicationService;
 
 	@Autowired
@@ -69,6 +67,7 @@ public class ComputerServiceImpl implements ComputerService {
 		Optional<Computer> existingComputer = computerRepository.findByDeviceIdAndIsDeletedFalse(payload.getDeviceId());
 		boolean isComputerUpdated = false;
 		boolean isApplicationsUpdated = false;
+		boolean isDataBaseEmpty = false;
 		Computer computer;
 		boolean isUpdate = existingComputer.isPresent();
 
@@ -86,21 +85,6 @@ public class ComputerServiceImpl implements ComputerService {
 				isComputerUpdated = true;
 				logger.info("Updated computer with UUID: {}", computer.getUuid());
 			}
-			// Soft-delete outdated mappings
-//	            List<ComputerApplicationDTO> currentMappings = computerApplicationRepository.findByComputerUuid(computer.getUuid());
-//	            Set<String> newAppKeys = payload.getInstalledSoftware().stream()
-//	                    .map(s -> s.getName() + ":" + (s.getVendorName() == null ? "" : s.getVendorName()) + ":" + (s.getVersion() == null ? "" : s.getVersion()))
-//	                    .collect(Collectors.toSet());
-//	            for (ComputerApplication mapping : currentMappings) {
-//	                Application app = applicationRepository.findByUuidAndIsDeletedFalse(mapping.getApplicationUuid()).orElse(null);
-//	                if (app != null) {
-//	                    String appKey = app.getName() + ":" + (app.getVendorName() == null ? "" : app.getVendorName()) + ":" + (app.getVersion() == null ? "" : app.getVersion());
-//	                    if (!newAppKeys.contains(appKey)) {
-//	                        computerApplicationRepository.softDeleteComputerApplicationUuid(mapping);
-//	                        logger.debug("Soft deleted mapping for application UUID: {}", app.getUuid());
-//	                    }
-//	                }
-//	            }
 		} else {
 			computer = new Computer();
 			computer.setUuid(UUIDUtil.generateUUID());
@@ -123,74 +107,113 @@ public class ComputerServiceImpl implements ComputerService {
 			}
 			logger.info("Created new computer with UUID: {}", computer.getUuid());
 		}
+		
+		List<ComputerApplicationDTO> currentMappings = computerApplicationRepository.findByComputerUuid(computer.getUuid());
+		Set<String> currentAppKeys = currentMappings.stream()
+		        .map(mapping -> key(mapping.getApplicationName(), mapping.getApplicationVendorName(), mapping.getApplicationVersion()))
+		        .collect(Collectors.toSet());
 
-		List<ComputerApplicationDTO> currentMappings = computerApplicationRepository
-				.findByComputerUuid(computer.getUuid());
+		Set<String> deletedAppKeys = currentMappings.stream()
+		        .filter(ComputerApplicationDTO::isDeleted)
+		        .map(mapping -> key(mapping.getApplicationName(), mapping.getApplicationVendorName(), mapping.getApplicationVersion()))
+		        .collect(Collectors.toSet());
 
+		// Fetch all known applications globally
+		List<Application> allApplications = applicationService.getAllApplications();
+		Map<String, Application> existingAppMap = allApplications.stream()
+		        .collect(Collectors.toMap(
+		            app -> key(app.getName(), app.getVendorName(), app.getVersion()),
+		            Function.identity()
+		        ));
+
+		// New applications from payload
 		Set<String> newAppKeys = payload.getInstalledSoftware().stream()
-				.map(software -> key(software.getName(), software.getVendorName(), software.getVersion()))
-				.collect(Collectors.toSet());
-		Set<String> currentAppKeys = currentMappings.stream().map(software -> key(software.getApplicationName(),
-				software.getApplicationVendorName(), software.getApplicationVersion())).collect(Collectors.toSet());
-		Set<String> deletedAppKeys = currentMappings.stream().filter(mapping -> mapping.isDeleted()) // or
-																										// mapping.getIsDeleted()
-																										// depending on
-																										// method name
-				.map(mapping -> key(mapping.getApplicationName(), mapping.getApplicationVendorName(),
-						mapping.getApplicationVersion()))
-				.collect(Collectors.toSet());
+		        .map(software -> key(software.getName(), software.getVendorName(), software.getVersion()))
+		        .collect(Collectors.toSet());
 
-		Set<String> newAppKeysInDeleted = newAppKeys.stream().filter(deletedAppKeys::contains)
-				.collect(Collectors.toSet());
+		// Apps that were soft-deleted earlier, now present again
+		Set<String> newAppKeysInDeleted = newAppKeys.stream()
+		        .filter(deletedAppKeys::contains)
+		        .collect(Collectors.toSet());
 
-		// Remove new apps that are already soft-deleted
-		newAppKeys.removeAll(newAppKeysInDeleted);
-
-		// Find new apps not already mapped
+		// Final new keys to be added (excluding already mapped or reactivatable)
 		Set<String> onlyInNew = new HashSet<>(newAppKeys);
 		onlyInNew.removeAll(currentAppKeys);
+		onlyInNew.removeAll(newAppKeysInDeleted);
 
-		// Find apps that are mapped but no longer present in the payload
+		// Apps to create (not yet existing globally)
+		Set<String> missingAppKeys = new HashSet<>(onlyInNew);
+		missingAppKeys.removeAll(existingAppMap.keySet());
+
+		List<SoftwareDTO> appsToCreate = payload.getInstalledSoftware().stream()
+		        .filter(software -> missingAppKeys.contains(key(software.getName(), software.getVendorName(), software.getVersion())))
+		        .collect(Collectors.toList());
+
+		if (!appsToCreate.isEmpty()) {
+		    int createdStatus = applicationService.createOrUpdateApplication(appsToCreate, computer.getUuid());
+		    logger.debug("Created {} new applications", appsToCreate.size());
+		}
+
+		// Refresh application list after creation
+		allApplications = applicationService.getAllApplications();
+		existingAppMap = allApplications.stream()
+		        .collect(Collectors.toMap(
+		            app -> key(app.getName(), app.getVendorName(), app.getVersion()),
+		            Function.identity()
+		        ));
+
+		// Link new applications to this computer
+		for (String appKey : onlyInNew) {
+		    Application app = existingAppMap.get(appKey);
+		    if (app != null) {
+		    	ComputerApplication mapping = new ComputerApplication();
+		    	mapping.setUuid(UUIDUtil.generateUUID());
+		    	mapping.setComputerUuid(computer.getUuid());
+		    	mapping.setApplicationUuid(app.getUuid());
+		    	mapping.setInstalledDate(app.getInstalledDate());
+		    	mapping.setCreatedAt(LocalDateTime.now());
+		    	mapping.setDeleted(false);
+		        int linkStatus = computerApplicationRepository.save(mapping);
+		        logger.debug("Created mapping: Computer UUID [{}] -> Application UUID [{}]", computer.getUuid(), app.getUuid());
+		    } else {
+		        logger.warn("Application not found in DB for key: {}", appKey);
+		    }
+		}
+
+		// Reactivate soft-deleted mappings
+		List<ComputerApplicationDTO> reactivatedMappings = currentMappings.stream()
+		        .filter(mapping -> newAppKeysInDeleted.contains(key(mapping.getApplicationName(),
+		                mapping.getApplicationVendorName(), mapping.getApplicationVersion())))
+		        .collect(Collectors.toList());
+
+		for (ComputerApplicationDTO mapping : reactivatedMappings) {
+		    int reactivateStatus = computerApplicationRepository.reactivateByComputerAndApplicationUuid(
+		            mapping.getUuid(), mapping.getInstalledDate());
+		    if (reactivateStatus != 1) {
+		        logger.error("Failed to reactivate mapping for application UUID: {}", mapping.getApplicationUuid());
+		        return -5; // Internal error
+		    }
+		    logger.debug("Reactivated mapping for application UUID: {}", mapping.getApplicationUuid());
+		}
+
+		// Soft-delete mappings no longer in the payload
 		Set<String> onlyInCurrent = new HashSet<>(currentAppKeys);
 		onlyInCurrent.removeAll(newAppKeys);
 
-		List<SoftwareDTO> newSoftware = payload.getInstalledSoftware().stream()
-				.filter(software -> onlyInNew
-						.contains(key(software.getName(), software.getVendorName(), software.getVersion())))
-				.collect(Collectors.toList());
-		if (!newSoftware.isEmpty()) {
-			int newSoftwareStatus = applicationService.createOrUpdateApplication(newSoftware, computer.getUuid());
-			isApplicationsUpdated = true;
-		}
-
 		List<ComputerApplicationDTO> outdatedMappings = currentMappings.stream()
-				.filter(mapping -> onlyInCurrent.contains(key(mapping.getApplicationName(),
-						mapping.getApplicationVendorName(), mapping.getApplicationVersion())))
-				.collect(Collectors.toList());
+		        .filter(mapping -> onlyInCurrent.contains(key(mapping.getApplicationName(),
+		                mapping.getApplicationVendorName(), mapping.getApplicationVersion())))
+		        .collect(Collectors.toList());
 
 		for (ComputerApplicationDTO mapping : outdatedMappings) {
-			int outdatedMappingsStatus = computerApplicationRepository
-					.softDeleteByComputerAndApplicationUuid(mapping.getUuid());
-			if (outdatedMappingsStatus != 1) {
-				logger.error("Failed to soft delete mapping for application UUID: {}", mapping.getApplicationUuid());
-			} else {
-				logger.debug("Soft deleted mapping for application UUID: {}", mapping.getApplicationUuid());
-			}
+		    int deleteStatus = computerApplicationRepository.softDeleteByComputerAndApplicationUuid(mapping.getUuid());
+		    if (deleteStatus != 1) {
+		        logger.error("Failed to soft delete mapping for application UUID: {}", mapping.getApplicationUuid());
+		    } else {
+		        logger.debug("Soft deleted mapping for application UUID: {}", mapping.getApplicationUuid());
+		    }
 		}
 
-		List<ComputerApplicationDTO> reactivatedMappings = currentMappings.stream()
-				.filter(mappings -> newAppKeysInDeleted.contains(key(mappings.getApplicationName(),
-						mappings.getApplicationVendorName(), mappings.getApplicationVersion())))
-				.collect(Collectors.toList());
-		for (ComputerApplicationDTO mapping : reactivatedMappings) {
-			int reactivateMappings = computerApplicationRepository
-					.reactivateByComputerAndApplicationUuid(mapping.getUuid(), mapping.getInstalledDate());
-			if (reactivateMappings != 1) {
-				logger.error("Failed to reactivate mapping for application UUID: {}", mapping.getApplicationUuid());
-				return -5; // Internal error
-			}
-			logger.debug("Reactivated mapping for application UUID: {}", mapping.getApplicationUuid());
-		}
 
 //	            if (computerRepository.findByDeviceIdAndIsDeletedFalse(payload.getDeviceId()).isPresent()) {
 //	                logger.warn("Device ID {} already exists", payload.getDeviceId());

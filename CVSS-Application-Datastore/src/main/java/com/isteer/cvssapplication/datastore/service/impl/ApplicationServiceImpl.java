@@ -179,4 +179,15 @@ public class ApplicationServiceImpl implements ApplicationService {
 			return new BussinessException(CVSSEnum.APPLICATION_NOT_FOUND);
 		});
 	}
+
+	@Override
+	public List<Application> getAllApplications() {
+		logger.info("Fetching all applications");
+		List<Application> applications = applicationRepository.findAll();
+		if (applications.isEmpty()) {
+			logger.warn("No applications found");
+			return Collections.emptyList();
+		}
+		return applications;
+	}
 }
