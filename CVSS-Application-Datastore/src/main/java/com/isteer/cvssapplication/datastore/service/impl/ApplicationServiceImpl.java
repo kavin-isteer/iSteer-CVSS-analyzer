@@ -40,7 +40,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 	private ComputerApplicationService computerApplicationService;
 
 	public int createOrUpdateApplication(List<SoftwareDTO> softwares, String computerUuid) {
-		Map<Application, Boolean> appExistenceMap = applicationRepository.isRecordExists(softwares);
+		Map<Application, Boolean> appExistenceMap = applicationRepository.isRecordExists1(softwares);
 		List<Application> newApplications = new ArrayList<>();
 		appExistenceMap.forEach((app, exists) -> {
 			if (!exists) {
@@ -61,15 +61,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 			}
 			logger.info("Batch saved {} new applications", newApplications.size());
 		}
-		int[] computerApplicationBatchResult = computerApplicationRepository
-				.batchMapApplicaitonAndComputer(newApplications, computerUuid);
-		for (int res : computerApplicationBatchResult) {
-			if (res != 1) {
-				logger.error("Failed to map some applications to computer UUID: {}", computerUuid);
-				return -1; // Internal error
-			}
-		}
-
+		
 		computerApplicationService.sampleService(newApplications);
 //		List<Application> applications = new ArrayList<>();
 //		for(SoftwareDTO software : softwares) {

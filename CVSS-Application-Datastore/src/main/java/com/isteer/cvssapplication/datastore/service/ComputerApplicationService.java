@@ -8,7 +8,7 @@ import com.isteer.cvssapplication.datastore.entity.Application;
 public interface ComputerApplicationService {
   
 
-	int createComputerApplication(String computerUuid, String applicationUuid, LocalDateTime installedDate);
+//	int createComputerApplication(String computerUuid, String applicationUuid, LocalDateTime installedDate);
 
 	int softDeleteMapping(String computerUuid, String applicationUuid);
 
