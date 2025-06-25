@@ -159,6 +159,13 @@ public class ComputerServiceImpl implements ComputerService {
 		existingAppMap = allApplications.stream().collect(Collectors
 				.toMap(app -> key(app.getName(), app.getVendorName(), app.getVersion()), Function.identity()));
 
+		Map<String, SoftwareDTO> softwareDTOMap = payload.getInstalledSoftware().stream()
+		        .collect(Collectors.toMap(
+		                software -> key(software.getName(), software.getVendorName(), software.getVersion()),
+		                Function.identity()
+		        ));
+
+		
 		// 🔗 Insert new mappings using your save() method
 		for (String appKey : onlyInNew) {
 			// Extra safety: skip if already mapped or reactivatable
@@ -167,12 +174,13 @@ public class ComputerServiceImpl implements ComputerService {
 			}
 
 			Application app = existingAppMap.get(appKey);
+			SoftwareDTO softwareDTO = softwareDTOMap.get(appKey);
 			if (app != null) {
 				ComputerApplication mapping = new ComputerApplication();
 				mapping.setUuid(UUID.randomUUID().toString());
 				mapping.setComputerUuid(computer.getUuid());
 				mapping.setApplicationUuid(app.getUuid());
-				mapping.setInstalledDate(LocalDateTime.now()); // Or set from SoftwareDTO if available
+				mapping.setInstalledDate(softwareDTO.getInstalledDate()); // Or set from SoftwareDTO if available
 				mapping.setDeleted(false);
 				mapping.setCreatedAt(LocalDateTime.now());
 
