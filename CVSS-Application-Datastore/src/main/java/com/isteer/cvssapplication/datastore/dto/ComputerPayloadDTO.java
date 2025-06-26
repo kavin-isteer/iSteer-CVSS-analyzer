@@ -16,7 +16,7 @@ public class ComputerPayloadDTO {
 	    private String deviceId;
 	    
 	    @NotBlank(message = "Machine name cannot be blank")
-//	    @Size(max = 100, message = "Machine name must be at most 100 characters")
+
 	    private String machineName;
 	    
 	    @NotBlank(message = "IP address cannot be blank")
@@ -25,19 +25,19 @@ public class ComputerPayloadDTO {
 	    private String ipAddress;
 	    
 	    @NotBlank(message = "OS version cannot be blank")
-//	    @Size(max = 50, message = "OS version must be at most 50 characters")
+
 	    private String osVersion;
 	    
 	    @NotBlank(message = "Antivirus status cannot be blank")
-//	    @Size(max = 20, message = "Antivirus status must be at most 20 characters")
+
 	    private String antivirusStatus;
 	    
 	    @NotBlank(message = "Firewall status cannot be blank")
-//	    @Size(max = 20, message = "Firewall status must be at most 20 characters")
+
 	    private String firewallStatus;
 	    
 	    @NotBlank(message = "Logged-in user cannot be blank")
-//	    @Size(max = 100, message = "Logged-in user must be at most 100 characters")
+
 	    private String loggedInUser;
 	    
 	    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
@@ -48,6 +48,9 @@ public class ComputerPayloadDTO {
 	    
 	    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
 	    private LocalDateTime timestamp;
+	    
+	    
+	    
 	 		public String getDeviceId() {
 			return deviceId;
 		}

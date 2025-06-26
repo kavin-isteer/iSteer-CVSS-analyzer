@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.isteer.cvssanalyser.core.cache.FuzzySearchCache;
@@ -42,8 +43,8 @@ public class ComputerController {
 
 	@PostMapping("/computers")
 	public ResponseEntity<?> createComputer(@Valid @RequestBody ComputerPayloadDTO payload) {
-		new FuzzySearchCache();
-		FuzzySearchCache.refreshCacheFromDb(); // Refresh cache before processing request
+//		new FuzzySearchCache();
+//		FuzzySearchCache.refreshCacheFromDb(); // Refresh cache before processing request
 		logger.info("Received request to create/update computer with deviceId: {}", payload.getDeviceId());
 		int status = computerService.createComputer(payload);
 
@@ -73,17 +74,12 @@ public class ComputerController {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 					.body(new ErrorMessageDTO(CVSSEnum.COMPUTER_PAYLOAD_INVALID.getStatusCode(),
 							StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_PAYLOAD_INVALID)));
-		case -3:
-			logger.warn("Computer with deviceId already exists");
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-					.body(new ErrorMessageDTO(CVSSEnum.COMPUTER_DEVICE_ID_EXISTS.getStatusCode(),
-							StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_DEVICE_ID_EXISTS)));
-		case -4:
-			logger.warn("Error processing applications for computer");
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-					.body(new ErrorMessageDTO(CVSSEnum.COMPUTER_APPLICATION_EXISTS.getStatusCode(),
-							StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_APPLICATION_EXISTS)));
-
+			case -2:
+				logger.warn("Application name is blank");
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body(new ErrorMessageDTO(CVSSEnum.APPLICATION_NAME_BLANK.getStatusCode(),
+							StatusMessageUtil.getMessage(CVSSEnum.APPLICATION_NAME_BLANK)));
+	
 		default:
 			logger.error("Unexpected error during computer creation/update");
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -111,21 +107,23 @@ public class ComputerController {
 		return ResponseEntity.ok(response);
 	}
 
-	@GetMapping("/computers/{computerUuid}/applications")
-	public ResponseEntity<List<Application>> getApplicationsByComputer(
-			@PathVariable @NotBlank(message = "Computer UUID cannot be blank") String computerUuid) {
-		logger.info("Received request to fetch applications for computer UUID: {}", computerUuid);
-		List<Application> applications = applicationService.getApplicationsByComputerUuid(computerUuid);
-		logger.info("Returning {} applications for computer UUID: {}", applications.size(), computerUuid);
-		return ResponseEntity.ok(applications);
-	}
 
-	@GetMapping("/applications/{uuid}")
-	public ResponseEntity<Application> getApplication(
-			@PathVariable @NotBlank(message = "UUID cannot be blank") String uuid) {
-		logger.info("Received request to fetch application with UUID: {}", uuid);
-		Application application = applicationService.getApplicationByUuid(uuid);
-		logger.info("Returning application with UUID: {}", uuid);
-		return ResponseEntity.ok(application);
-	}
+    @GetMapping("/computers/{computerUuid}/applications")
+    public ResponseEntity<List<Application>> getApplicationsByComputer(
+            @PathVariable @NotBlank(message = "Computer UUID cannot be blank") String computerUuid,
+            @RequestParam(required = false) Boolean status) {
+        logger.info("Received request to fetch applications for computer UUID: {} with status: {}", computerUuid, status);
+        List<Application> applications = applicationService.getApplicationsByComputerUuid(computerUuid, status);
+        logger.info("Returning {} applications for computer UUID: {}", applications.size(), computerUuid);
+        return ResponseEntity.ok(applications);
+    }
+
+    @GetMapping("/applications/{uuid}")
+    public ResponseEntity<Application> getApplication(
+            @PathVariable @NotBlank(message = "UUID cannot be blank") String uuid) {
+        logger.info("Received request to fetch application with UUID: {}", uuid);
+        Application application = applicationService.getApplicationByUuid(uuid);
+        logger.info("Returning application with UUID: {}", uuid);
+        return ResponseEntity.ok(application);
+    }
 }

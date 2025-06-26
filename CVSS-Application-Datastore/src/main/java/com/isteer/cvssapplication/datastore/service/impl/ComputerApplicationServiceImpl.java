@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -23,7 +22,6 @@ import com.isteer.cvssapplication.datastore.dao.ComputerApplicationDao;
 import com.isteer.cvssapplication.datastore.dao.VulnerabilityDao;
 import com.isteer.cvssapplication.datastore.entity.Application;
 import com.isteer.cvssapplication.datastore.entity.ApplicationVulnerability;
-import com.isteer.cvssapplication.datastore.entity.ComputerApplication;
 import com.isteer.cvssapplication.datastore.entity.Vulnerability;
 import com.isteer.cvssapplication.datastore.enums.Severity;
 import com.isteer.cvssapplication.datastore.service.ComputerApplicationService;
@@ -42,60 +40,6 @@ public class ComputerApplicationServiceImpl implements ComputerApplicationServic
 	@Autowired
 	private ApplicationVulnerabilityDao applicationVulnerabilityDao;
 
-//	@Transactional
-//	@Override
-//	public int createComputerApplication(String computerUuid, String applicationUuid, LocalDateTime installedDate) {
-//		logger.debug("Processing mapping for computer UUID: {} and application UUID: {}", computerUuid,
-//				applicationUuid);
-//
-//		// Use null if installedDate is null
-//		LocalDateTime effectiveInstalledDate = installedDate != null ? installedDate : null;
-//		logger.debug("Effective installedDate: {}", effectiveInstalledDate);
-//
-//		// Check for existing active mapping
-//		Optional<ComputerApplication> existingMapping = computerApplicationRepository
-//				.findByComputerAndApplicationUuid(computerUuid, applicationUuid);
-//		if (existingMapping.isPresent() && !existingMapping.get().isDeleted()) {
-//			ComputerApplication mapping = existingMapping.get();
-//			// Update existing mapping if installed_date changed
-//			// Compare installedDate safely
-//			if (!Objects.equals(mapping.getInstalledDate(), installedDate)) {
-//				mapping.setInstalledDate(installedDate); // Store null if installedDate is null
-//				mapping.setUpdatedAt(LocalDateTime.now());
-//				int result = computerApplicationRepository.update(mapping);
-//				if (result != 1) {
-//					logger.error("Failed to update mapping for computer UUID: {}, application UUID: {}", computerUuid,
-//							applicationUuid);
-//					return -5; // Internal error
-//				}
-//				logger.info("Updated mapping for computer UUID: {}, application UUID: {}", computerUuid,
-//						applicationUuid);
-//			} else {
-//				logger.debug("No changes to mapping for computer UUID: {}, application UUID: {}", computerUuid,
-//						applicationUuid);
-//			}
-//			return 1; // Success (no change or updated)
-//		}
-//
-//		// Create new mapping
-//		ComputerApplication ca = new ComputerApplication();
-//		ca.setUuid(UUIDUtil.generateUUID());
-//		ca.setComputerUuid(computerUuid);
-//		ca.setApplicationUuid(applicationUuid);
-//		ca.setInstalledDate(installedDate);
-//		ca.setDeleted(false);
-//		ca.setCreatedAt(LocalDateTime.now());
-//
-//		int result = computerApplicationRepository.save(ca);
-//		if (result != 1) {
-//			logger.error("Failed to save mapping for computer UUID: {}, application UUID: {}", computerUuid,
-//					applicationUuid);
-//			return -5; // Internal error
-//		}
-//
-//		logger.info("Created mapping for computer UUID: {}, application UUID: {}", computerUuid, applicationUuid);
-//		return 1; // Success
-//	}
 
 	@Transactional
 	@Override
