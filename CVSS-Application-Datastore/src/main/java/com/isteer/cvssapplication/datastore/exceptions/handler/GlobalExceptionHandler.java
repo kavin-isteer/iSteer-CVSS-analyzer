@@ -52,23 +52,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorMessageDTO> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         logger.error("Data integrity violation: {}", ex.getMessage());
-        String message = ex.getMessage().toLowerCase();
-        if (message.contains("computers_device_id_uindex")) {
-            return new ResponseEntity<>(
-                    new ErrorMessageDTO(CVSSEnum.COMPUTER_DEVICE_ID_EXISTS.getStatusCode(),
-                            StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_DEVICE_ID_EXISTS)),
-                    HttpStatus.BAD_REQUEST);
-        } else if (message.contains("computers_ip_address")) {
-            return new ResponseEntity<>(
-                    new ErrorMessageDTO(CVSSEnum.COMPUTER_WITH_SAME_IP_EXISTS.getStatusCode(),
-                            StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_WITH_SAME_IP_EXISTS)),
-                    HttpStatus.BAD_REQUEST);
-        } else if (message.contains("computer_applications_computer_uuid_application_uuid")) {
-            return new ResponseEntity<>(
-                    new ErrorMessageDTO(CVSSEnum.COMPUTER_APPLICATION_EXISTS.getStatusCode(),
-                            StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_APPLICATION_EXISTS)),
-                    HttpStatus.BAD_REQUEST);
-        }
+//        String message = ex.getMessage().toLowerCase();
+//        if (message.contains("computers_device_id_uindex")) {
+//            return new ResponseEntity<>(
+//                    new ErrorMessageDTO(CVSSEnum.COMPUTER_DEVICE_ID_EXISTS.getStatusCode(),
+//                            StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_DEVICE_ID_EXISTS)),
+//                    HttpStatus.BAD_REQUEST);
+//        } else if (message.contains("computers_ip_address")) {
+//            return new ResponseEntity<>(
+//                    new ErrorMessageDTO(CVSSEnum.COMPUTER_WITH_SAME_IP_EXISTS.getStatusCode(),
+//                            StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_WITH_SAME_IP_EXISTS)),
+//                    HttpStatus.BAD_REQUEST);
+//        } 
         return new ResponseEntity<>(
                 new ErrorMessageDTO(CVSSEnum.DATA_INTEGRITY_VIOLATION.getStatusCode(),
                         StatusMessageUtil.getMessage(CVSSEnum.DATA_INTEGRITY_VIOLATION)),
@@ -114,6 +109,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorMessageDTO> handleGeneralException(Exception ex) {
         logger.error("Unexpected error: {}", ex.getMessage());
+        ex.printStackTrace(); // Log the stack trace for debugging
         return new ResponseEntity<>(
                 new ErrorMessageDTO(CVSSEnum.Internal_Server_Error.getStatusCode(),
                         StatusMessageUtil.getMessage(CVSSEnum.Internal_Server_Error)),

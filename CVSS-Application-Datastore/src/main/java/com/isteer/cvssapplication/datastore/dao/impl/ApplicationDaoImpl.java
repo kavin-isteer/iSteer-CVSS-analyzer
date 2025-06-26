@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -80,19 +81,30 @@ public class ApplicationDaoImpl implements ApplicationDao {
 		}
 	}
 
-	@Override
-	public List<Application> findByComputerUuid(String computerUuid) {
-		String sql = "SELECT a.* FROM applications a "
-				+ "JOIN computer_applications ca ON a.uuid = ca.application_uuid "
-				+ "JOIN computers c ON ca.computer_uuid = c.uuid "
-				+ "WHERE c.uuid = :computerUuid AND c.is_deleted = false AND ca.is_deleted = false";
-		MapSqlParameterSource params = new MapSqlParameterSource("computerUuid", computerUuid);
-		return jdbcTemplate.query(sql, params, RowMapper::mapApplicationRow);
-	}
+
+	
+	 @Override
+	    public List<Application> findByComputerUuid(String computerUuid, Boolean status) {
+	        String sql = "SELECT a.*, ca.installed_date FROM applications a "
+	                + "JOIN computer_applications ca ON a.uuid = ca.application_uuid "
+	                + "JOIN computers c ON ca.computer_uuid = c.uuid "
+	                + "WHERE c.uuid = :computerUuid AND c.is_deleted = false";
+	        
+	        if (status != null) {
+	            sql += " AND ca.is_deleted = :isDeleted";
+	        }
+	        
+	        MapSqlParameterSource params = new MapSqlParameterSource("computerUuid", computerUuid);
+	        if (status != null) {
+	            params.addValue("isDeleted", status);
+	        }
+	        
+	        return jdbcTemplate.query(sql, params, RowMapper::mapApplicationRow);
+	    }
 
 	@Override
 	public Optional<Application> findByUuidAndIsDeletedFalse(String uuid) {
-		String sql = "SELECT * FROM applications WHERE uuid = :uuid";
+		String sql = "SELECT * FROM applications WHERE uuid = :uuid AND is_deleted = false";
 		MapSqlParameterSource params = new MapSqlParameterSource("uuid", uuid);
 		try {
 			Application application = jdbcTemplate.queryForObject(sql, params, RowMapper::mapApplicationRow);
@@ -102,6 +114,7 @@ public class ApplicationDaoImpl implements ApplicationDao {
 			return Optional.empty();
 		}
 	}
+	 
 
 	@Override
 	public Map<Application, Boolean> isRecordExists(List<SoftwareDTO> applications) {
@@ -197,11 +210,29 @@ public class ApplicationDaoImpl implements ApplicationDao {
 	}
 
 	@Override
-	public List<Application> findAll() {
+	public List<Application> findAllApplications() {
 		String query = "SELECT id, uuid, name, version, vendor_name, created_at FROM applications";
 		logger.debug("Fetching all applications");
 		List<Application> applications = jdbcTemplate.query(query, new ApplicationRowMapper());
 		logger.debug("Found {} applications", applications.size());
 		return applications;
 	}
+
+	 @Override
+	    public Optional<Application> findByApplicationUuid(String uuid) {
+	        String sql = "SELECT a.*, MIN(ca.installed_date) as installed_date " +
+	                     "FROM applications a " +
+	                     "LEFT JOIN computer_applications ca ON a.uuid = ca.application_uuid " +
+	                     "WHERE a.uuid = :uuid " +
+	                     "GROUP BY a.id, a.uuid, a.name, a.version, a.vendor_name, a.created_at";
+	        MapSqlParameterSource params = new MapSqlParameterSource("uuid", uuid);
+	        try {
+	            Application application = jdbcTemplate.queryForObject(sql, params, RowMapper::mapApplicationRow);
+	            return Optional.ofNullable(application);
+	        } catch (Exception e) {
+	            logger.debug("No application found for UUID: {}", uuid);
+	            return Optional.empty();
+	        }
+	    }
+	
 }

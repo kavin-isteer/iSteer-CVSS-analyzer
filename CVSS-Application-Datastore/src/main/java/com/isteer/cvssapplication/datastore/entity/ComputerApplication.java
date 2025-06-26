@@ -7,21 +7,10 @@ import jakarta.validation.constraints.NotBlank;
 public class ComputerApplication {
 	private Long id;
 
-	@NotBlank(message = "UUID cannot be blank")
-//	@Size(min = 36, max = 36, message = "UUID must be 36 characters")
 	private String uuid;
-
-	@NotBlank(message = "Computer UUID cannot be blank")
-//	@Size(min = 36, max = 36, message = "Computer UUID must be 36 characters")
 	private String computerUuid;
-
-	@NotBlank(message = "Application UUID cannot be blank")
-//	@Size(min = 36, max = 36, message = "Application UUID must be 36 characters")
 	private String applicationUuid;
-
-//	@NotNull(message = "Installed date cannot be null")
 	private LocalDateTime installedDate;
-
 	private boolean isDeleted;
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;

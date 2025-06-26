@@ -11,31 +11,25 @@ public class Computer {
 	private String uuid;
 
 	@NotBlank(message = "Device ID cannot be blank")
-//	@Size(max = 50, message = "Device ID must be at most 50 characters")
+
 	private String deviceId;
 
 	@NotBlank(message = "Machine Name cannot be blank")
-//	@Size(max = 100, message = "Hostname must be at most 100 characters")
 	private String machineName;
 
 	@NotBlank(message = "IP address cannot be blank")
-//	@Pattern(regexp = "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$", message = "Invalid IPv4 address")
 	private String ipAddress;
 
 	@NotBlank(message = "OS version cannot be blank")
-//	@Size(max = 50, message = "OS version must be at most 50 characters")
 	private String osVersion;
 
 	@NotBlank(message = "Antivirus status cannot be blank")
-//	@Size(max = 20, message = "Antivirus status must be at most 20 characters")
 	private String antivirusStatus;
 
 	@NotBlank(message = "Firewall status cannot be blank")
-//	@Size(max = 20, message = "Firewall status must be at most 20 characters")
 	private String firewallStatus;
 
 	@NotBlank(message = "Logged-in user cannot be blank")
-//	@Size(max = 100, message = "Logged-in user must be at most 100 characters")
 	private String loggedInUser;
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime lastUpdateCheck;

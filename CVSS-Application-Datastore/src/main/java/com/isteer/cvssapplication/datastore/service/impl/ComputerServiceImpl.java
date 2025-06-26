@@ -33,8 +33,7 @@ import com.isteer.cvssapplication.datastore.service.ApplicationService;
 import com.isteer.cvssapplication.datastore.service.ComputerService;
 import com.isteer.cvssapplication.datastore.util.UUIDUtil;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
+
 
 @Service
 public class ComputerServiceImpl implements ComputerService {
@@ -52,24 +51,31 @@ public class ComputerServiceImpl implements ComputerService {
 	@Autowired
 	private VulnerabilityDao vulnerabilityRepository;
 
-	@Autowired
-	private Validator validator;
+//	@Autowired
+//	private Validator validator;
 
 	@Transactional
 	@Override
 	public int createComputer(ComputerPayloadDTO payload) {
 		logger.debug("Processing computer with deviceId: {}", payload.getDeviceId());
-		Set<ConstraintViolation<ComputerPayloadDTO>> violations = validator.validate(payload);
-		if (!violations.isEmpty()) {
-			logger.warn("Validation errors: {}",
-					violations.stream().map(ConstraintViolation::getMessage).collect(Collectors.joining("; ")));
-			return -1; // Invalid payload
-		}
+//		Set<ConstraintViolation<ComputerPayloadDTO>> violations = validator.validate(payload);
+//		if (!violations.isEmpty()) {
+//			logger.warn("Validation errors: {}",
+//					violations.stream().map(ConstraintViolation::getMessage).collect(Collectors.joining("; ")));
+//			return -1; // Invalid payload
+//		}
+		
+		// Validate application names in installedSoftware
+				for (SoftwareDTO software : payload.getInstalledSoftware()) {
+					if (software.getName() == null || software.getName().trim().isEmpty()) {
+						logger.warn("Application name is null or blank in payload for deviceId: {}", payload.getDeviceId());
+						return -2; // Application name should not be blank
+					}
+				}
 
 		Optional<Computer> existingComputer = computerRepository.findByDeviceIdAndIsDeletedFalse(payload.getDeviceId());
 		boolean isComputerUpdated = false;
 		boolean isApplicationsUpdated = false;
-		boolean isDataBaseEmpty = false;
 		Computer computer;
 		boolean isUpdate = existingComputer.isPresent();
 
@@ -152,6 +158,11 @@ public class ComputerServiceImpl implements ComputerService {
 		if (!appsToCreate.isEmpty()) {
 			int createdStatus = applicationService.createOrUpdateApplication(appsToCreate, computer.getUuid());
 			logger.debug("Created {} new applications", appsToCreate.size());
+			if (createdStatus != 1) {
+				logger.error("Failed to create new applications for computer UUID: {}", computer.getUuid());
+				return -1; // Internal error
+			}
+			isApplicationsUpdated = true;
 		}
 
 		// Refresh app list after new app insert
@@ -159,7 +170,13 @@ public class ComputerServiceImpl implements ComputerService {
 		existingAppMap = allApplications.stream().collect(Collectors
 				.toMap(app -> key(app.getName(), app.getVendorName(), app.getVersion()), Function.identity()));
 
-		// 🔗 Insert new mappings using your save() method
+		Map<String, SoftwareDTO> softwareDTOMap = payload.getInstalledSoftware().stream()
+                .collect(Collectors.toMap(
+                        software -> key(software.getName(), software.getVendorName(), software.getVersion()),
+                        Function.identity()
+                ));
+		
+		// Insert new mappings using your save() method
 		for (String appKey : onlyInNew) {
 			// Extra safety: skip if already mapped or reactivatable
 			if (currentAppKeys.contains(appKey) || newAppKeysInDeleted.contains(appKey)) {
@@ -167,12 +184,13 @@ public class ComputerServiceImpl implements ComputerService {
 			}
 
 			Application app = existingAppMap.get(appKey);
+			SoftwareDTO softwareDTO = softwareDTOMap.get(appKey);
 			if (app != null) {
 				ComputerApplication mapping = new ComputerApplication();
 				mapping.setUuid(UUID.randomUUID().toString());
 				mapping.setComputerUuid(computer.getUuid());
 				mapping.setApplicationUuid(app.getUuid());
-				mapping.setInstalledDate(LocalDateTime.now()); // Or set from SoftwareDTO if available
+				mapping.setInstalledDate(softwareDTO.getInstalledDate()); // Or set from SoftwareDTO if available
 				mapping.setDeleted(false);
 				mapping.setCreatedAt(LocalDateTime.now());
 
@@ -182,6 +200,7 @@ public class ComputerServiceImpl implements ComputerService {
 						logger.error("Failed to save mapping: Computer UUID [{}], Application UUID [{}]",
 								computer.getUuid(), app.getUuid());
 					} else {
+						isApplicationsUpdated = true;
 						logger.debug("Saved mapping: Computer UUID [{}], Application UUID [{}]", computer.getUuid(),
 								app.getUuid());
 					}
@@ -194,7 +213,7 @@ public class ComputerServiceImpl implements ComputerService {
 			}
 		}
 
-		// 🔄 Reactivate previously deleted mappings now found in the payload
+		//  Reactivate previously deleted mappings now found in the payload
 		List<ComputerApplicationDTO> reactivatedMappings = currentMappings.stream()
 				.filter(mapping -> newAppKeysInDeleted.contains(key(mapping.getApplicationName(),
 						mapping.getApplicationVendorName(), mapping.getApplicationVersion())))
@@ -208,6 +227,7 @@ public class ComputerServiceImpl implements ComputerService {
 				return -5;
 			}
 			logger.debug("Reactivated mapping for application UUID: {}", mapping.getApplicationUuid());
+			isApplicationsUpdated = true;
 		}
 
 		// 🧹 Soft-delete applications no longer present on this computer
@@ -225,23 +245,10 @@ public class ComputerServiceImpl implements ComputerService {
 				logger.error("Failed to soft delete mapping for application UUID: {}", mapping.getApplicationUuid());
 			} else {
 				logger.debug("Soft deleted mapping for application UUID: {}", mapping.getApplicationUuid());
+				isApplicationsUpdated = true;
 			}
 		}
 
-//	            if (computerRepository.findByDeviceIdAndIsDeletedFalse(payload.getDeviceId()).isPresent()) {
-//	                logger.warn("Device ID {} already exists", payload.getDeviceId());
-//	                return -3; // Device ID exists
-//	            }
-//	            
-//
-//	        // Process all applications in a batch
-//	        int appStatus = applicationService.createOrUpdateApplication(payload.getInstalledSoftware(), computer.getUuid());
-//	        isApplicationsUpdated = true;
-//	        logger.info("Processed applications for computer UUID: {}", computer.getUuid());
-//	        if (appStatus == -1) {
-//	            logger.error("Error processing applications for computer UUID: {}", computer.getUuid());
-//	            return -4; // Error in application processing
-//	        }
 
 		if (!existingComputer.isPresent()) {
 			return 1; // New computer created successfully
@@ -304,7 +311,7 @@ public class ComputerServiceImpl implements ComputerService {
 	public ComputerDetailsResponseDTO getComputerDetailsByUuid(String uuid) {
 		logger.info("Fetching computer details with UUID: {}", uuid);
 		Computer computer = getComputerByUuid(uuid);
-		List<Application> applications = applicationService.getApplicationsByComputerUuid(uuid);
+		List<Application> applications = applicationService.getApplicationsByComputerUuid(uuid, null);
 
 		for (Application app : applications) {
 			app.setVulnerabilities(vulnerabilityRepository.findByApplicationUuid(app.getUuid()));
