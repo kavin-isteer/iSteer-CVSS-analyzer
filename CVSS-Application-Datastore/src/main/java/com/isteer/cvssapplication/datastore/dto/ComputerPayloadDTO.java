@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -37,20 +38,18 @@ public class ComputerPayloadDTO {
 	    private String firewallStatus;
 	    
 	    @NotBlank(message = "Logged-in user cannot be blank")
-
 	    private String loggedInUser;
-	    
-	    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
-	    private LocalDateTime lastUpdateCheck;
-	    
+	      
 	    @NotEmpty(message = "Installed software cannot be empty")
 	    private List<SoftwareDTO> installedSoftware;
 	    
 	    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+	    private LocalDateTime lastUpdateCheck;
+	    @NotNull(message = "Timestamp cannot be blank")
+	    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
 	    private LocalDateTime timestamp;
 	    
-	    
-	    
+	       
 	 		public String getDeviceId() {
 			return deviceId;
 		}

@@ -75,11 +75,6 @@ public class ApplicationServiceImpl implements ApplicationService {
 		return createOrUpdateApplication(Collections.singletonList(software), computerUuid);
 	}
 
-//	@Override
-//	public List<Application> getApplicationsByComputerUuid(String computerUuid) {
-//		logger.info("Fetching applications for computer UUID: {}", computerUuid);
-//		return applicationRepository.findByComputerUuid(computerUuid);
-//	}
 	
 	 @Override
 	    public List<Application> getApplicationsByComputerUuid(String computerUuid, Boolean status) {
@@ -92,15 +87,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 	        return applications;
 	    }
 
-//	@Transactional(readOnly = true)
-//	@Override
-//	public Application getApplicationByUuid(String uuid) {
-//		logger.info("Fetching application with UUID: {}", uuid);
-//		return applicationRepository.findByUuidAndIsDeletedFalse(uuid).orElseThrow(() -> {
-//			logger.warn("Application not found for UUID: {}", uuid);
-//			return new BussinessException(CVSSEnum.APPLICATION_NOT_FOUND);
-//		});
-//	}
+
 	 
 	  @Override
 	    public Application getApplicationByUuid(String uuid) {

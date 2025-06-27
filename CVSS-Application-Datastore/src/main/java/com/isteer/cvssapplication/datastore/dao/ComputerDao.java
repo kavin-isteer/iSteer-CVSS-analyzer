@@ -12,5 +12,9 @@ public interface ComputerDao {
 	    Optional<Computer> findByDeviceIdAndIsDeletedFalse(String deviceId);
 	    Optional<Computer> findByUuidAndIsDeletedFalse(String uuid);
 	    List<Computer> findAllComputers();
-
+	    Optional<Computer> findByUuid(String uuid);
+	    int updateDeletionStatus(Computer computer);
+	    int updateActivationStatus(Computer computer);
+	    List<Computer> findByDeletionStatus(Boolean isDeleted);
+	    List<Computer> findByActivationStatus(Boolean isActive);
 }

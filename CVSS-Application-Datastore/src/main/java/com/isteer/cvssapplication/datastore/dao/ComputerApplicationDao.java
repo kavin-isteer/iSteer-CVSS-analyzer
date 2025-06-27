@@ -10,14 +10,18 @@ import com.isteer.cvssapplication.datastore.entity.ComputerApplication;
 
 public interface ComputerApplicationDao {
 	 int save(ComputerApplication ca);
-	    Optional<ComputerApplication> findByComputerAndApplicationUuid(String computerUuid, String applicationUuid);
+//	    Optional<ComputerApplication> findByComputerAndApplicationUuid(String computerUuid, String applicationUuid);
 	    int softDeleteByComputerAndApplicationUuid(String computerUuid, String applicationUuid);
 	    List<ComputerApplicationDTO> findByComputerUuid(String computerUuid);
-		int update(ComputerApplication mapping);
+//		int update(ComputerApplication mapping);
 		int reactivateByComputerAndApplicationUuid(String computerUuid, String applicationUuid,
 				LocalDateTime installedDate);
 		int updateInstalledDate(String computerUuid, String applicationUuid, LocalDateTime installedDate);
-		int[] batchMapApplicaitonAndComputer(List<Application> applications, String computerUuid);
+//		int[] batchMapApplicaitonAndComputer(List<Application> applications, String computerUuid);
 		int softDeleteByComputerAndApplicationUuid(String uuid);
 		int reactivateByComputerAndApplicationUuid(String uuid, LocalDateTime installedDate);
+		  int updateInstalledDate(String uuid, LocalDateTime installedDate);
+		  
+		  int softDeleteByComputerUuid(String computerUuid);
+		    int revertSoftDeleteByComputerUuid(String computerUuid);
 }
