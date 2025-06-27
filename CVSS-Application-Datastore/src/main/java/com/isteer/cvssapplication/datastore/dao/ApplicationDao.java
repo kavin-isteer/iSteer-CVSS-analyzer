@@ -9,11 +9,11 @@ import com.isteer.cvssapplication.datastore.entity.Application;
 
 public interface ApplicationDao {
 	  int save(Application application);
-	    Optional<Application> findByNameVersionVendor(String name, String version, String vendorName);
+//	    Optional<Application> findByNameVersionVendor(String name, String version, String vendorName);
 //	    List<Application> findByComputerUuid(String computerUuid);
-	    Optional<Application> findByUuidAndIsDeletedFalse(String uuid);
-		Optional<Application> findByComputerUuidAndNameVendor(String computerUuid, String name, String vendorName);
-		Map<Application, Boolean> isRecordExists(List<SoftwareDTO> applications);
+//	    Optional<Application> findByUuidAndIsDeletedFalse(String uuid);
+//		Optional<Application> findByComputerUuidAndNameVendor(String computerUuid, String name, String vendorName);
+//		Map<Application, Boolean> isRecordExists(List<SoftwareDTO> applications);
 		int[] batchSave(List<Application> applications);
 		Map<Application, Boolean> isRecordExists1(List<SoftwareDTO> applications);
 		List<Application> findAllApplications();
