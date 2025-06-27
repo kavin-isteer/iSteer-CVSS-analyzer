@@ -20,8 +20,10 @@ import org.springframework.stereotype.Repository;
 import com.isteer.cvssapplication.datastore.dao.ApplicationDao;
 import com.isteer.cvssapplication.datastore.dao.rowmapper.ApplicationRowMapper;
 import com.isteer.cvssapplication.datastore.dao.rowmapper.RowMapper;
+import com.isteer.cvssapplication.datastore.dao.rowmapper.VulnerabilityRowMapper;
 import com.isteer.cvssapplication.datastore.dto.SoftwareDTO;
 import com.isteer.cvssapplication.datastore.entity.Application;
+import com.isteer.cvssapplication.datastore.entity.Vulnerability;
 
 @Repository
 public class ApplicationDaoImpl implements ApplicationDao {
@@ -232,5 +234,15 @@ public class ApplicationDaoImpl implements ApplicationDao {
 	            return Optional.empty();
 	        }
 	    }
+//	 
+//	   @Override
+//	    public List<Vulnerability> findVulnerabilitiesByApplicationUuid(String uuid) {
+//	        String sql = "SELECT v.* FROM vulnerabilities v " +
+//	                     "JOIN application_vulnerabilities av ON v.id = av.vulnerability_id " +
+//	                     "WHERE av.application_uuid = :uuid";
+//	        MapSqlParameterSource params = new MapSqlParameterSource("uuid", uuid);
+//	        logger.debug("Fetching vulnerabilities for application UUID: {}", uuid);
+//	        return jdbcTemplate.query(sql, params, new VulnerabilityRowMapper());
+//	    }
 	
 }

@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import com.isteer.cvssapplication.datastore.dto.SoftwareDTO;
 import com.isteer.cvssapplication.datastore.entity.Application;
+import com.isteer.cvssapplication.datastore.entity.Vulnerability;
 
 public interface ApplicationDao {
 	  int save(Application application);
@@ -20,5 +21,6 @@ public interface ApplicationDao {
 		List<Application> findByComputerUuid(String computerUuid, Boolean status);
 //		Optional<Application> findByComputerUuidAndIsDeletedFalse(String computerUuid);	
 		Optional<Application> findByApplicationUuid(String uuid);
+//		List<Vulnerability> findVulnerabilitiesByApplicationUuid(String uuid);
 		
 }

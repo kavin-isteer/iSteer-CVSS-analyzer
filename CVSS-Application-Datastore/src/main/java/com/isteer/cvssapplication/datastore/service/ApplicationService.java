@@ -4,6 +4,9 @@ import java.util.List;
 
 import com.isteer.cvssapplication.datastore.dto.SoftwareDTO;
 import com.isteer.cvssapplication.datastore.entity.Application;
+import com.isteer.cvssapplication.datastore.entity.Vulnerability;
+
+import jakarta.validation.constraints.NotBlank;
 
 public interface ApplicationService {
 	 
@@ -22,5 +25,8 @@ public interface ApplicationService {
 		List<Application> getAllApplications();
 
 		List<Application> getApplicationsByComputerUuid(String computerUuid, Boolean status);
+
+
+		List<Vulnerability> getVulnerabilitiesByApplicationUuid( String uuid);
 
 }
