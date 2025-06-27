@@ -3,28 +3,21 @@ package com.isteer.cvssapplication.datastore.service.impl;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.isteer.cvssapplication.datastore.dao.ApplicationDao;
-import com.isteer.cvssapplication.datastore.dao.ComputerApplicationDao;
 import com.isteer.cvssapplication.datastore.dao.VulnerabilityDao;
 import com.isteer.cvssapplication.datastore.dto.SoftwareDTO;
 import com.isteer.cvssapplication.datastore.entity.Application;
-import com.isteer.cvssapplication.datastore.entity.ComputerApplication;
 import com.isteer.cvssapplication.datastore.enums.CVSSEnum;
 import com.isteer.cvssapplication.datastore.exception.BussinessException;
 import com.isteer.cvssapplication.datastore.service.ApplicationService;
-import com.isteer.cvssapplication.datastore.service.ComputerApplicationService;
 import com.isteer.cvssapplication.datastore.util.UUIDUtil;
 
 @Service
@@ -35,10 +28,10 @@ public class ApplicationServiceImpl implements ApplicationService {
 	private ApplicationDao applicationRepository;
 	
 	@Autowired
-	private VulnerabilityDao vulnerabilityRepository;
+	private VulnerabilityService vulnerabilityService;
 	
 	@Autowired
-	private ComputerApplicationService computerApplicationService;
+	private VulnerabilityDao vulnerabilityRepository;
 
 	public int createOrUpdateApplication(List<SoftwareDTO> softwares, String computerUuid) {
 		Map<Application, Boolean> appExistenceMap = applicationRepository.isRecordExists1(softwares);
@@ -63,8 +56,17 @@ public class ApplicationServiceImpl implements ApplicationService {
 			logger.info("Batch saved {} new applications", newApplications.size());
 		}
 		
-		computerApplicationService.sampleService(newApplications);
-
+		vulnerabilityService.analyzeAndSaveApplicationVulnerabilitiesAsync(newApplications);
+//		List<Application> applications = new ArrayList<>();
+//		for(SoftwareDTO software : softwares) {
+//			Application application = new Application();
+//			application.setUuid(UUIDUtil.generateUUID());
+//			application.setName(software.getName());
+//			application.setVendorName(software.getVendorName() == null ? "" : software.getVendorName());
+//			application.setVersion(software.getVersion() == null ? "" : software.getVersion());
+//			application.setCreatedAt(LocalDateTime.now());
+//			application.setInstalledDate(software.getInstalledDate());
+//		}
 		return 1;
 	}
 
