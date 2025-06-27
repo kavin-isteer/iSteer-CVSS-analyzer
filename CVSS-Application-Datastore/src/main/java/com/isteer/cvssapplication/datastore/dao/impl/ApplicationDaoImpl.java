@@ -1,8 +1,6 @@
 package com.isteer.cvssapplication.datastore.dao.impl;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
