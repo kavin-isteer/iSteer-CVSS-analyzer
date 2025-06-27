@@ -15,10 +15,13 @@ import com.isteer.cvssapplication.datastore.dao.ApplicationDao;
 import com.isteer.cvssapplication.datastore.dao.VulnerabilityDao;
 import com.isteer.cvssapplication.datastore.dto.SoftwareDTO;
 import com.isteer.cvssapplication.datastore.entity.Application;
+import com.isteer.cvssapplication.datastore.entity.Vulnerability;
 import com.isteer.cvssapplication.datastore.enums.CVSSEnum;
 import com.isteer.cvssapplication.datastore.exception.BussinessException;
 import com.isteer.cvssapplication.datastore.service.ApplicationService;
 import com.isteer.cvssapplication.datastore.util.UUIDUtil;
+
+import jakarta.validation.constraints.NotBlank;
 
 @Service
 public class ApplicationServiceImpl implements ApplicationService {
@@ -91,7 +94,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
 
 	 
-	  @Override
+	  @Override  // not used anymore
 	    public Application getApplicationByUuid(String uuid) {
 	        logger.info("Fetching application with UUID: {}", uuid);
 	        // Modified: Remove is_deleted check and fetch vulnerabilities
@@ -114,5 +117,17 @@ public class ApplicationServiceImpl implements ApplicationService {
 			return Collections.emptyList();
 		}
 		return applications;
+	}
+
+    @Override
+	public List<Vulnerability> getVulnerabilitiesByApplicationUuid(String uuid) {
+    	 logger.info("Fetching vulnerabilities for application UUID: {}", uuid);
+         if (!(applicationRepository.findByApplicationUuid(uuid)).isPresent()) {
+             logger.warn("Application not found for UUID: {}", uuid);
+             throw new BussinessException(CVSSEnum.APPLICATION_NOT_FOUND);
+         }
+         List<Vulnerability> vulnerabilities = vulnerabilityRepository.findByApplicationUuid(uuid);
+         logger.info("Found {} vulnerabilities for application UUID: {}", vulnerabilities.size(), uuid);
+         return vulnerabilities;
 	}
 }

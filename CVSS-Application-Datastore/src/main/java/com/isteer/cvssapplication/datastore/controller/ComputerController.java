@@ -24,6 +24,7 @@ import com.isteer.cvssapplication.datastore.dto.ErrorMessageDTO;
 import com.isteer.cvssapplication.datastore.dto.StatusMessageDTO;
 import com.isteer.cvssapplication.datastore.entity.Application;
 import com.isteer.cvssapplication.datastore.entity.Computer;
+import com.isteer.cvssapplication.datastore.entity.Vulnerability;
 import com.isteer.cvssapplication.datastore.enums.CVSSEnum;
 import com.isteer.cvssapplication.datastore.service.impl.ApplicationServiceImpl;
 import com.isteer.cvssapplication.datastore.service.impl.ComputerServiceImpl;
@@ -45,8 +46,8 @@ public class ComputerController {
 
 	@PostMapping("/computers")
 	public ResponseEntity<?> createComputer(@Valid @RequestBody ComputerPayloadDTO payload) {
-//		new FuzzySearchCache();
-//		FuzzySearchCache.refreshCacheFromDb(); // Refresh cache before processing request
+		new FuzzySearchCache();
+		FuzzySearchCache.refreshCacheFromDb(); // Refresh cache before processing request
 		logger.info("Received request to create/update computer with deviceId: {}", payload.getDeviceId());
 		int status = computerService.createComputer(payload);
 
@@ -125,13 +126,23 @@ public class ComputerController {
         return ResponseEntity.ok(applications);
     }
 
+//    @GetMapping("/applications/{uuid}")
+//    public ResponseEntity<Application> getApplication(
+//            @PathVariable @NotBlank(message = "UUID cannot be blank") String uuid) {
+//        logger.info("Received request to fetch application with UUID: {}", uuid);
+//        Application application = applicationService.getApplicationByUuid(uuid);
+//        logger.info("Returning application with UUID: {}", uuid);
+//        return ResponseEntity.ok(application);
+//    }
+    
+    
     @GetMapping("/applications/{uuid}")
-    public ResponseEntity<Application> getApplication(
+    public ResponseEntity<List<Vulnerability>> getApplicationVulnerabilities(
             @PathVariable @NotBlank(message = "UUID cannot be blank") String uuid) {
-        logger.info("Received request to fetch application with UUID: {}", uuid);
-        Application application = applicationService.getApplicationByUuid(uuid);
-        logger.info("Returning application with UUID: {}", uuid);
-        return ResponseEntity.ok(application);
+        logger.info("Received request to fetch vulnerabilities for application with UUID: {}", uuid);
+        List<Vulnerability> vulnerabilities = applicationService.getVulnerabilitiesByApplicationUuid(uuid);
+        logger.info("Returning {} vulnerabilities for application UUID: {}", vulnerabilities.size(), uuid);
+        return ResponseEntity.ok(vulnerabilities);
     }
     
  // Added: Soft delete computer by UUID
