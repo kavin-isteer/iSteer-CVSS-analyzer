@@ -24,4 +24,5 @@ public interface ComputerApplicationDao {
 		  
 		  int softDeleteByComputerUuid(String computerUuid);
 		    int revertSoftDeleteByComputerUuid(String computerUuid);
+			int softDeleteApplicationByComputerUuid(String uuid);
 }

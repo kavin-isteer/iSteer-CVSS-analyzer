@@ -19,6 +19,7 @@ import org.springframework.stereotype.Repository;
 
 import com.isteer.cvssapplication.datastore.dao.ApplicationDao;
 import com.isteer.cvssapplication.datastore.dao.rowmapper.ApplicationRowMapper;
+import com.isteer.cvssapplication.datastore.dao.rowmapper.ApplicationWithVulnerabilitiesExtractor;
 import com.isteer.cvssapplication.datastore.dao.rowmapper.RowMapper;
 import com.isteer.cvssapplication.datastore.dao.rowmapper.VulnerabilityRowMapper;
 import com.isteer.cvssapplication.datastore.dto.SoftwareDTO;
@@ -31,10 +32,10 @@ public class ApplicationDaoImpl implements ApplicationDao {
 
 	@Autowired
 	private NamedParameterJdbcTemplate jdbcTemplate;
-	
+
 	@Autowired
 	private JdbcTemplate template;
-	
+
 	@Override
 	public int save(Application application) {
 		String sql = "INSERT INTO applications (uuid, name, version, vendor_name, created_at) "
@@ -81,26 +82,50 @@ public class ApplicationDaoImpl implements ApplicationDao {
 //		}
 //	}
 
+	@Override
+	public List<Application> findByComputerUuid(String computerUuid, Boolean status) {
+		String sql = """
+					   SELECT a.*, ca.installed_date , ca.updated_at AS ca_updated_at, ca.is_deleted AS ca_is_deleted,
+				       v.id AS v_id, v.uuid AS v_uuid, v.cve_id, v.severity, v.description, v.vector_string,
+				       v.source_identifier, v.cvss_score, v.cvss_version, v.created_at AS v_created_at, v.is_deleted AS v_is_deleted
+				FROM applications a
+				JOIN computer_applications ca ON a.uuid = ca.application_uuid
+				JOIN computers c ON ca.computer_uuid = c.uuid
+				LEFT JOIN application_vulnerabilities av ON a.uuid = av.application_uuid
+				LEFT JOIN vulnerabilities v ON av.vulnerability_uuid = v.id AND v.is_deleted = false
+				WHERE c.uuid = :computerUuid AND c.is_deleted = false
+					     """;
 
-	
-	 @Override
-	    public List<Application> findByComputerUuid(String computerUuid, Boolean status) {
-	        String sql = "SELECT a.*, ca.installed_date FROM applications a "
-	                + "JOIN computer_applications ca ON a.uuid = ca.application_uuid "
-	                + "JOIN computers c ON ca.computer_uuid = c.uuid "
-	                + "WHERE c.uuid = :computerUuid AND c.is_deleted = false";
-	        
-	        if (status != null) {
-	            sql += " AND ca.is_deleted = :isDeleted";
-	        }
-	        
-	        MapSqlParameterSource params = new MapSqlParameterSource("computerUuid", computerUuid);
-	        if (status != null) {
-	            params.addValue("isDeleted", status);
-	        }
-	        
-	        return jdbcTemplate.query(sql, params, RowMapper::mapApplicationRow);
-	    }
+		MapSqlParameterSource params = new MapSqlParameterSource();
+		params.addValue("computerUuid", computerUuid);
+
+		if (status != null) {
+			sql += " AND ca.is_deleted = :isDeleted";
+			params.addValue("isDeleted", status);
+		}
+
+		return jdbcTemplate.query(sql, params, new ApplicationWithVulnerabilitiesExtractor());
+	}
+
+//	
+//	 @Override
+//	    public List<Application> findByComputerUuid(String computerUuid, Boolean status) {
+//	        String sql = "SELECT a.*, ca.installed_date , ca.updated_at FROM applications a "
+//	                + "JOIN computer_applications ca ON a.uuid = ca.application_uuid "
+//	                + "JOIN computers c ON ca.computer_uuid = c.uuid "
+//	                + "WHERE c.uuid = :computerUuid AND c.is_deleted = false";
+//	        
+//	        if (status != null) {
+//	            sql += " AND ca.is_deleted = :isDeleted";
+//	        }
+//	        
+//	        MapSqlParameterSource params = new MapSqlParameterSource("computerUuid", computerUuid);
+//	        if (status != null) {
+//	            params.addValue("isDeleted", status);
+//	        }
+//	        
+//	        return jdbcTemplate.query(sql, params, RowMapper::mapApplicationRow);
+//	    }
 
 //	@Override   // method not used
 //	public Optional<Application> findByUuidAndIsDeletedFalse(String uuid) {
@@ -114,7 +139,6 @@ public class ApplicationDaoImpl implements ApplicationDao {
 //			return Optional.empty();
 //		}
 //	}
-	 
 
 //	@Override
 //	public Map<Application, Boolean> isRecordExists(List<SoftwareDTO> applications) {
@@ -139,61 +163,53 @@ public class ApplicationDaoImpl implements ApplicationDao {
 //		}
 //		return result;
 //	}
-	
+
 	@Override
 	public Map<Application, Boolean> isRecordExists1(List<SoftwareDTO> applications) {
-		 Map<Application, Boolean> result = new LinkedHashMap<>();
-		    
-		    if (applications.isEmpty()) {
-		        return result;
-		    }
+		Map<Application, Boolean> result = new LinkedHashMap<>();
 
-		    // Create temporary table
-		    template.execute("CREATE TEMPORARY TABLE IF NOT EXISTS temp_apps_to_check (" +
-		        "name VARCHAR(255), " +
-		        "version VARCHAR(255), " +
-		        "vendor_name VARCHAR(255))");
+		if (applications.isEmpty()) {
+			return result;
+		}
 
-		    // Clear previous data
-		    template.execute("TRUNCATE TABLE temp_apps_to_check");
+		// Create temporary table
+		template.execute("CREATE TEMPORARY TABLE IF NOT EXISTS temp_apps_to_check (" + "name VARCHAR(255), "
+				+ "version VARCHAR(255), " + "vendor_name VARCHAR(255))");
 
-		    // Batch insert all applications to check
-		    template.batchUpdate(
-		        "INSERT INTO temp_apps_to_check (name, version, vendor_name) VALUES (?, ?, ?)",
-		        applications.stream()
-		            .map(app -> new Object[]{app.getName(), app.getVersion(), app.getVendorName()})
-		            .collect(Collectors.toList())
-		    );
+		// Clear previous data
+		template.execute("TRUNCATE TABLE temp_apps_to_check");
 
-		    
-		    List<Map<String, Object>> rows = template.queryForList(
-		        "SELECT a.id, a.uuid, t.name, t.version, t.vendor_name, " +
-		        "a.created_at, CASE WHEN a.id IS NULL THEN FALSE ELSE TRUE END AS exists_flag " +
-		        "FROM temp_apps_to_check t " +
-		        "LEFT JOIN applications a ON " +
-		        "a.name = t.name AND a.version = t.version AND a.vendor_name = t.vendor_name"
-		    );
+		// Batch insert all applications to check
+		template.batchUpdate("INSERT INTO temp_apps_to_check (name, version, vendor_name) VALUES (?, ?, ?)",
+				applications.stream().map(app -> new Object[] { app.getName(), app.getVersion(), app.getVendorName() })
+						.collect(Collectors.toList()));
 
-		 // Process results
-		    for (Map<String, Object> row : rows) {
-		        Application app = new Application();
-		        app.setId(row.get("id") != null ? ((Number)row.get("id")).longValue() : null);
-		        app.setUuid((String)row.get("uuid"));
-		        app.setName((String)row.get("name"));
-		        app.setVersion((String)row.get("version"));
-		        app.setVendorName((String)row.get("vendor_name"));
+		List<Map<String, Object>> rows = template.queryForList("SELECT a.id, a.uuid, t.name, t.version, t.vendor_name, "
+				+ "a.created_at, CASE WHEN a.id IS NULL THEN FALSE ELSE TRUE END AS exists_flag "
+				+ "FROM temp_apps_to_check t " + "LEFT JOIN applications a ON "
+				+ "a.name = t.name AND a.version = t.version AND a.vendor_name = t.vendor_name");
+
+		// Process results
+		for (Map<String, Object> row : rows) {
+			Application app = new Application();
+			app.setId(row.get("id") != null ? ((Number) row.get("id")).longValue() : null);
+			app.setUuid((String) row.get("uuid"));
+			app.setName((String) row.get("name"));
+			app.setVersion((String) row.get("version"));
+			app.setVendorName((String) row.get("vendor_name"));
 //		        Timestamp createdAt = (Timestamp)row.get("created_at") != null ? (Timestamp)row.get("created_at") : null;
-		        app.setCreatedAt(row.get("created_at") != null ? ((Timestamp)row.get("created_at")).toLocalDateTime() : null);
-		        
-		        Long exists = (Long)row.get("exists_flag");
-		        //FIXME: This should be Boolean, but the query returns Long. Dont do like this.
-		        result.put(app, Boolean.valueOf(exists.toString()));
-		    }
-		    
-		    // Clean up
-		    template.execute("DROP TEMPORARY TABLE IF EXISTS temp_apps_to_check");
+			app.setCreatedAt(
+					row.get("created_at") != null ? ((Timestamp) row.get("created_at")).toLocalDateTime() : null);
 
-		    return result;
+			Long exists = (Long) row.get("exists_flag");
+			// FIXME: This should be Boolean, but the query returns Long. Dont do like this.
+			result.put(app, Boolean.valueOf(exists.toString()));
+		}
+
+		// Clean up
+		template.execute("DROP TEMPORARY TABLE IF EXISTS temp_apps_to_check");
+
+		return result;
 	}
 
 	@Override
@@ -218,22 +234,20 @@ public class ApplicationDaoImpl implements ApplicationDao {
 		return applications;
 	}
 
-	 @Override
-	    public Optional<Application> findByApplicationUuid(String uuid) {
-	        String sql = "SELECT a.*, MIN(ca.installed_date) as installed_date " +
-	                     "FROM applications a " +
-	                     "LEFT JOIN computer_applications ca ON a.uuid = ca.application_uuid " +
-	                     "WHERE a.uuid = :uuid " +
-	                     "GROUP BY a.id, a.uuid, a.name, a.version, a.vendor_name, a.created_at";
-	        MapSqlParameterSource params = new MapSqlParameterSource("uuid", uuid);
-	        try {
-	            Application application = jdbcTemplate.queryForObject(sql, params, RowMapper::mapApplicationRow);
-	            return Optional.ofNullable(application);
-	        } catch (Exception e) {
-	            logger.debug("No application found for UUID: {}", uuid);
-	            return Optional.empty();
-	        }
-	    }
+	@Override
+	public Optional<Application> findByApplicationUuid(String uuid) {
+		String sql = "SELECT a.*, MIN(ca.installed_date) as installed_date ,MIN(ca.updated_at) as updated_at , MIN(ca.is_deleted) as is_deleted "
+				+ "FROM applications a " + "LEFT JOIN computer_applications ca ON a.uuid = ca.application_uuid "
+				+ "WHERE a.uuid = :uuid " + "GROUP BY a.id, a.uuid, a.name, a.version, a.vendor_name, a.created_at";
+		MapSqlParameterSource params = new MapSqlParameterSource("uuid", uuid);
+		try {
+			Application application = jdbcTemplate.queryForObject(sql, params, RowMapper::mapApplicationRow);
+			return Optional.ofNullable(application);
+		} catch (Exception e) {
+			logger.debug("No application found for UUID: {}", uuid);
+			return Optional.empty();
+		}
+	}
 //	 
 //	   @Override
 //	    public List<Vulnerability> findVulnerabilitiesByApplicationUuid(String uuid) {
@@ -244,5 +258,5 @@ public class ApplicationDaoImpl implements ApplicationDao {
 //	        logger.debug("Fetching vulnerabilities for application UUID: {}", uuid);
 //	        return jdbcTemplate.query(sql, params, new VulnerabilityRowMapper());
 //	    }
-	
+
 }

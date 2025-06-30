@@ -201,6 +201,24 @@ public class ComputerApplicationDaoImpl implements ComputerApplicationDao {
 	        logger.debug("Soft deleting all mappings for computer UUID: {}", computerUuid);
 	        return jdbcTemplate.update(sql, params);
 	    }
+		
+		 @Override
+		    public int softDeleteApplicationByComputerUuid(String computerUuid) {    
+			 String sql = """
+					    UPDATE computer_applications ca
+					    JOIN computers c ON ca.computer_uuid = c.uuid
+					    JOIN applications a ON ca.application_uuid = a.uuid
+					    SET ca.is_deleted = true, ca.updated_at = :updatedAt
+					    WHERE c.uuid = :computerUuid
+					      AND ca.is_deleted = false
+					""";
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("computerUuid", computerUuid)
+                .addValue("updatedAt", LocalDateTime.now());
+        logger.debug("Soft deleting mappings for computer UUID: {} using JOINs", computerUuid);
+        return jdbcTemplate.update(sql, params);
+		    }
 
 	    // Added: Revert soft delete for all mappings for a computer UUID
 	    @Override

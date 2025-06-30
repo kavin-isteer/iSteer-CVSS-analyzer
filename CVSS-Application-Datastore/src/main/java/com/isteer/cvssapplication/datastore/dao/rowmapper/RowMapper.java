@@ -42,6 +42,9 @@ public class RowMapper {
         application.setInstalledDate(rs.getTimestamp("installed_date") != null ?
                 rs.getTimestamp("installed_date").toLocalDateTime() : null);
         application.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+        application.setUpdatedAt(rs.getTimestamp("updated_at") != null ?
+				rs.getTimestamp("updated_at").toLocalDateTime() : null);
+        application.setDeleted(rs.getBoolean("is_deleted"));
         return application;
     }
 

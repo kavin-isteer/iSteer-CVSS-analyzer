@@ -52,12 +52,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorMessageDTO> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         logger.error("Data integrity violation: {}", ex.getMessage());
-//        String message = ex.getMessage().toLowerCase();
-//        if (message.contains("computers_device_id_uindex")) {
-//            return new ResponseEntity<>(
-//                    new ErrorMessageDTO(CVSSEnum.COMPUTER_DEVICE_ID_EXISTS.getStatusCode(),
-//                            StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_DEVICE_ID_EXISTS)),
-//                    HttpStatus.BAD_REQUEST);
+        String message = ex.getMessage().toLowerCase();
+        if (message.contains("computers.device_id")) {
+            return new ResponseEntity<>(
+                    new ErrorMessageDTO(CVSSEnum.COMPUTER_DEVICE_ID_EXISTS.getStatusCode(),
+                            StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_DEVICE_ID_EXISTS)),
+                    HttpStatus.BAD_REQUEST);
+        }
 //        } else if (message.contains("computers_ip_address")) {
 //            return new ResponseEntity<>(
 //                    new ErrorMessageDTO(CVSSEnum.COMPUTER_WITH_SAME_IP_EXISTS.getStatusCode(),
@@ -82,6 +83,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadSqlGrammarException.class)
     public ResponseEntity<ErrorMessageDTO> handleDatabaseError(BadSqlGrammarException ex) {
         logger.error("SQL error: {}", ex.getMessage());
+        ex.printStackTrace(); // Log the stack trace for debugging
         return new ResponseEntity<>(
                 new ErrorMessageDTO(CVSSEnum.INVALID_SQL_SYNTAX.getStatusCode(),
                         StatusMessageUtil.getMessage(CVSSEnum.INVALID_SQL_SYNTAX)),
