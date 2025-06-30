@@ -97,50 +97,62 @@ public class ComputerController {
 	}
 
 	@GetMapping("/computers")
-	public ResponseEntity<List<Computer>> getAllComputers() {
+	public ResponseEntity<List<Computer>> getAllPresentComputers() {
 		logger.info("Received request to fetch all computers");
-		List<Computer> computers = computerService.getAllComputers();
+		List<Computer> computers = computerService.getAllPresentComputers();
+        if (computers.isEmpty()) { // Check if the list is empty
+            return ResponseEntity.noContent().build(); // Return no content status
+        }
 		logger.info("Returning {} computers", computers.size());
+		return ResponseEntity.ok(computers);
+	}
+	
+	@GetMapping("/computers/is-deleted")
+	public ResponseEntity<List<Computer>> getAllDeletedComputers() {
+		logger.info("Received request to fetch all deleted computers");
+		List<Computer> computers = computerService.getAllDeletedComputers();
+		   if (computers.isEmpty()) { // Check if the list is empty
+	            return ResponseEntity.noContent().build(); // Return no content status
+	        }
+		logger.info("Returning {} deleted computers", computers.size());
 		return ResponseEntity.ok(computers);
 	}
 
   
-
-	@GetMapping("computers/{uuid}")
-	public ResponseEntity<ComputerDetailsResponseDTO> getComputer(
-			@PathVariable @NotBlank(message = "UUID cannot be blank") String uuid) {
-		logger.info("Received request to fetch computer with UUID: {}", uuid);
-		ComputerDetailsResponseDTO response = computerService.getComputerDetailsByUuid(uuid);
-		logger.info("Returning computer with UUID: {} and {} applications", uuid, response.getApplications().size());
-		return ResponseEntity.ok(response);
-	}
+	  @GetMapping("/computers/{uuid}")
+	    public ResponseEntity<ComputerDetailsResponseDTO> getComputerDetails(
+	            @PathVariable @NotBlank(message = "UUID cannot be blank") String uuid) {
+	        logger.info("Received request to fetch computer details with UUID: {}", uuid);
+	        ComputerDetailsResponseDTO computerDetails = computerService.getComputerDetailsByUuid(uuid);
+	        logger.info("Returning computer details for UUID: {}", uuid);
+	        return ResponseEntity.ok(computerDetails);
+	    }
 
 
     @GetMapping("/computers/{computerUuid}/applications")
     public ResponseEntity<List<Application>> getApplicationsByComputer(
-            @PathVariable @NotBlank(message = "Computer UUID cannot be blank") String computerUuid,
+            @PathVariable String computerUuid,
             @RequestParam(required = false) Boolean status) {
+
         logger.info("Received request to fetch applications for computer UUID: {} with status: {}", computerUuid, status);
+
         List<Application> applications = applicationService.getApplicationsByComputerUuid(computerUuid, status);
+
         logger.info("Returning {} applications for computer UUID: {}", applications.size(), computerUuid);
         return ResponseEntity.ok(applications);
     }
-
-//    @GetMapping("/applications/{uuid}")
-//    public ResponseEntity<Application> getApplication(
-//            @PathVariable @NotBlank(message = "UUID cannot be blank") String uuid) {
-//        logger.info("Received request to fetch application with UUID: {}", uuid);
-//        Application application = applicationService.getApplicationByUuid(uuid);
-//        logger.info("Returning application with UUID: {}", uuid);
-//        return ResponseEntity.ok(application);
-//    }
-    
+  
     
     @GetMapping("/applications/{uuid}")
     public ResponseEntity<List<Vulnerability>> getApplicationVulnerabilities(
             @PathVariable @NotBlank(message = "UUID cannot be blank") String uuid) {
         logger.info("Received request to fetch vulnerabilities for application with UUID: {}", uuid);
         List<Vulnerability> vulnerabilities = applicationService.getVulnerabilitiesByApplicationUuid(uuid);
+        
+        if (vulnerabilities.isEmpty()) {
+			logger.warn("No vulnerabilities found for application UUID: {}", uuid);
+			return ResponseEntity.noContent().build(); // Return no content status
+		}
         logger.info("Returning {} vulnerabilities for application UUID: {}", vulnerabilities.size(), uuid);
         return ResponseEntity.ok(vulnerabilities);
     }

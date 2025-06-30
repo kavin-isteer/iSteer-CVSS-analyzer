@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,9 +13,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.isteer.cvssapplication.datastore.dao.ApplicationDao;
+import com.isteer.cvssapplication.datastore.dao.ComputerDao;
 import com.isteer.cvssapplication.datastore.dao.VulnerabilityDao;
 import com.isteer.cvssapplication.datastore.dto.SoftwareDTO;
 import com.isteer.cvssapplication.datastore.entity.Application;
+import com.isteer.cvssapplication.datastore.entity.Computer;
 import com.isteer.cvssapplication.datastore.entity.Vulnerability;
 import com.isteer.cvssapplication.datastore.enums.CVSSEnum;
 import com.isteer.cvssapplication.datastore.exception.BussinessException;
@@ -29,6 +32,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
 	@Autowired
 	private ApplicationDao applicationRepository;
+	
+	@Autowired
+	private ComputerDao computerRepository;
 	
 	@Autowired
 	private VulnerabilityService vulnerabilityService;
@@ -83,30 +89,31 @@ public class ApplicationServiceImpl implements ApplicationService {
 	
 	 @Override
 	    public List<Application> getApplicationsByComputerUuid(String computerUuid, Boolean status) {
-	        logger.info("Fetching applications for computer UUID: {} with status: {}", computerUuid, status);
-	        List<Application> applications = applicationRepository.findByComputerUuid(computerUuid, status);
-	        for (Application app : applications) {
-	            app.setVulnerabilities(vulnerabilityRepository.findByApplicationUuid(app.getUuid()));
+		 Optional<Computer> computerOpt = computerRepository.findByUuid(computerUuid);
+	        if (!computerOpt.isPresent() || computerOpt.get().isDeleted()) {
+	            logger.warn("Computer not found or deleted for UUID: {}", computerUuid);
+	            throw new BussinessException(CVSSEnum.COMPUTER_NOT_FOUND);
 	        }
-	        logger.info("Found {} applications for computer UUID: {}", applications.size(), computerUuid);
-	        return applications;
+		 List<Application> applications = applicationRepository.findByComputerUuid(computerUuid, status);
+
+		    return applications;
 	    }
 
 
 	 
-	  @Override  // not used anymore
-	    public Application getApplicationByUuid(String uuid) {
-	        logger.info("Fetching application with UUID: {}", uuid);
-	        // Modified: Remove is_deleted check and fetch vulnerabilities
-	        Application application = applicationRepository.findByApplicationUuid(uuid).orElseThrow(() -> {
-	            logger.warn("Application not found for UUID: {}", uuid);
-	            return new BussinessException(CVSSEnum.APPLICATION_NOT_FOUND);
-	        });
-	        // Added: Fetch and set vulnerabilities for the application
-	        application.setVulnerabilities(vulnerabilityRepository.findByApplicationUuid(uuid));
-	        logger.info("Fetched application with UUID: {} and {} vulnerabilities", uuid, application.getVulnerabilities().size());
-	        return application;
-	    }
+//	  @Override  // not used anymore
+//	    public Application getApplicationByUuid(String uuid) {
+//	        logger.info("Fetching application with UUID: {}", uuid);
+//	        // Modified: Remove is_deleted check and fetch vulnerabilities
+//	        Application application = applicationRepository.findByApplicationUuid(uuid).orElseThrow(() -> {
+//	            logger.warn("Application not found for UUID: {}", uuid);
+//	            return new BussinessException(CVSSEnum.APPLICATION_NOT_FOUND);
+//	        });
+//	        // Added: Fetch and set vulnerabilities for the application
+//	        application.setVulnerabilities(vulnerabilityRepository.findByApplicationUuid(uuid));
+//	        logger.info("Fetched application with UUID: {} and {} vulnerabilities", uuid, application.getVulnerabilities().size());
+//	        return application;
+//	    }
 
 	@Override
 	public List<Application> getAllApplications() {

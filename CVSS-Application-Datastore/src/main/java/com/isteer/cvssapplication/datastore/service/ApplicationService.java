@@ -13,7 +13,7 @@ public interface ApplicationService {
 	 
 //		int createApplication(SoftwareDTO software, String computerUuid);
 
-		Application getApplicationByUuid(String uuid);
+//		Application getApplicationByUuid(String uuid);
 		
 
 //		List<Application> getApplicationsByComputerUuid(String computerUuid);

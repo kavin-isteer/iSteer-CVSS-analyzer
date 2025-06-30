@@ -34,8 +34,6 @@ import com.isteer.cvssapplication.datastore.service.ApplicationService;
 import com.isteer.cvssapplication.datastore.service.ComputerService;
 import com.isteer.cvssapplication.datastore.util.UUIDUtil;
 
-
-
 @Service
 public class ComputerServiceImpl implements ComputerService {
 	private static final Logger logger = LoggerFactory.getLogger(ComputerServiceImpl.class);
@@ -52,26 +50,26 @@ public class ComputerServiceImpl implements ComputerService {
 	@Autowired
 	private VulnerabilityDao vulnerabilityRepository;
 
-
 	@Transactional
 	@Override
 	public int createComputer(ComputerPayloadDTO payload) {
 		logger.debug("Processing computer with deviceId: {}", payload.getDeviceId());
-				
-				 // Added: Check for duplicate applications in installedSoftware
-		        Map<String, SoftwareDTO> softwareDTOMapForValidation = new LinkedHashMap<>();
-		        for (SoftwareDTO software : payload.getInstalledSoftware()) {
-		            String key = key(software.getName(), software.getVendorName(), software.getVersion());
-		            if (software.getName() == null || software.getName().trim().isEmpty()) {
-						logger.warn("Application name is null or blank in payload for deviceId: {}", payload.getDeviceId());
-						return -2; // Application name should not be blank
-					}
-		            if (softwareDTOMapForValidation.containsKey(key)) {
-		                logger.warn("Duplicate application found in payload for deviceId: {}, key: {}", payload.getDeviceId(), key);
-		                return -3; // Duplicate application in payload
-		            }
-		            softwareDTOMapForValidation.put(key, software);
-		        }
+
+		// Added: Check for duplicate applications in installedSoftware
+		Map<String, SoftwareDTO> softwareDTOMapForValidation = new LinkedHashMap<>();
+		for (SoftwareDTO software : payload.getInstalledSoftware()) {
+			String key = key(software.getName(), software.getVendorName(), software.getVersion());
+			if (software.getName() == null || software.getName().trim().isEmpty()) {
+				logger.warn("Application name is null or blank in payload for deviceId: {}", payload.getDeviceId());
+				return -2; // Application name should not be blank
+			}
+			if (softwareDTOMapForValidation.containsKey(key)) {
+				logger.warn("Duplicate application found in payload for deviceId: {}, key: {}", payload.getDeviceId(),
+						key);
+				return -3; // Duplicate application in payload
+			}
+			softwareDTOMapForValidation.put(key, software);
+		}
 
 		Optional<Computer> existingComputer = computerRepository.findByDeviceIdAndIsDeletedFalse(payload.getDeviceId());
 		boolean isComputerUpdated = false;
@@ -170,11 +168,10 @@ public class ComputerServiceImpl implements ComputerService {
 				.toMap(app -> key(app.getName(), app.getVendorName(), app.getVersion()), Function.identity()));
 
 		Map<String, SoftwareDTO> softwareDTOMap = payload.getInstalledSoftware().stream()
-                .collect(Collectors.toMap(
-                        software -> key(software.getName(), software.getVendorName(), software.getVersion()),
-                        Function.identity()
-                ));
-		
+				.collect(Collectors.toMap(
+						software -> key(software.getName(), software.getVendorName(), software.getVersion()),
+						Function.identity()));
+
 //		 // Modified: Use deduplicated map to avoid IllegalStateException
 //        Map<String, SoftwareDTO> softwareDTOMap = new LinkedHashMap<>();
 //        for (SoftwareDTO software : payload.getInstalledSoftware()) {
@@ -185,7 +182,7 @@ public class ComputerServiceImpl implements ComputerService {
 //                logger.warn("Skipping duplicate application in softwareDTOMap for key: {}", key);
 //            }
 //        }
-		
+
 		// Insert new mappings using your save() method
 		for (String appKey : onlyInNew) {
 			// Extra safety: skip if already mapped or reactivatable
@@ -222,42 +219,44 @@ public class ComputerServiceImpl implements ComputerService {
 				logger.warn("Application not found for app key: {}", appKey);
 			}
 		}
-		
-		  for (ComputerApplicationDTO mapping : currentMappings) {
-	            if (mapping.isDeleted()) {
-	                continue; // Skip deleted mappings
-	            }
-	            String appKey = key(mapping.getApplicationName(), mapping.getApplicationVendorName(), mapping.getApplicationVersion());
-	            SoftwareDTO softwareDTO = softwareDTOMap.get(appKey);
-	            if (softwareDTO != null) {
-	                LocalDateTime newInstalledDate = softwareDTO.getInstalledDate();
-	                LocalDateTime currentInstalledDate = mapping.getInstalledDate();
-	                if (newInstalledDate != null && !newInstalledDate.equals(currentInstalledDate)) {
-	                    int updateStatus = computerApplicationRepository.updateInstalledDate(
-	                            mapping.getUuid(), newInstalledDate);
-	                    if (updateStatus != 1) {
-	                        logger.error("Failed to update installed_date for mapping UUID: {}", mapping.getUuid());
-	                    } else {
-	                        isApplicationsUpdated = true;
-	                        logger.debug("Updated installed_date for mapping UUID: {}", mapping.getUuid());
-	                    }
-	                }
-	            }
-	        }
 
-		//  Reactivate previously deleted mappings now found in the payload
+		for (ComputerApplicationDTO mapping : currentMappings) {
+			if (mapping.isDeleted()) {
+				continue; // Skip deleted mappings
+			}
+			String appKey = key(mapping.getApplicationName(), mapping.getApplicationVendorName(),
+					mapping.getApplicationVersion());
+			SoftwareDTO softwareDTO = softwareDTOMap.get(appKey);
+			if (softwareDTO != null) {
+				LocalDateTime newInstalledDate = softwareDTO.getInstalledDate();
+				LocalDateTime currentInstalledDate = mapping.getInstalledDate();
+				if (newInstalledDate != null && !newInstalledDate.equals(currentInstalledDate)) {
+					int updateStatus = computerApplicationRepository.updateInstalledDate(mapping.getUuid(),
+							newInstalledDate);
+					if (updateStatus != 1) {
+						logger.error("Failed to update installed_date for mapping UUID: {}", mapping.getUuid());
+					} else {
+						isApplicationsUpdated = true;
+						logger.debug("Updated installed_date for mapping UUID: {}", mapping.getUuid());
+					}
+				}
+			}
+		}
+
+		// Reactivate previously deleted mappings now found in the payload
 		List<ComputerApplicationDTO> reactivatedMappings = currentMappings.stream()
 				.filter(mapping -> newAppKeysInDeleted.contains(key(mapping.getApplicationName(),
 						mapping.getApplicationVendorName(), mapping.getApplicationVersion())))
 				.collect(Collectors.toList());
 
 		for (ComputerApplicationDTO mapping : reactivatedMappings) {
-			 // Modified: Update installed_date during reactivation
-            SoftwareDTO softwareDTO = softwareDTOMap.get(
-                    key(mapping.getApplicationName(), mapping.getApplicationVendorName(), mapping.getApplicationVersion()));
-			  LocalDateTime newInstalledDate = softwareDTO != null ? softwareDTO.getInstalledDate() : mapping.getInstalledDate();
-			  System.out.println("in service " + newInstalledDate);
-			  int status = computerApplicationRepository.reactivateByComputerAndApplicationUuid(mapping.getUuid(),
+			// Modified: Update installed_date during reactivation
+			SoftwareDTO softwareDTO = softwareDTOMap.get(key(mapping.getApplicationName(),
+					mapping.getApplicationVendorName(), mapping.getApplicationVersion()));
+			LocalDateTime newInstalledDate = softwareDTO != null ? softwareDTO.getInstalledDate()
+					: mapping.getInstalledDate();
+			System.out.println("in service " + newInstalledDate);
+			int status = computerApplicationRepository.reactivateByComputerAndApplicationUuid(mapping.getUuid(),
 					newInstalledDate);
 			if (status != 1) {
 				logger.error("Failed to reactivate mapping for application UUID: {}", mapping.getApplicationUuid());
@@ -286,7 +285,6 @@ public class ComputerServiceImpl implements ComputerService {
 			}
 		}
 
-
 		if (!existingComputer.isPresent()) {
 			return 1; // New computer created successfully
 		} else if (isComputerUpdated && isApplicationsUpdated) {
@@ -312,9 +310,9 @@ public class ComputerServiceImpl implements ComputerService {
 				&& (computer.getLoggedInUser() == null ? payload.getLoggedInUser() == null
 						: computer.getLoggedInUser().equals(payload.getLoggedInUser()))
 				&& (computer.getLastUpdateCheck() == null ? payload.getLastUpdateCheck() == null
-                : computer.getLastUpdateCheck().equals(payload.getLastUpdateCheck()))
-        && (computer.getTimestamp() == null ? payload.getTimestamp() == null
-                : computer.getTimestamp().equals(payload.getTimestamp()));
+						: computer.getLastUpdateCheck().equals(payload.getLastUpdateCheck()))
+				&& (computer.getTimestamp() == null ? payload.getTimestamp() == null
+						: computer.getTimestamp().equals(payload.getTimestamp()));
 	}
 
 	private void updateComputerDetails(Computer computer, ComputerPayloadDTO payload) {
@@ -341,36 +339,52 @@ public class ComputerServiceImpl implements ComputerService {
 
 	@Transactional(readOnly = true)
 	@Override
-	public List<Computer> getAllComputers() {
+	public List<Computer> getAllPresentComputers() {
 		logger.info("Fetching all computers");
-		return computerRepository.findAllComputers();
+		return computerRepository.findAllPresentComputers();
 	}
 
 	@Override
 	public ComputerDetailsResponseDTO getComputerDetailsByUuid(String uuid) {
-		logger.info("Fetching computer details with UUID: {}", uuid);
-		Computer computer = getComputerByUuid(uuid);
-		List<Application> applications = applicationService.getApplicationsByComputerUuid(uuid, false);
 
-		for (Application app : applications) {
-			app.setVulnerabilities(vulnerabilityRepository.findByApplicationUuid(app.getUuid()));
+		ComputerDetailsResponseDTO computerDetails = computerRepository.findDetailsByUuid(uuid);
+		if (computerDetails.getComputer() == null || computerDetails.getComputer().getUuid() == null) {
+			logger.warn("Computer not found for UUID: {}", uuid);
+			throw new BussinessException(CVSSEnum.COMPUTER_NOT_FOUND);
 		}
-
-		ComputerDetailsResponseDTO response = new ComputerDetailsResponseDTO();
-		response.setComputer(computer);
-		response.setApplications(applications);
-
-		logger.info("Returning computer details with UUID: {} and {} applications", uuid, applications.size());
-		return response;
+		logger.info("Returning computer details for UUID: {}", uuid);
+		return computerDetails;
 	}
 
 	private String key(String product, String vendor, String version) {
 		return product + ":" + (vendor == null ? "" : vendor) + ":" + (version == null ? "" : version);
 	}
-	
-	 @Override
-	    public int softDeleteComputer(String uuid) {
-	        Optional<Computer> computerOpt = computerRepository.findByUuid(uuid);
+
+	@Override
+	public int softDeleteComputer(String uuid) {
+//		Optional<Computer> computerOpt = computerRepository.findByUuid(uuid);
+//		if (!computerOpt.isPresent()) {
+//			logger.warn("Computer not found for UUID: {}", uuid);
+//			return -1; // Not found
+//		}
+//		Computer computer = computerOpt.get();
+//		if (computer.isDeleted()) {
+//			logger.warn("Computer already soft deleted for UUID: {}", uuid);
+//			return -2; // Already deleted
+//		}
+//		computer.setDeleted(true);
+//		computer.setActive(false); // Deactivate on soft delete
+//		computer.setUpdatedAt(LocalDateTime.now());
+//		int status = computerRepository.updateDeletionStatus(computer);
+//		if (status != 1) {
+//			logger.error("Failed to soft delete computer with UUID: {}", uuid);
+//			return -3; // Internal error
+//		}
+//		// Soft delete associated computer_applications mappings
+//		int mappingStatus = computerApplicationRepository.softDeleteByComputerUuid(uuid);
+//		logger.debug("Soft deleted {} mappings for computer UUID: {}", mappingStatus, uuid);
+//		return 1; // Success
+		 Optional<Computer> computerOpt = computerRepository.findByUuid(uuid);
 	        if (!computerOpt.isPresent()) {
 	            logger.warn("Computer not found for UUID: {}", uuid);
 	            return -1; // Not found
@@ -388,106 +402,117 @@ public class ComputerServiceImpl implements ComputerService {
 	            logger.error("Failed to soft delete computer with UUID: {}", uuid);
 	            return -3; // Internal error
 	        }
-	        // Soft delete associated computer_applications mappings
-	        int mappingStatus = computerApplicationRepository.softDeleteByComputerUuid(uuid);
+	        // Soft delete associated computer_applications mappings using JOINs
+	        int mappingStatus = computerApplicationRepository.softDeleteApplicationByComputerUuid(uuid);
 	        logger.debug("Soft deleted {} mappings for computer UUID: {}", mappingStatus, uuid);
-	        return 1; // Success
-	    }
+	        return 1; // Success}
+	}
+	// Added: Revert soft delete computer
+	@Transactional
+	@Override
+	public int revertSoftDeleteComputer(String uuid) {
+		Optional<Computer> computerOpt = computerRepository.findByUuid(uuid);
+		if (!computerOpt.isPresent()) {
+			logger.warn("Computer not found for UUID: {}", uuid);
+			return -1; // Not found
+		}
+		Computer computer = computerOpt.get();
+		if (!computer.isDeleted()) {
+			logger.warn("Computer not soft deleted for UUID: {}", uuid);
+			return -2; // Not deleted
+		}
+		computer.setDeleted(false);
+		// Keep is_active = false as per requirement
+		computer.setUpdatedAt(LocalDateTime.now());
+		int status = computerRepository.updateDeletionStatus(computer);
+		if (status != 1) {
+			logger.error("Failed to revert soft delete for computer with UUID: {}", uuid);
+			return -3; // Internal error
+		}
+		// Revert soft delete for associated computer_applications mappings
+		int mappingStatus = computerApplicationRepository.revertSoftDeleteByComputerUuid(uuid);
+		logger.debug("Reverted soft delete for {} mappings for computer UUID: {}", mappingStatus, uuid);
+		return 1; // Success
+	}
 
-	    // Added: Revert soft delete computer
-	    @Transactional
-	    @Override
-	    public int revertSoftDeleteComputer(String uuid) {
-	        Optional<Computer> computerOpt = computerRepository.findByUuid(uuid);
-	        if (!computerOpt.isPresent()) {
-	            logger.warn("Computer not found for UUID: {}", uuid);
-	            return -1; // Not found
-	        }
-	        Computer computer = computerOpt.get();
-	        if (!computer.isDeleted()) {
-	            logger.warn("Computer not soft deleted for UUID: {}", uuid);
-	            return -2; // Not deleted
-	        }
-	        computer.setDeleted(false);
-	        // Keep is_active = false as per requirement
-	        computer.setUpdatedAt(LocalDateTime.now());
-	        int status = computerRepository.updateDeletionStatus(computer);
-	        if (status != 1) {
-	            logger.error("Failed to revert soft delete for computer with UUID: {}", uuid);
-	            return -3; // Internal error
-	        }
-	        // Revert soft delete for associated computer_applications mappings
-	        int mappingStatus = computerApplicationRepository.revertSoftDeleteByComputerUuid(uuid);
-	        logger.debug("Reverted soft delete for {} mappings for computer UUID: {}", mappingStatus, uuid);
-	        return 1; // Success
-	    }
+	// Added: Activate computer
+	@Transactional
+	@Override
+	public int activateComputer(String uuid) {
+		Optional<Computer> computerOpt = computerRepository.findByUuid(uuid);
+		if (!computerOpt.isPresent()) {
+			logger.warn("Computer not found for UUID: {}", uuid);
+			return -1; // Not found
+		}
+		Computer computer = computerOpt.get();
+		if (computer.isDeleted()) {
+			logger.warn("Cannot activate soft deleted computer with UUID: {}", uuid);
+			return -3; // Soft deleted
+		}
+		if (computer.isActive()) {
+			logger.warn("Computer already active for UUID: {}", uuid);
+			return -2; // Already active
+		}
+		computer.setActive(true);
+		computer.setUpdatedAt(LocalDateTime.now());
+		int status = computerRepository.updateActivationStatus(computer);
+		if (status != 1) {
+			logger.error("Failed to activate computer with UUID: {}", uuid);
+			return -4; // Internal error
+		}
+		return 1; // Success
+	}
 
-	    // Added: Activate computer
-	    @Transactional
-	    @Override
-	    public int activateComputer(String uuid) {
-	        Optional<Computer> computerOpt = computerRepository.findByUuid(uuid);
-	        if (!computerOpt.isPresent()) {
-	            logger.warn("Computer not found for UUID: {}", uuid);
-	            return -1; // Not found
-	        }
-	        Computer computer = computerOpt.get();
-	        if (computer.isDeleted()) {
-	            logger.warn("Cannot activate soft deleted computer with UUID: {}", uuid);
-	            return -3; // Soft deleted
-	        }
-	        if (computer.isActive()) {
-	            logger.warn("Computer already active for UUID: {}", uuid);
-	            return -2; // Already active
-	        }
-	        computer.setActive(true);
-	        computer.setUpdatedAt(LocalDateTime.now());
-	        int status = computerRepository.updateActivationStatus(computer);
-	        if (status != 1) {
-	            logger.error("Failed to activate computer with UUID: {}", uuid);
-	            return -4; // Internal error
-	        }
-	        return 1; // Success
-	    }
+	// Added: Deactivate computer
+	@Transactional
+	@Override
+	public int deactivateComputer(String uuid) {
+		Optional<Computer> computerOpt = computerRepository.findByUuid(uuid);
+		if (!computerOpt.isPresent()) {
+			logger.warn("Computer not found for UUID: {}", uuid);
+			return -1; // Not found
+		}
+		Computer computer = computerOpt.get();
+		if (computer.isDeleted()) {
+			logger.warn("Cannot deactivate soft deleted computer with UUID: {}", uuid);
+			return -3; // Soft deleted
+		}
+		if (!computer.isActive()) {
+			logger.warn("Computer already deactivated for UUID: {}", uuid);
+			return -2; // Already deactivated
+		}
+		computer.setActive(false);
+		computer.setUpdatedAt(LocalDateTime.now());
+		int status = computerRepository.updateActivationStatus(computer);
+		if (status != 1) {
+			logger.error("Failed to deactivate computer with UUID: {}", uuid);
+			return -4; // Internal error
+		}
+		return 1; // Success
+	}
 
-	    // Added: Deactivate computer
-	    @Transactional
-	    @Override
-	    public int deactivateComputer(String uuid) {
-	        Optional<Computer> computerOpt = computerRepository.findByUuid(uuid);
-	        if (!computerOpt.isPresent()) {
-	            logger.warn("Computer not found for UUID: {}", uuid);
-	            return -1; // Not found
-	        }
-	        Computer computer = computerOpt.get();
-	        if (computer.isDeleted()) {
-	            logger.warn("Cannot deactivate soft deleted computer with UUID: {}", uuid);
-	            return -3; // Soft deleted
-	        }
-	        if (!computer.isActive()) {
-	            logger.warn("Computer already deactivated for UUID: {}", uuid);
-	            return -2; // Already deactivated
-	        }
-	        computer.setActive(false);
-	        computer.setUpdatedAt(LocalDateTime.now());
-	        int status = computerRepository.updateActivationStatus(computer);
-	        if (status != 1) {
-	            logger.error("Failed to deactivate computer with UUID: {}", uuid);
-	            return -4; // Internal error
-	        }
-	        return 1; // Success
-	    }
+	// Added: List computers by deletion status
+	@Override
+	public List<Computer> getComputersByDeletionStatus(Boolean isDeleted) {
+		return computerRepository.findByDeletionStatus(isDeleted);
+	}
 
-	    // Added: List computers by deletion status
-	    @Override
-	    public List<Computer> getComputersByDeletionStatus(Boolean isDeleted) {
-	        return computerRepository.findByDeletionStatus(isDeleted);
-	    }
+	// Added: List computers by activation status
+	@Override
+	public List<Computer> getComputersByActivationStatus(Boolean isActive) {
+		return computerRepository.findByActivationStatus(isActive);
+	}
 
-	    // Added: List computers by activation status
-	    @Override
-	    public List<Computer> getComputersByActivationStatus(Boolean isActive) {
-	        return computerRepository.findByActivationStatus(isActive);
-	    }
+	@Override
+	public List<Computer> getAllDeletedComputers() {
+		logger.info("Fetching all deleted computers");
+		List<Computer> deletedComputers = computerRepository.findAllDeletedComputers();
+		if (deletedComputers.isEmpty()) {
+			logger.warn("No deleted computers found");
+		} else {
+			logger.info("Found {} deleted computers", deletedComputers.size());
+		}
+		return deletedComputers;
+	}
 
 }
