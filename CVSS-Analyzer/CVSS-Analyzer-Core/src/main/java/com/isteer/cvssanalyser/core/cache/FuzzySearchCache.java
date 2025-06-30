@@ -33,7 +33,7 @@ public class FuzzySearchCache {
 
     // Optionally refresh manually or on a schedule
     public static void refreshCacheFromDb() {
-    	if(cachedCpeEntries.get().size()>0) {
+    	if(cachedCpeEntries.get()!=null && cachedCpeEntries.get().size()>0) {
     		return;
     	}
         List<CpeEntryModel> freshData=new ArrayList<>();
