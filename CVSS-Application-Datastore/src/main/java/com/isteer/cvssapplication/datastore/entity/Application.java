@@ -11,27 +11,15 @@ public class Application {
 	private Long id;
 
 	@NotBlank(message = "UUID cannot be blank")
-//	@Size(min = 36, max = 36, message = "UUID must be 36 characters")
 	private String uuid;
 
 	@NotBlank(message = "Name cannot be blank")
-//	@Size(max = 100, message = "Name must be at most 100 characters")
 	private String name;
 
-//	@Size(max = 50, message = "Version must be at most 50 characters")
 	private String version;
 
-//	@NotBlank(message = "Vendor name cannot be blank")
-//	@Size(max = 100, message = "Vendor name must be at most 100 characters")
+
 	private String vendorName;
-
-	public LocalDateTime getInstalledDate() {
-		return installedDate;
-	}
-
-	public void setInstalledDate(LocalDateTime installedDate) {
-		this.installedDate = installedDate;
-	}
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime createdAt;
@@ -88,6 +76,16 @@ public class Application {
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
 	}
+	
+
+	public LocalDateTime getInstalledDate() {
+		return installedDate;
+	}
+
+	public void setInstalledDate(LocalDateTime installedDate) {
+		this.installedDate = installedDate;
+	}
+
 
 	public List<Vulnerability> getVulnerabilities() {
 		return vulnerabilities;

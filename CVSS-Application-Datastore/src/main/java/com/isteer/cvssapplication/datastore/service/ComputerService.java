@@ -13,6 +13,12 @@ public interface ComputerService {
 	Computer getComputerByUuid(String uuid);
 
 	List<Computer> getAllComputers();
+	 int softDeleteComputer(String uuid);
+	    int revertSoftDeleteComputer(String uuid);
+	    int activateComputer(String uuid);
+	    int deactivateComputer(String uuid);
+	    List<Computer> getComputersByDeletionStatus(Boolean isDeleted);
+	    List<Computer> getComputersByActivationStatus(Boolean isActive);
 	}
 
 

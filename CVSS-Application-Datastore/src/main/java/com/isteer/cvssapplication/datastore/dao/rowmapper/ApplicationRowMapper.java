@@ -16,6 +16,9 @@ public class ApplicationRowMapper implements RowMapper<Application> {
         application.setName(rs.getString("name"));
         application.setVersion(rs.getString("version"));
         application.setVendorName(rs.getString("vendor_name"));
+//       application.setInstalledDate(rs.getTimestamp("installed_date") != null ?
+//                rs.getTimestamp("installed_date").toLocalDateTime() : null);
+        application.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
         return application;
     }
 }

@@ -2,6 +2,8 @@ package com.isteer.cvssapplication.datastore.dto;
 
 import java.time.LocalDateTime;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class ComputerApplicationDTO {
 
 	private String uuid;

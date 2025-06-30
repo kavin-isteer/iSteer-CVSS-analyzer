@@ -16,7 +16,15 @@ public enum CVSSEnum {
     COMPUTER_INACTIVE(5017, "computer.inactive"),
     COMPUTER_DEVICE_ID_EXISTS(2010, "computer.device_id.exists"),
     COMPUTER_PAYLOAD_INVALID(2021, "Invaild.Computer.payload"),
-    COMPUTER_APPLICATION_EXISTS(2091, "computer.application.exists"),
+    
+    COMPUTER_SOFT_DELETED(2010, "computer.soft.deleted"),
+    COMPUTER_REVERT_SOFT_DELETE(2011, "computer.revert.soft.delete"),
+    COMPUTER_ACTIVATED(2012, "computer.activated"),
+    COMPUTER_NOT_DELETED(2015, "computer.not.deleted"),
+    COMPUTER_ALREADY_DEACTIVATED(2017, "computer.already.deactivated"),
+    COMPUTER_DELETED(2018, "computer.deleted"),
+    INVALID_STATUS(2019, "invalid.status"),
+   
 
     // Application-related operations
     APPLICATION_ADD(2100, "application.add"),
@@ -48,7 +56,8 @@ public enum CVSSEnum {
     ILLEGAL_ARGUMENT(5013, "illegal.argument.exception"),
     Internal_Server_Error(9000, "internal.error"), 
     INVALID_DATE_FORMAT(5014, "invalid.date.format"), 
-    NO_CHANGES(2033, "no.changes.detected");
+    NO_CHANGES(2033, "no.changes.detected"), APPLICATION_NAME_BLANK(2108, "application.name.blank"), 
+    DUPLICATE_APPLICATIONS(2109, "duplicate.applications"),;
 
     private final int statusCode;
     private final String messageKey;
