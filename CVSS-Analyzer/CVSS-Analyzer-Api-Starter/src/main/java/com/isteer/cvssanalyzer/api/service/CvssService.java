@@ -1,6 +1,8 @@
 package com.isteer.cvssanalyzer.api.service;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,8 +98,10 @@ public class CvssService {
             RestTemplate restTemplate = new RestTemplate();
             CveClient cveClient = new CveClient();
             HttpEntity<String> entity = getHeaders();
-            String url = String.format("%s?cpeName=%s", CVE_API_BASE_URL, cpe);
-            ResponseEntity<Object> response = restTemplate.exchange(url, HttpMethod.GET, entity, Object.class);
+            String encodedCpe = URLEncoder.encode(cpe, StandardCharsets.UTF_8.toString());
+            String url = String.format("%s?cpeName=%s", CVE_API_BASE_URL, encodedCpe);
+            URI uri = new URI(url);
+            ResponseEntity<Object> response = restTemplate.exchange(uri, HttpMethod.GET, entity, Object.class);
 
             if (!response.getStatusCode().is2xxSuccessful()) {
                 throw new NvdApiException("NVD API returned non-success status", response.getStatusCode().value());
@@ -123,8 +127,10 @@ public class CvssService {
             RestTemplate restTemplate = new RestTemplate();
             CveClient cveClient = new CveClient();
             HttpEntity<String> entity = getHeaders();
-            String url = String.format("%s?cpeMatchString=%s", CPE_API_BASE_URL, cpeName);
-            ResponseEntity<Object> response = restTemplate.exchange(url, HttpMethod.GET, entity, Object.class);
+            String encodedCpe = URLEncoder.encode(cpeName, StandardCharsets.UTF_8.toString());
+            String url = String.format("%s?cpeMatchString=%s", CPE_API_BASE_URL, encodedCpe);
+            URI uri = new URI(url);
+            ResponseEntity<Object> response = restTemplate.exchange(uri, HttpMethod.GET, entity, Object.class);
 
             if (!response.getStatusCode().is2xxSuccessful()) {
                 throw new NvdApiException("NVD API returned non-success status", response.getStatusCode().value());
