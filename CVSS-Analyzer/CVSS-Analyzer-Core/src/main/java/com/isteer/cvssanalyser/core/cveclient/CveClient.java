@@ -1,5 +1,10 @@
 package com.isteer.cvssanalyser.core.cveclient;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +17,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isteer.cvssanalyser.core.Engine;
 import com.isteer.cvssanalyser.core.exception.NvdApiException;
 import com.isteer.cvssanalyser.core.model.CPENameModel;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
@@ -56,8 +62,10 @@ public class CveClient {
 		HttpEntity<String> entity = new HttpEntity<>(headers);
 
 		try {
-			String cveUrl = String.format("%s?cpeName=%s", CVE_BASE_URL, cpeName);
-			ResponseEntity<Object> cveResponse = restTemplate.exchange(cveUrl, HttpMethod.GET, entity, Object.class);
+			String encodedCpe = URLEncoder.encode(cpeName, StandardCharsets.UTF_8.toString());
+			String cveUrl = String.format("%s?cpeName=%s", CVE_BASE_URL, encodedCpe);
+			URI uri = new URI(cveUrl);
+			ResponseEntity<Object> cveResponse = restTemplate.exchange(uri, HttpMethod.GET, entity, Object.class);
 			if (cveResponse != null && cveResponse.getStatusCode().is2xxSuccessful()) {
 				cveApiResponse = cveResponse.getBody();
 				if (cveApiResponse != null) {
@@ -73,6 +81,12 @@ public class CveClient {
 			}
 		} catch (RestClientException e) {
 			throw new NvdApiException("CVE API error: " + e.getMessage(), 500);
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (URISyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
 		return dependency;
