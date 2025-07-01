@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.isteer.cvssapplication.datastore.dao.ComputerApplicationDao;
 import com.isteer.cvssapplication.datastore.dao.ComputerDao;
-import com.isteer.cvssapplication.datastore.dao.VulnerabilityDao;
 import com.isteer.cvssapplication.datastore.dto.ComputerApplicationDTO;
 import com.isteer.cvssapplication.datastore.dto.ComputerDetailsResponseDTO;
 import com.isteer.cvssapplication.datastore.dto.ComputerPayloadDTO;
@@ -51,7 +50,7 @@ public class ComputerServiceImpl implements ComputerService {
 	@Override
 	public int createComputer(ComputerPayloadDTO payload) {
 		logger.debug("Processing computer with deviceId: {}", payload.getDeviceId());
-
+		Computer computer = new Computer();
 		// Added: Check for duplicate applications in installedSoftware
 		Map<String, SoftwareDTO> softwareDTOMapForValidation = new LinkedHashMap<>();
 		for (SoftwareDTO software : payload.getInstalledSoftware()) {
@@ -70,13 +69,16 @@ public class ComputerServiceImpl implements ComputerService {
 		}
 
 		Optional<Computer> existingComputer = computerRepository.findByDeviceIdAndIsDeletedFalse(payload.getDeviceId());
+		 // Added: Check if computer is active
+      
 		boolean isComputerUpdated = false;
 		boolean isApplicationsUpdated = false;
-		Computer computer = new Computer();
+		
 		boolean isUpdate = existingComputer.isPresent();
 
 		if (isUpdate) {
 			computer = existingComputer.get();
+			if(computer.isActive()) {
 			logger.info("Checking for updates to computer with UUID: {}", computer.getUuid());
 			if (isComputerUnchanged(computer, payload)) {
 				logger.debug("No changes to computer details for UUID: {}", computer.getUuid());
@@ -88,6 +90,10 @@ public class ComputerServiceImpl implements ComputerService {
 				}
 				isComputerUpdated = true;
 				logger.info("Updated computer with UUID: {}", computer.getUuid());
+			}
+			} else {
+				logger.warn("Cannot update soft deleted or deactivated computer with deviceId: {}", payload.getDeviceId());
+				return -4; // Computer is soft deleted
 			}
 		} else {
 			computer.setUuid(UUIDUtil.generateUUID());
@@ -325,15 +331,15 @@ public class ComputerServiceImpl implements ComputerService {
 		computer.setUpdatedAt(LocalDateTime.now());
 	}
 
-	@Transactional(readOnly = true)
-	@Override
-	public Computer getComputerByUuid(String uuid) {
-		logger.info("Fetching computer with UUID: {}", uuid);
-		return computerRepository.findByUuidAndIsDeletedFalse(uuid).orElseThrow(() -> {
-			logger.warn("Computer not found for UUID: {}", uuid);
-			return new BussinessException(CVSSEnum.COMPUTER_NOT_FOUND);
-		});
-	}
+//	@Transactional(readOnly = true)
+//	@Override
+//	public Computer getComputerByUuid(String uuid) {
+//		logger.info("Fetching computer with UUID: {}", uuid);
+//		return computerRepository.findByUuidAndIsDeletedFalse(uuid).orElseThrow(() -> {
+//			logger.warn("Computer not found for UUID: {}", uuid);
+//			return new BussinessException(CVSSEnum.COMPUTER_NOT_FOUND);
+//		});
+//	}
 
 	@Transactional(readOnly = true)
 	@Override
@@ -360,28 +366,7 @@ public class ComputerServiceImpl implements ComputerService {
 
 	@Override
 	public int softDeleteComputer(String uuid) {
-//		Optional<Computer> computerOpt = computerRepository.findByUuid(uuid);
-//		if (!computerOpt.isPresent()) {
-//			logger.warn("Computer not found for UUID: {}", uuid);
-//			return -1; // Not found
-//		}
-//		Computer computer = computerOpt.get();
-//		if (computer.isDeleted()) {
-//			logger.warn("Computer already soft deleted for UUID: {}", uuid);
-//			return -2; // Already deleted
-//		}
-//		computer.setDeleted(true);
-//		computer.setActive(false); // Deactivate on soft delete
-//		computer.setUpdatedAt(LocalDateTime.now());
-//		int status = computerRepository.updateDeletionStatus(computer);
-//		if (status != 1) {
-//			logger.error("Failed to soft delete computer with UUID: {}", uuid);
-//			return -3; // Internal error
-//		}
-//		// Soft delete associated computer_applications mappings
-//		int mappingStatus = computerApplicationRepository.softDeleteByComputerUuid(uuid);
-//		logger.debug("Soft deleted {} mappings for computer UUID: {}", mappingStatus, uuid);
-//		return 1; // Success
+		logger.info("Soft deleting computer with UUID: {}", uuid);
 		 Optional<Computer> computerOpt = computerRepository.findByUuid(uuid);
 	        if (!computerOpt.isPresent()) {
 	            logger.warn("Computer not found for UUID: {}", uuid);
@@ -401,7 +386,7 @@ public class ComputerServiceImpl implements ComputerService {
 	            return -3; // Internal error
 	        }
 	        // Soft delete associated computer_applications mappings using JOINs
-	        int mappingStatus = computerApplicationRepository.softDeleteApplicationByComputerUuid(uuid);
+	        int mappingStatus = computerApplicationRepository.softDeleteByComputerUuid(uuid);
 	        logger.debug("Soft deleted {} mappings for computer UUID: {}", mappingStatus, uuid);
 	        return 1; // Success}
 	}
@@ -456,7 +441,7 @@ public class ComputerServiceImpl implements ComputerService {
 		int status = computerRepository.updateActivationStatus(computer);
 		if (status != 1) {
 			logger.error("Failed to activate computer with UUID: {}", uuid);
-			return -4; // Internal error
+			return -5; // Internal error
 		}
 		return 1; // Success
 	}
@@ -484,7 +469,7 @@ public class ComputerServiceImpl implements ComputerService {
 		int status = computerRepository.updateActivationStatus(computer);
 		if (status != 1) {
 			logger.error("Failed to deactivate computer with UUID: {}", uuid);
-			return -4; // Internal error
+			return -5; // Internal error
 		}
 		return 1; // Success
 	}

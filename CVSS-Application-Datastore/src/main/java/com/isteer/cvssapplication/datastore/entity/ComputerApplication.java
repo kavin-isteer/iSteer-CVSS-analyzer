@@ -2,8 +2,6 @@ package com.isteer.cvssapplication.datastore.entity;
 
 import java.time.LocalDateTime;
 
-import jakarta.validation.constraints.NotBlank;
-
 public class ComputerApplication {
 	private Long id;
 

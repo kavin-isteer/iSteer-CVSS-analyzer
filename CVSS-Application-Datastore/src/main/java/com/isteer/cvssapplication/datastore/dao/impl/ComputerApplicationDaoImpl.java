@@ -37,33 +37,7 @@ public class ComputerApplicationDaoImpl implements ComputerApplicationDao {
 	        return jdbcTemplate.update(sql, params);
 	    }
 
-//	    @Override   // not used
-//	    public Optional<ComputerApplication> findByComputerAndApplicationUuid(String computerUuid, String applicationUuid) {
-//	        String sql = "SELECT * FROM computer_applications WHERE computer_uuid = :computerUuid AND application_uuid = :applicationUuid ";
-//	        MapSqlParameterSource params = new MapSqlParameterSource()
-//	                .addValue("computerUuid", computerUuid)
-//	                .addValue("applicationUuid", applicationUuid);
-//	        try {
-//	            ComputerApplication ca = jdbcTemplate.queryForObject(sql, params, RowMapper::mapComputerApplicationRow);
-//	            return Optional.ofNullable(ca);
-//	        } catch (Exception e) {
-//	            logger.debug("No mapping found for computer UUID: {}, application UUID: {}", computerUuid, applicationUuid);
-//	            return Optional.empty();
-//	        }
-//	    }
-
-	    @Override
-	    public int softDeleteByComputerAndApplicationUuid(String computerUuid, String applicationUuid) {
-	        String sql = "UPDATE computer_applications SET is_deleted = true, updated_at = CURRENT_TIMESTAMP " +
-	                "WHERE computer_uuid = :computerUuid AND application_uuid = :applicationUuid AND is_deleted = false";
-	        MapSqlParameterSource params = new MapSqlParameterSource()
-	                .addValue("computerUuid", computerUuid)
-	                .addValue("applicationUuid", applicationUuid);
-	        int updated = jdbcTemplate.update(sql, params);
-	        logger.debug("Soft deleted mapping for computer UUID: {}, application UUID: {}, updated rows: {}", computerUuid, applicationUuid, updated);
-	        return updated;
-	    }
-	    
+   
 	    @Override
 	    public int softDeleteByComputerAndApplicationUuid(String uuid) {
 	        String sql = "UPDATE computer_applications SET is_deleted = true, updated_at = CURRENT_TIMESTAMP " +
@@ -82,104 +56,28 @@ public class ComputerApplicationDaoImpl implements ComputerApplicationDao {
 	        return jdbcTemplate.query(sql, params, RowMapper::mapComputerApplicationDetailsRow);
 	    }
 
-//		@Override // not used
-//		public int update(ComputerApplication mapping) {
-//			 String sql = "UPDATE computer_applications SET installed_date = :installedDate, updated_at = :updatedAt WHERE uuid = :uuid AND is_deleted = false";
-//			 MapSqlParameterSource params = new MapSqlParameterSource()
-//					.addValue("uuid", mapping.getUuid())
-//					.addValue("installedDate", mapping.getInstalledDate())
-//					.addValue("updatedAt", mapping.getUpdatedAt());
-//			 logger.debug("Updating computer-application mapping with UUID: {}", mapping.getUuid());
-//			 int updatedRows = jdbcTemplate.update(sql, params);
-//			 if (updatedRows > 0) {
-//				 logger.info("Successfully updated mapping for UUID: {}", mapping.getUuid());
-//				 return 1; // Success
-//			 } else {
-//				 logger.warn("No mapping found to update for UUID: {}", mapping.getUuid());
-//				 return -1; // No rows updated
-//			 }
-//		}
-
-		@Override
-		public int reactivateByComputerAndApplicationUuid(String computerUuid, String applicationUuid,
-				LocalDateTime installedDate) {
-			  String sql = "UPDATE computer_applications SET is_deleted = false, installed_date = :installedDate, updated_at = :updatedAt WHERE computer_uuid = :computerUuid AND application_uuid = :applicationUuid";
-			  MapSqlParameterSource params = new MapSqlParameterSource()
-					  .addValue("computerUuid", computerUuid)
-					  .addValue("applicationUuid", applicationUuid)
-					  .addValue("installedDate", installedDate)
-					  .addValue("updatedAt", LocalDateTime.now());
-			  logger.debug("Reactivating mapping for computer UUID: {}, application UUID: {}", computerUuid, applicationUuid);
-			  int updatedRows = jdbcTemplate.update(sql, params);
-			  if (updatedRows > 0) {
-				  logger.info("Successfully reactivated mapping for computer UUID: {}, application UUID: {}", computerUuid, applicationUuid);
-				  return 1; // Success
-			  } else {
-				  logger.warn("No mapping found to reactivate for computer UUID: {}, application UUID: {}", computerUuid, applicationUuid);
-				  return -1; // No rows updated
-			  }
-		}
 		
 		@Override
-		public int reactivateByComputerAndApplicationUuid(String uuid, LocalDateTime installedDate) {
+		public int reactivateByComputerAndApplicationUuid(String mappingUuid, LocalDateTime installedDate) {
 			  String sql = "UPDATE computer_applications SET is_deleted = false, installed_date = :installedDate, updated_at = :updatedAt WHERE uuid = :uuid";
 			  MapSqlParameterSource params = new MapSqlParameterSource()
-					  .addValue("uuid", uuid)
+					  .addValue("uuid", mappingUuid)
 					  .addValue("installedDate", installedDate)
 					  .addValue("updatedAt", LocalDateTime.now());
 			  System.out.println(installedDate);
-			  logger.debug("Reactivating mapping for UUID: {}", uuid);
+			  logger.debug("Reactivating mapping for UUID: {}", mappingUuid);
 			  int updatedRows = jdbcTemplate.update(sql, params);
 			  if (updatedRows > 0) {
-				  logger.info("Successfully reactivated mapping with uuid {}", uuid);
+				  logger.info("Successfully reactivated mapping with uuid {}", mappingUuid);
 				  return 1; // Success
 			  } else {
-				  logger.warn("No mapping found to reactivate for UUID: {}", uuid);
+				  logger.warn("No mapping found to reactivate for UUID: {}", mappingUuid);
 				  return -1; // No rows updated
 			  }
 		}
 
-		@Override
-		public int updateInstalledDate(String computerUuid, String applicationUuid, LocalDateTime installedDate) {
-			String sql = "UPDATE computer_applications SET installed_date = :installedDate, updated_at = :updatedAt WHERE computer_uuid = :computerUuid AND application_uuid = :applicationUuid AND is_deleted = false";
-			MapSqlParameterSource params = new MapSqlParameterSource()
-					.addValue("computerUuid", computerUuid)
-					.addValue("applicationUuid", applicationUuid)
-					.addValue("installedDate", installedDate)
-					.addValue("updatedAt", LocalDateTime.now());
-			logger.debug("Updating installed date for mapping with computer UUID: {}, application UUID: {}", computerUuid, applicationUuid);
-			int updatedRows = jdbcTemplate.update(sql, params);
-			if (updatedRows > 0) {
-				logger.info("Successfully updated installed date for mapping with computer UUID: {}, application UUID: {}", computerUuid, applicationUuid);
-				return 1; // Success
-			} else {
-				logger.warn("No mapping found to update installed date for computer UUID: {}, application UUID: {}", computerUuid, applicationUuid);
-				return -1; // No rows updated
-			}
-		}
 
-//		@Override  // not used
-//		public int[] batchMapApplicaitonAndComputer(List<Application> applications, String computerUuid) {
-//			String query = "INSERT INTO computer_applications (uuid, computer_uuid, application_uuid, installed_date, is_deleted, created_at) "
-//					+ "VALUES (:uuid, :computer, :application, :installedDate, :isDeleted, :createdAt)";
-//	    	List<MapSqlParameterSource> paramsList = applications.stream()
-//	    			.map(app -> new MapSqlParameterSource()
-//	    			.addValue("uuid", UUIDUtil.generateUUID())
-//	    			.addValue("computer", computerUuid)
-//		    		.addValue("application", app.getUuid())
-//		    		.addValue("installedDate", app.getInstalledDate())
-//		    		.addValue("isDeleted", false)
-//		    		.addValue("createdAt", LocalDateTime.now()))
-//		    			.collect(Collectors.toList());
-//	    	
-//	    	logger.debug("Batch mapping {} applications to computer UUID: {}", applications.size(), computerUuid);
-//	    	
-//	    	int[] updateCounts = jdbcTemplate.batchUpdate(query, paramsList.toArray(new MapSqlParameterSource[0]));
-//	    	
-//	    	logger.info("Batch mapping completed with {} applications mapped to computer UUID: {}", updateCounts.length, computerUuid);
-//	    	return updateCounts;
-//	    			
-//		}
+
 		
 		@Override
 	    public int updateInstalledDate(String uuid, LocalDateTime installedDate) {
@@ -192,18 +90,9 @@ public class ComputerApplicationDaoImpl implements ComputerApplicationDao {
 	        return jdbcTemplate.update(sql, params);
 	    }
 		
-		@Override
-	    public int softDeleteByComputerUuid(String computerUuid) {
-	        String sql = "UPDATE computer_applications SET is_deleted = true, updated_at = :updatedAt WHERE computer_uuid = :computerUuid AND is_deleted = false";
-	        MapSqlParameterSource params = new MapSqlParameterSource()
-	                .addValue("computerUuid", computerUuid)
-	                .addValue("updatedAt", LocalDateTime.now());
-	        logger.debug("Soft deleting all mappings for computer UUID: {}", computerUuid);
-	        return jdbcTemplate.update(sql, params);
-	    }
 		
 		 @Override
-		    public int softDeleteApplicationByComputerUuid(String computerUuid) {    
+		    public int softDeleteByComputerUuid(String computerUuid) {    
 			 String sql = """
 					    UPDATE computer_applications ca
 					    JOIN computers c ON ca.computer_uuid = c.uuid

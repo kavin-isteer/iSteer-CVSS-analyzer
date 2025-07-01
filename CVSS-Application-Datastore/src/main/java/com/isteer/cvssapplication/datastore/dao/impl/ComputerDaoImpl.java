@@ -73,18 +73,6 @@ public class ComputerDaoImpl implements ComputerDao {
 		}
 	}
 
-	@Override
-	public Optional<Computer> findByUuidAndIsDeletedFalse(String uuid) {
-		String sql = "SELECT * FROM computers WHERE uuid = :uuid AND is_deleted = false";
-		MapSqlParameterSource params = new MapSqlParameterSource("uuid", uuid);
-		try {
-			Computer computer = jdbcTemplate.queryForObject(sql, params, RowMapper::mapComputerRow);
-			return Optional.ofNullable(computer);
-		} catch (Exception e) {
-			logger.debug("No computer found for UUID: {}", uuid);
-			return Optional.empty();
-		}
-	}
 
 	@Override
 	public List<Computer> findAllPresentComputers() {
@@ -148,7 +136,7 @@ public class ComputerDaoImpl implements ComputerDao {
 		String sql;
 		MapSqlParameterSource params = new MapSqlParameterSource();
 		if (isActive == null) {
-			sql = "SELECT * FROM computers WHERE is_deleted = false AND is_active = true";
+			sql = "SELECT * FROM computers WHERE is_deleted = false AND is_active = true OR is_active = false";
 		} else {
 			sql = "SELECT * FROM computers WHERE is_deleted = false AND is_active = :isActive";
 			params.addValue("isActive", isActive);

@@ -17,14 +17,14 @@ public class Application {
 
 	private String version;
 
-    private String vendorName;
+	private String vendorName;
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime createdAt;
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime installedDate;
-	
+
 	public String getVendorName() {
 		return vendorName;
 	}
@@ -43,7 +43,7 @@ public class Application {
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime updatedAt;
-	
+
 	private boolean isDeleted;
 
 	private List<Vulnerability> vulnerabilities;
@@ -80,8 +80,6 @@ public class Application {
 		this.version = version;
 	}
 
-	
-
 	public LocalDateTime getCreatedAt() {
 		return createdAt;
 	}
@@ -89,9 +87,6 @@ public class Application {
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
 	}
-	
-
-	
 
 	public List<Vulnerability> getVulnerabilities() {
 		return vulnerabilities;

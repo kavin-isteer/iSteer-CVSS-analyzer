@@ -70,6 +70,7 @@ public class Computer {
 	public String getMachineName() {
 		return machineName;
 	}
+
 	public void setMachineName(String machineName) {
 		this.machineName = machineName;
 	}
@@ -153,7 +154,7 @@ public class Computer {
 	public void setUpdatedAt(LocalDateTime updatedAt) {
 		this.updatedAt = updatedAt;
 	}
-	
+
 	public LocalDateTime getTimestamp() {
 		return timestamp;
 	}

@@ -9,129 +9,121 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 
 public class ComputerPayloadDTO {
-	    @NotBlank(message = "Device ID cannot be blank")
-//	    @Size(max = 50, message = "Device ID must be at most 50 characters")
-	    private String deviceId;
-	    
-	    @NotBlank(message = "Machine name cannot be blank")
+	
+	@NotBlank(message = "Device ID cannot be blank")
+	private String deviceId;
 
-	    private String machineName;
-	    
-	    @NotBlank(message = "IP address cannot be blank")
-	    @Pattern(regexp = "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$", 
-	            message = "Invalid IPv4 Address")
-	    private String ipAddress;
-	    
-	    @NotBlank(message = "OS version cannot be blank")
+	@NotBlank(message = "Machine name cannot be blank")
+	private String machineName;
 
-	    private String osVersion;
-	    
-	    @NotBlank(message = "Antivirus status cannot be blank")
+	@NotBlank(message = "IP address cannot be blank")
+	@Pattern(regexp = "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$", message = "Invalid IPv4 Address")
+	private String ipAddress;
 
-	    private String antivirusStatus;
-	    
-	    @NotBlank(message = "Firewall status cannot be blank")
+	@NotBlank(message = "OS version cannot be blank")
 
-	    private String firewallStatus;
-	    
-	    @NotBlank(message = "Logged-in user cannot be blank")
-	    private String loggedInUser;
-	      
-	    @NotEmpty(message = "Installed software cannot be empty")
-	    private List<SoftwareDTO> installedSoftware;
-	    
-	    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
-	    private LocalDateTime lastUpdateCheck;
-	    @NotNull(message = "Timestamp cannot be blank")
-	    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
-	    private LocalDateTime timestamp;
-	    
-	       
-	 		public String getDeviceId() {
-			return deviceId;
-		}
+	private String osVersion;
 
-		public void setDeviceId(String deviceId) {
-			this.deviceId = deviceId;
-		}
+	@NotBlank(message = "Antivirus status cannot be blank")
 
-		public String getMachineName() {
-			return machineName;
-		}
+	private String antivirusStatus;
 
-		public void setMachineName(String machineName) {
-			this.machineName = machineName;
-		}
+	@NotBlank(message = "Firewall status cannot be blank")
 
-		public String getIpAddress() {
-			return ipAddress;
-		}
+	private String firewallStatus;
 
-		public void setIpAddress(String ipAddress) {
-			this.ipAddress = ipAddress;
-		}
+	@NotBlank(message = "Logged-in user cannot be blank")
+	private String loggedInUser;
 
-		public String getOsVersion() {
-			return osVersion;
-		}
+	@NotEmpty(message = "Installed software cannot be empty")
+	private List<SoftwareDTO> installedSoftware;
 
-		public void setOsVersion(String osVersion) {
-			this.osVersion = osVersion;
-		}
+	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+	private LocalDateTime lastUpdateCheck;
+	@NotNull(message = "Timestamp cannot be blank")
+	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+	private LocalDateTime timestamp;
 
-		public String getAntivirusStatus() {
-			return antivirusStatus;
-		}
+	public String getDeviceId() {
+		return deviceId;
+	}
 
-		public void setAntivirusStatus(String antivirusStatus) {
-			this.antivirusStatus = antivirusStatus;
-		}
+	public void setDeviceId(String deviceId) {
+		this.deviceId = deviceId;
+	}
 
-		public String getFirewallStatus() {
-			return firewallStatus;
-		}
+	public String getMachineName() {
+		return machineName;
+	}
 
-		public void setFirewallStatus(String firewallStatus) {
-			this.firewallStatus = firewallStatus;
-		}
+	public void setMachineName(String machineName) {
+		this.machineName = machineName;
+	}
 
-		public String getLoggedInUser() {
-			return loggedInUser;
-		}
+	public String getIpAddress() {
+		return ipAddress;
+	}
 
-		public void setLoggedInUser(String loggedInUser) {
-			this.loggedInUser = loggedInUser;
-		}
+	public void setIpAddress(String ipAddress) {
+		this.ipAddress = ipAddress;
+	}
 
-		public LocalDateTime getLastUpdateCheck() {
-			return lastUpdateCheck;
-		}
+	public String getOsVersion() {
+		return osVersion;
+	}
 
-		public void setLastUpdateCheck(LocalDateTime lastUpdateCheck) {
-			this.lastUpdateCheck = lastUpdateCheck;
-		}
+	public void setOsVersion(String osVersion) {
+		this.osVersion = osVersion;
+	}
 
-		public List<SoftwareDTO> getInstalledSoftware() {
-			return installedSoftware;
-		}
+	public String getAntivirusStatus() {
+		return antivirusStatus;
+	}
 
-		public void setInstalledSoftware(List<SoftwareDTO> installedSoftware) {
-			this.installedSoftware = installedSoftware;
-		}
+	public void setAntivirusStatus(String antivirusStatus) {
+		this.antivirusStatus = antivirusStatus;
+	}
 
-		public LocalDateTime getTimestamp() {
-			return timestamp;
-		}
+	public String getFirewallStatus() {
+		return firewallStatus;
+	}
 
-		public void setTimestamp(LocalDateTime timestamp) {
-			this.timestamp = timestamp;
-		}
-		
-		
-		
+	public void setFirewallStatus(String firewallStatus) {
+		this.firewallStatus = firewallStatus;
+	}
 
+	public String getLoggedInUser() {
+		return loggedInUser;
+	}
+
+	public void setLoggedInUser(String loggedInUser) {
+		this.loggedInUser = loggedInUser;
+	}
+
+	public LocalDateTime getLastUpdateCheck() {
+		return lastUpdateCheck;
+	}
+
+	public void setLastUpdateCheck(LocalDateTime lastUpdateCheck) {
+		this.lastUpdateCheck = lastUpdateCheck;
+	}
+
+	public List<SoftwareDTO> getInstalledSoftware() {
+		return installedSoftware;
+	}
+
+	public void setInstalledSoftware(List<SoftwareDTO> installedSoftware) {
+		this.installedSoftware = installedSoftware;
+	}
+
+	public LocalDateTime getTimestamp() {
+		return timestamp;
+	}
+
+	public void setTimestamp(LocalDateTime timestamp) {
+		this.timestamp = timestamp;
+	}
 
 }

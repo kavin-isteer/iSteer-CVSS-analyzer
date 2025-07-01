@@ -10,13 +10,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public interface ApplicationService {
 	 
-	 
-//		int createApplication(SoftwareDTO software, String computerUuid);
 
-//		Application getApplicationByUuid(String uuid);
-		
-
-//		List<Application> getApplicationsByComputerUuid(String computerUuid);
 
 		int createOrUpdateApplication(List<SoftwareDTO> list, String computerUuid);
 
@@ -28,5 +22,8 @@ public interface ApplicationService {
 
 
 		List<Vulnerability> getVulnerabilitiesByApplicationUuid( String uuid);
+
+
+
 
 }
