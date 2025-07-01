@@ -15,7 +15,7 @@ public class AsyncConfiguration {
 	 Executor asyncExecutor() {
 		
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-		executor.setCorePoolSize(1);
+		executor.setCorePoolSize(5);
 		executor.setMaxPoolSize(10);
 		executor.setQueueCapacity(500);
 		executor.setThreadNamePrefix("AppCpeScanner-");

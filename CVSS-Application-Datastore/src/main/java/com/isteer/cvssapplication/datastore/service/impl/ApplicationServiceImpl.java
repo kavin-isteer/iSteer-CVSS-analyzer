@@ -24,8 +24,6 @@ import com.isteer.cvssapplication.datastore.exception.BussinessException;
 import com.isteer.cvssapplication.datastore.service.ApplicationService;
 import com.isteer.cvssapplication.datastore.util.UUIDUtil;
 
-import jakarta.validation.constraints.NotBlank;
-
 @Service
 public class ApplicationServiceImpl implements ApplicationService {
 	private static final Logger logger = LoggerFactory.getLogger(ApplicationServiceImpl.class);
@@ -66,16 +64,6 @@ public class ApplicationServiceImpl implements ApplicationService {
 		}
 		
 		vulnerabilityService.analyzeAndSaveApplicationVulnerabilitiesAsync(newApplications);
-//		List<Application> applications = new ArrayList<>();
-//		for(SoftwareDTO software : softwares) {
-//			Application application = new Application();
-//			application.setUuid(UUIDUtil.generateUUID());
-//			application.setName(software.getName());
-//			application.setVendorName(software.getVendorName() == null ? "" : software.getVendorName());
-//			application.setVersion(software.getVersion() == null ? "" : software.getVersion());
-//			application.setCreatedAt(LocalDateTime.now());
-//			application.setInstalledDate(software.getInstalledDate());
-//		}
 		return 1;
 	}
 
@@ -98,22 +86,6 @@ public class ApplicationServiceImpl implements ApplicationService {
 
 		    return applications;
 	    }
-
-
-	 
-//	  @Override  // not used anymore
-//	    public Application getApplicationByUuid(String uuid) {
-//	        logger.info("Fetching application with UUID: {}", uuid);
-//	        // Modified: Remove is_deleted check and fetch vulnerabilities
-//	        Application application = applicationRepository.findByApplicationUuid(uuid).orElseThrow(() -> {
-//	            logger.warn("Application not found for UUID: {}", uuid);
-//	            return new BussinessException(CVSSEnum.APPLICATION_NOT_FOUND);
-//	        });
-//	        // Added: Fetch and set vulnerabilities for the application
-//	        application.setVulnerabilities(vulnerabilityRepository.findByApplicationUuid(uuid));
-//	        logger.info("Fetched application with UUID: {} and {} vulnerabilities", uuid, application.getVulnerabilities().size());
-//	        return application;
-//	    }
 
 	@Override
 	public List<Application> getAllApplications() {
