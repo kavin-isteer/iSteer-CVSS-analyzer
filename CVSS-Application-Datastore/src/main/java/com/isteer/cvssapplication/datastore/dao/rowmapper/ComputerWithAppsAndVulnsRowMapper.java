@@ -54,10 +54,10 @@ public class ComputerWithAppsAndVulnsRowMapper implements ResultSetExtractor<Com
                 application.setUuid(appUuid);
                 application.setName(rs.getString("name"));
                 application.setVersion(rs.getString("version"));
-                application.setVendorName(rs.getString("vendor_name"));
+                application.setVendorName(rs.getString("a_vendor_name"));
                 application.setCreatedAt(rs.getTimestamp("a_created_at").toLocalDateTime());
-                application.setInstalledDate(rs.getTimestamp("installed_date") != null
-                        ? rs.getTimestamp("installed_date").toLocalDateTime() : null);
+                application.setInstalledDate(rs.getTimestamp("ca_installed_date") != null
+                        ? rs.getTimestamp("ca_installed_date").toLocalDateTime() : null);
                 application.setDeleted(rs.getBoolean("ca_is_deleted")); // Added
                 application.setUpdatedAt(rs.getTimestamp("ca_updated_at") != null
                         ? rs.getTimestamp("ca_updated_at").toLocalDateTime() : null); // Added

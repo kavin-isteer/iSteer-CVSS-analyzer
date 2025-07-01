@@ -14,10 +14,7 @@ public  class SoftwareDTO {
 	    @NotBlank(message = "Software name cannot be blank")
         private String name;
         private String version;
-        @JsonProperty("VendorName")
-        private String vendorName;	
-        
-        @JsonProperty("InstalledDate")
+        private String vendorName;	  
         @JsonDeserialize(using = CustomLocalDateTimeDeserializer.class)
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
         private LocalDateTime installedDate;
@@ -64,6 +61,12 @@ public  class SoftwareDTO {
 			this.createdAt = createdAt;
 		}
 
+		
+		@Override
+		public String toString() {
+			return "SoftwareDTO [name=" + name + ", version=" + version + ", vendorName=" + vendorName
+					+ ", installedDate=" + installedDate + ", createdAt=" + createdAt + "]";
+		}
 	
 
 }

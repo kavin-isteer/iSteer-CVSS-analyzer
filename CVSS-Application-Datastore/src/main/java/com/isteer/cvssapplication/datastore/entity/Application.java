@@ -10,7 +10,6 @@ import jakarta.validation.constraints.NotBlank;
 public class Application {
 	private Long id;
 
-	@NotBlank(message = "UUID cannot be blank")
 	private String uuid;
 
 	@NotBlank(message = "Name cannot be blank")
@@ -18,8 +17,7 @@ public class Application {
 
 	private String version;
 
-
-	private String vendorName;
+    private String vendorName;
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime createdAt;
@@ -27,6 +25,23 @@ public class Application {
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime installedDate;
 	
+	public String getVendorName() {
+		return vendorName;
+	}
+
+	public void setVendorName(String vendorName) {
+		this.vendorName = vendorName;
+	}
+
+	public LocalDateTime getInstalledDate() {
+		return installedDate;
+	}
+
+	public void setInstalledDate(LocalDateTime installedDate) {
+		this.installedDate = installedDate;
+	}
+
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime updatedAt;
 	
 	private boolean isDeleted;
@@ -65,13 +80,7 @@ public class Application {
 		this.version = version;
 	}
 
-	public String getVendorName() {
-		return vendorName;
-	}
-
-	public void setVendorName(String vendorName) {
-		this.vendorName = vendorName;
-	}
+	
 
 	public LocalDateTime getCreatedAt() {
 		return createdAt;
@@ -82,14 +91,7 @@ public class Application {
 	}
 	
 
-	public LocalDateTime getInstalledDate() {
-		return installedDate;
-	}
-
-	public void setInstalledDate(LocalDateTime installedDate) {
-		this.installedDate = installedDate;
-	}
-
+	
 
 	public List<Vulnerability> getVulnerabilities() {
 		return vulnerabilities;
