@@ -13,7 +13,7 @@ import jakarta.validation.constraints.Size;
 
 public class ComputerPayloadDTO {
 	    @NotBlank(message = "Device ID cannot be blank")
-	    @Size(max = 50, message = "Device ID must be at most 50 characters")
+//	    @Size(max = 50, message = "Device ID must be at most 50 characters")
 	    private String deviceId;
 	    
 	    @NotBlank(message = "Machine name cannot be blank")

@@ -47,9 +47,6 @@ public class ComputerServiceImpl implements ComputerService {
 	@Autowired
 	private ComputerApplicationDao computerApplicationRepository;
 
-	@Autowired
-	private VulnerabilityDao vulnerabilityRepository;
-
 	@Transactional
 	@Override
 	public int createComputer(ComputerPayloadDTO payload) {
@@ -58,11 +55,12 @@ public class ComputerServiceImpl implements ComputerService {
 		// Added: Check for duplicate applications in installedSoftware
 		Map<String, SoftwareDTO> softwareDTOMapForValidation = new LinkedHashMap<>();
 		for (SoftwareDTO software : payload.getInstalledSoftware()) {
-			String key = key(software.getName(), software.getVendorName(), software.getVersion());
+//			System.out.println(payload.getInstalledSoftware() + " " + software.getName() + " " + software.getVendorName() + " " + software.getVersion());
 			if (software.getName() == null || software.getName().trim().isEmpty()) {
 				logger.warn("Application name is null or blank in payload for deviceId: {}", payload.getDeviceId());
 				return -2; // Application name should not be blank
 			}
+			String key = key(software.getName(), software.getVendorName(), software.getVersion());
 			if (softwareDTOMapForValidation.containsKey(key)) {
 				logger.warn("Duplicate application found in payload for deviceId: {}, key: {}", payload.getDeviceId(),
 						key);

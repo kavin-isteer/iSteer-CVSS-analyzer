@@ -59,12 +59,12 @@ public class GlobalExceptionHandler {
                             StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_DEVICE_ID_EXISTS)),
                     HttpStatus.BAD_REQUEST);
         }
-//        } else if (message.contains("computers_ip_address")) {
-//            return new ResponseEntity<>(
-//                    new ErrorMessageDTO(CVSSEnum.COMPUTER_WITH_SAME_IP_EXISTS.getStatusCode(),
-//                            StatusMessageUtil.getMessage(CVSSEnum.COMPUTER_WITH_SAME_IP_EXISTS)),
-//                    HttpStatus.BAD_REQUEST);
-//        } 
+ else if (message.contains("applications.name")) {
+            return new ResponseEntity<>(
+                    new ErrorMessageDTO(CVSSEnum.DUPLICATE_APPLICATIONS.getStatusCode(),
+                            StatusMessageUtil.getMessage(CVSSEnum.DUPLICATE_APPLICATIONS)),
+                    HttpStatus.BAD_REQUEST);
+        } 
         return new ResponseEntity<>(
                 new ErrorMessageDTO(CVSSEnum.DATA_INTEGRITY_VIOLATION.getStatusCode(),
                         StatusMessageUtil.getMessage(CVSSEnum.DATA_INTEGRITY_VIOLATION)),

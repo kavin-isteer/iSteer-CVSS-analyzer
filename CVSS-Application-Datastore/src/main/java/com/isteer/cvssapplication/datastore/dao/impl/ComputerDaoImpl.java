@@ -170,8 +170,8 @@ public class ComputerDaoImpl implements ComputerDao {
 	        String sql = "SELECT c.id AS c_id, c.uuid AS c_uuid, c.device_id, c.hostname, c.ip_address, c.os_version, " +
 	                     "c.antivirus_status, c.firewall_status, c.logged_in_user, c.last_update_check, c.timestamp, " +
 	                     "c.is_active, c.is_deleted, c.created_at AS c_created_at, c.updated_at AS c_updated_at, " +
-	                     "a.id AS a_id, a.uuid AS a_uuid, a.name, a.version, a.vendor_name, a.created_at AS a_created_at, " +
-	                     "ca.installed_date, ca.updated_at AS ca_updated_at, ca.is_deleted AS ca_is_deleted, " +
+	                     "a.id AS a_id, a.uuid AS a_uuid, a.name, a.version, a.vendor_name AS a_vendor_name, a.created_at AS a_created_at, " +
+	                     "ca.installed_date AS ca_installed_date, ca.updated_at AS ca_updated_at, ca.is_deleted AS ca_is_deleted, " +
 	                     "v.id AS v_id, v.uuid AS v_uuid, v.cve_id, v.severity, v.description, v.vector_string, " +
 	                     "v.source_identifier, v.cvss_score, v.cvss_version, v.created_at AS v_created_at, v.is_deleted AS v_is_deleted " +
 	                     "FROM computers c " +
