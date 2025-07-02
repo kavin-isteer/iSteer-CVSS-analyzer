@@ -24,6 +24,15 @@ public class Application {
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime installedDate;
+	
+	
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+	private LocalDateTime updatedAt;
+
+	private boolean isDeleted;
+
+	private List<Vulnerability> vulnerabilities;
+
 
 	public String getVendorName() {
 		return vendorName;
@@ -40,13 +49,6 @@ public class Application {
 	public void setInstalledDate(LocalDateTime installedDate) {
 		this.installedDate = installedDate;
 	}
-
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-	private LocalDateTime updatedAt;
-
-	private boolean isDeleted;
-
-	private List<Vulnerability> vulnerabilities;
 
 	public Long getId() {
 		return id;

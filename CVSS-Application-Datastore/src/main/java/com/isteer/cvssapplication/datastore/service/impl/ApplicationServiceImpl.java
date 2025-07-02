@@ -13,18 +13,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.isteer.cvssapplication.datastore.dao.ApplicationDao;
-import com.isteer.cvssapplication.datastore.dao.ComputerDao;
 import com.isteer.cvssapplication.datastore.dao.VulnerabilityDao;
 import com.isteer.cvssapplication.datastore.dto.SoftwareDTO;
 import com.isteer.cvssapplication.datastore.entity.Application;
-import com.isteer.cvssapplication.datastore.entity.Computer;
 import com.isteer.cvssapplication.datastore.entity.Vulnerability;
 import com.isteer.cvssapplication.datastore.enums.CVSSEnum;
 import com.isteer.cvssapplication.datastore.exception.BussinessException;
 import com.isteer.cvssapplication.datastore.service.ApplicationService;
 import com.isteer.cvssapplication.datastore.util.UUIDUtil;
-
-import jakarta.validation.constraints.NotBlank;
 
 @Service
 public class ApplicationServiceImpl implements ApplicationService {
@@ -32,9 +28,6 @@ public class ApplicationServiceImpl implements ApplicationService {
 
 	@Autowired
 	private ApplicationDao applicationRepository;
-
-	@Autowired
-	private ComputerDao computerRepository;
 
 	@Autowired
 	private VulnerabilityService vulnerabilityService;

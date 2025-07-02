@@ -1,20 +1,19 @@
 
 package com.isteer.cvssapplication.datastore.dao.rowmapper;
 
-import com.isteer.cvssapplication.datastore.entity.Application;
-import com.isteer.cvssapplication.datastore.entity.Vulnerability;
-import com.isteer.cvssapplication.datastore.enums.Severity;
-
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.ResultSetExtractor;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.ResultSetExtractor;
+
+import com.isteer.cvssapplication.datastore.entity.Application;
+import com.isteer.cvssapplication.datastore.entity.Vulnerability;
+import com.isteer.cvssapplication.datastore.enums.Severity;
 
 public class ApplicationWithVulnerabilitiesExtractor implements ResultSetExtractor<List<Application>> {
     @Override
