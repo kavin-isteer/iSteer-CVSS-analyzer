@@ -148,4 +148,35 @@ public class CPEEntriesDao {
 		}
 		return entries;
 	}
+	
+	public List<CpeEntryModel> getAllCpeEntriesWithOffset(Connection con, int offset, int limit) throws SQLException  {
+	    String sql = "SELECT id, cpe_name, cpe_title, vendor, product, version, update_date, deprecated "
+	               + "FROM cpe_entries "
+	               + "ORDER BY id "
+	               + "LIMIT ? OFFSET ?";
+
+	    List<CpeEntryModel> entries = new ArrayList<>();
+
+	    try (PreparedStatement ps = con.prepareStatement(sql)) {
+	        ps.setInt(1, limit);
+	        ps.setInt(2, offset);
+
+	        try (ResultSet rs = ps.executeQuery()) {
+	            while (rs.next()) {
+	                CpeEntryModel entry = new CpeEntryModel();
+	                entry.setEntryId(rs.getInt(1));
+	                entry.setCpeName(rs.getString(2));
+	                entry.setCpeTitle(rs.getString(3));
+	                entry.setVendor(rs.getString(4));
+	                entry.setProduct(rs.getString(5));
+	                entry.setVersion(rs.getString(6));
+	                entry.setUpdatedDate(rs.getTimestamp(7).toLocalDateTime());
+	                entry.setDeprecated(rs.getBoolean(8));
+	                entries.add(entry);
+	            }
+	        }
+	    }
+
+	    return entries;
+	}
 }

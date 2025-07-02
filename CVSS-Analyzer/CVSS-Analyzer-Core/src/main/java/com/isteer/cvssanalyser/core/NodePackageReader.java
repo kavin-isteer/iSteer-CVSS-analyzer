@@ -168,7 +168,7 @@ public class NodePackageReader {
 	}
 	
 	private String refineVersion(String rawVersion) {
-		 if (rawVersion == null || rawVersion.trim().isEmpty()) {
+		   if (rawVersion == null || rawVersion.trim().isEmpty()) {
 	            return "";
 	        }
 
@@ -177,7 +177,6 @@ public class NodePackageReader {
 
 	        // Strip prefixes like ^, ~, >=, <=, =, >, <, v
 	        cleaned = cleaned.replaceAll("^[\\^~><=v]+", "");
-
 	        return cleaned;
 	}
 	
@@ -214,7 +213,7 @@ public class NodePackageReader {
 		versionEvidence.setEvidenceTitle(evidenceSource);
 		versionEvidence.setEvidenceType(EvidenceType.NODE_PACKAGE);
 		versionEvidence.setResolvedValue(version);
-		dependency.addProductEvidences(versionEvidence);
+		dependency.addVersionEvidences(versionEvidence);
 		//Add CPE enumeration
 		CPENameModel cpeEnumeration = new CPENameModel();
 		cpeEnumeration.setVendor(vendor);

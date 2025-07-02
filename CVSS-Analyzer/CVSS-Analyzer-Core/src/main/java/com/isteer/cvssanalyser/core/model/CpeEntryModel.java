@@ -11,6 +11,7 @@ public class CpeEntryModel {
 	private String version;
 	private LocalDateTime updatedDate;
 	private boolean isDeprecated;
+	
 	public Integer getEntryId() {
 		return entryId;
 	}
@@ -58,5 +59,10 @@ public class CpeEntryModel {
 	}
 	public void setDeprecated(boolean isDeprecated) {
 		this.isDeprecated = isDeprecated;
+	}
+	@Override
+	public String toString() {
+		return "CpeEntryModel [cpeName=" + cpeName + ", cpeTitle=" + cpeTitle + ", vendor=" + vendor + ", product="
+				+ product + ", version=" + version + "]";
 	}
 }

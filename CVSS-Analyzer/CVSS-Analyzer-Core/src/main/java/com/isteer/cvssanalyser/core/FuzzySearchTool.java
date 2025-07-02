@@ -13,6 +13,7 @@ import org.apache.commons.text.similarity.JaroWinklerSimilarity;
 
 import com.isteer.cvssanalyser.core.dao.CPEEntriesDao;
 import com.isteer.cvssanalyser.core.enums.EvidenceType;
+import com.isteer.cvssanalyser.core.lucene.LuceneCpeSearcher;
 import com.isteer.cvssanalyser.core.model.CPENameModel;
 import com.isteer.cvssanalyser.core.model.CpeEntryModel;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
@@ -27,29 +28,112 @@ public class FuzzySearchTool {
 	private String[] COMMON_PACKAGE_LITERALS = { "org", "com" };
 	private static List<String> vendorNames = new ArrayList<>();
 
+	private LuceneCpeSearcher luceneSearcher = new LuceneCpeSearcher();
+
+	private static boolean USE_LUCENE_INDEX = false; // Use lucene by default
+
+	private static boolean LUCENE_ALL_FIELD_SEARCH = true; // Use lucene by default
+
+	public static void useLucene(boolean useLucene) {
+		USE_LUCENE_INDEX = useLucene;
+	}
+
 	/**
 	 * Given a DependencyModel, attempts to find likely matching CPE entries based
 	 * on vendor and product evidences extracted from the dependency.
 	 * 
 	 * @param dependency DependencyModel to search likely CPEs for
-	 * @throws SQLException on DB errors
+	 * @throws Exception
 	 */
-	public void searchForLikelyCpes(DependencyModel dependency) throws SQLException {
+	public void searchForLikelyCpes(DependencyModel dependency) {
+		List<CpeEntryModel> filteredCpes = new ArrayList<>();
+		Engine.logger.debug("Using lucene index searcher!!");
+		Engine.logger.debug("Using lucene all field searcher!!");
+		List<String> vendorSearchStrings = new ArrayList<>();
+		List<String> productSearchStrings = new ArrayList<>();
+		List<String> versionSearchStrings = new ArrayList<>();
+
+		for (Evidence ev : dependency.getVendorEvidences()) {
+			if (ev.getEvidenceType() == EvidenceType.GROUP_ID) {
+				String[] wrkGroupIdStrings = ev.getEvidence().split("\\.");
+				for (String wrkStr : wrkGroupIdStrings) {
+					if (!isCommonPackageLiteral(wrkStr)) {
+						vendorSearchStrings.add(wrkStr);
+					}
+				}
+			} else if (ev.getEvidenceType() == EvidenceType.MANIFEST_ENTRY) {
+
+			} else {
+				vendorSearchStrings.add(ev.getEvidence());
+			}
+		}
+
+		for (Evidence ev : dependency.getProductEvidences()) {
+			if (ev.getEvidenceType() == EvidenceType.MANIFEST_ENTRY) {
+
+			} else {
+				productSearchStrings.add(ev.getEvidence());
+			}
+		}
+		for (Evidence ev : dependency.getVersionEvidences()) {
+			if (ev.getEvidenceType() == EvidenceType.MANIFEST_ENTRY) {
+
+			} else {
+				versionSearchStrings.add(ev.getEvidence());
+			}
+		}
+		try {
+		filteredCpes = luceneSearcher.multiFieldSearch(vendorSearchStrings, productSearchStrings, versionSearchStrings);
+		}catch (Exception e) {
+			Engine.logger.debug(e.getMessage());
+			Engine.logger.debug("Exception occured while searching for likely cpes !!");
+		}
+		// Create CPE entry model for each filtered CPE
+		if (filteredCpes.size() > 0) {
+			for (CpeEntryModel entry : filteredCpes) {
+				CPENameModel wrkCpeNameModel = new CPENameModel();
+				wrkCpeNameModel.setProduct(entry.getProduct());
+				wrkCpeNameModel.setVendor(entry.getVendor());
+				wrkCpeNameModel.setVersion(entry.getVersion());
+				wrkCpeNameModel.setValidCpe(true);
+				String[] wrkCPELiterals = entry.getCpeName().split(":");
+				if (wrkCPELiterals.length > 6) {
+					wrkCpeNameModel.setUpdate(wrkCPELiterals[6]);
+				}
+				// Engine.getMavenLog().info("Adding likely CPE for dependency:
+				// "+dependency.getDependencyName()+" - "+wrkCpeNameModel.getCPE23Uri());
+				dependency.addLikelyCPEs(wrkCpeNameModel);
+			}
+			Engine.logger.debug("Total likely CPEs found: " + filteredCpes.size());
+		}
+	}
+
+	@Deprecated
+	public void searchForLikelyCpesDeprecated(DependencyModel dependency) {
+		List<CpeEntryModel> filteredCpes = new ArrayList<>();
 		Set<String> likelyVendors = new HashSet<>();
 		// filter out likely vendors from the list of vendor evidences
-		likelyVendors = searchForLikelyVendors(dependency.getVendorEvidences());
+		try {
+			likelyVendors = searchForLikelyVendors(dependency.getVendorEvidences());
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		if (likelyVendors.size() == 0) {
 			// Engine.logger.info(
 			// "Unable to find vendor through fuzzy search for dependency: " +
 			// dependency.getDependencyName());
 			return;
 		}
-		List<CpeEntryModel> filteredCpes = new ArrayList<>();
 		for (Evidence ev : dependency.getProductEvidences()) {
 			if (ev.getEvidenceType() == EvidenceType.ARTIFACT_ID) {
 				// Search for CPE entries with likely product from the filtered likely vendors
 				// list
-				filteredCpes = searchForLikelyProducts(likelyVendors, ev.getEvidence());
+				try {
+					filteredCpes = searchForLikelyProducts(likelyVendors, ev.getEvidence());
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		}
 		// Create CPE entry model for each filtered CPE
@@ -68,7 +152,7 @@ public class FuzzySearchTool {
 				// "+dependency.getDependencyName()+" - "+wrkCpeNameModel.getCPE23Uri());
 				dependency.addLikelyCPEs(wrkCpeNameModel);
 			}
-			Engine.logger.info("Total likely CPEs found: " + filteredCpes.size());
+			Engine.logger.debug("Total likely CPEs found: " + filteredCpes.size());
 		}
 	}
 
@@ -119,7 +203,7 @@ public class FuzzySearchTool {
 		// If vendor likely match not found with Group Artifact Verison info then
 		// iterate through other evidences and search for likely matches.
 		if (likelyMatch.size() == 0) {
-			Engine.logger.warn("Vendor likely match not found. Searching with other evidences");
+			Engine.logger.debug("Vendor likely match not found. Searching with other evidences");
 			for (Evidence ev : evidences) {
 				if (ev.getEvidenceType() != EvidenceType.GROUP_ID) {
 					for (String vendor : vendorNames) {
@@ -133,7 +217,7 @@ public class FuzzySearchTool {
 			}
 		}
 		Engine.logger
-				.info("Total Vendor likely match found after searching with other evidences: " + likelyMatch.size());
+				.debug("Total Vendor likely match found after searching with other evidences: " + likelyMatch.size());
 		return likelyMatch;
 	}
 

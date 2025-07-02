@@ -125,7 +125,6 @@ public class JarAnalyzer {
 		DbUtil dbUtil = new DbUtil();
 
 		try (JarFile jar = new JarFile(jarFile); Connection connection = dbUtil.getConnection()) {
-
 			// 1. Extract manifest attributes
 			Manifest manifest = jar.getManifest();
 			if (manifest == null) {

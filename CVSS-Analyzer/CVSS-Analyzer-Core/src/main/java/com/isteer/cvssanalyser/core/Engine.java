@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.isteer.cvssanalyser.core.cveclient.CveClient;
@@ -17,6 +16,7 @@ import com.isteer.cvssanalyser.core.enums.EngineMode;
 import com.isteer.cvssanalyser.core.enums.ResolveMethod;
 import com.isteer.cvssanalyser.core.logging.EngineLogger;
 import com.isteer.cvssanalyser.core.logging.Slf4jEngineLogger;
+import com.isteer.cvssanalyser.core.lucene.LuceneIndexRunner;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
 import com.isteer.cvssanalyser.core.model.VulnerabilityCvssMetricsModel;
 import com.isteer.cvssanalyser.core.model.VulnerabilityDetailsModel;
@@ -34,6 +34,10 @@ public class Engine {
 	public static EngineLogger getLogger() {
 		return logger;
 	}
+	
+	public static void initializeLuceneIndex() {
+		initialize();
+	}
 
 	public static void withDependencies(List<DependencyModel> dependencies) {
 		Engine.dependencies = dependencies;
@@ -49,6 +53,28 @@ public class Engine {
 		logger.info("Setting threshold value to " + threshold);
 		Engine.thresholdValue = threshold;
 		return;
+	}
+
+	public static void initialize() {
+		Engine.logger.info("Initializing lucene index....");
+		LuceneIndexRunner luceneIndexRunner = new LuceneIndexRunner();
+		try {
+			File indexDir = new File("lucene-index");
+			boolean indexExists = indexDir.exists() && indexDir.isDirectory() && indexDir.list().length > 0;
+
+			if (!indexExists) {
+				Engine.logger.debug("Lucene index not exists.... Creating index");
+				luceneIndexRunner.createIndexFromCvssDb();
+			}else {
+				logger.debug("Lucene index found...!!");
+			}
+		} catch (IOException e) {
+			logger.error("IO Exception occured during creating lucene index for CPE Entries!!");
+			e.printStackTrace();
+		} catch (SQLException e) {
+			logger.error("SQL exception occured while fetcihng CPE entries from DB!!");
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -278,39 +304,39 @@ public class Engine {
 	 */
 	public static void doFuzzySearchAndGetLikelyCpes() {
 		for (DependencyModel dep : dependencies) {
-			if(dep.getCpeEnumeration()!=null) {
-				boolean conditionToSkip =false;
-				
+			if (dep.getCpeEnumeration() != null) {
+				boolean conditionToSkip = false;
+
 				Map<CpeField, ResolveMethod> resolveMethod = dep.getCpeEnumeration().getResolveMethod();
 				ResolveMethod vendorMethod = resolveMethod.get(CpeField.VENDOR);
 				ResolveMethod productMethod = resolveMethod.get(CpeField.PRODUCT);
 
 				if (isUserHint(vendorMethod)) {
-					if(isUserHint(productMethod)) {
-					    conditionToSkip = true;
+					if (isUserHint(productMethod)) {
+						conditionToSkip = true;
 					}
 				}
 				if (conditionToSkip) {
 					continue;
 				}
 			}
-			
+
 			if (dep.getVulnerabilities().size() == 0) {
-				logger.info("No vulnerabilities found for dependency: " + dep.getDependencyName()
+				logger.debug("No vulnerabilities found for dependency: " + dep.getDependencyName()
 						+ " Doing fuzzy search to find likely CPEs!!");
 				FuzzySearchTool fuzzySearchTool = new FuzzySearchTool();
 				try {
 					// invoke the fuzzy search tool and search for likely CPEs.
 					fuzzySearchTool.searchForLikelyCpes(dep);
-				} catch (SQLException e) {
-					// e.printStackTrace();
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
 			}
 		}
 	}
-	
+
 	private static boolean isUserHint(ResolveMethod method) {
-	    return method == ResolveMethod.HINT_BY_CLIENT_USER || method == ResolveMethod.HINT_BY_DEVELOPER;
+		return method == ResolveMethod.HINT_BY_CLIENT_USER || method == ResolveMethod.HINT_BY_DEVELOPER;
 	}
 
 	/**
@@ -327,10 +353,10 @@ public class Engine {
 		// greater than the threshold value.
 		for (DependencyModel dep : dependencies) {
 			if (dep.getVulnerabilities().size() > 0) {
-				logger.error("Found " + dep.getVulnerabilities().size() + " vulnerabilities for dependency:"
+				logger.info("Found " + dep.getVulnerabilities().size() + " vulnerabilities for dependency:"
 						+ dep.getDependencyName());
 				for (VulnerabilityDetailsModel vulnerabilities : dep.getVulnerabilities()) {
-					logger.info(vulnerabilities.getCveId());
+					logger.debug(vulnerabilities.getCveId());
 					for (VulnerabilityCvssMetricsModel cvssMetrics : vulnerabilities.getCvssMetrics()) {
 						// FIXME: check whether these else conditions are needed
 						if (cvssMetrics.getBaseScore() >= thresholdValue) {
@@ -364,7 +390,7 @@ public class Engine {
 		return isThresholdExceeded;
 	}
 
-	public static void readAndAnalyzeUploadedPomFile(byte[] file, SseEmitter emitter)  {
+	public static void readAndAnalyzeUploadedPomFile(byte[] file, SseEmitter emitter) {
 		PomFileReader pomReader = new PomFileReader();
 		GAVAnalyzer gavAnalyzer = new GAVAnalyzer();
 		CPEEvidencesNormalizer normalizer = new CPEEvidencesNormalizer();

@@ -71,5 +71,20 @@
 			<artifactId>commons-text</artifactId>
 			<version>1.11.0</version> <!-- Use latest -->
 		</dependency>
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-core</artifactId>
+			<version>9.10.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-analysis-common</artifactId>
+			<version>9.10.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-queryparser</artifactId>
+			<version>9.10.0</version>
+		</dependency>
 	</dependencies>
 </project>

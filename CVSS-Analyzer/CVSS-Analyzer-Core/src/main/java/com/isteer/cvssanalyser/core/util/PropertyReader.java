@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+import com.isteer.cvssanalyser.core.Engine;
+
 public class PropertyReader {
 
     public static String getProperty(String key) {
@@ -19,8 +21,4 @@ public class PropertyReader {
         }
     }
 
-    public static void main(String[] args) {
-        String dbUrl = getProperty("db.url");
-        System.out.println("DB URL: " + dbUrl);
-    }
 }

@@ -34,9 +34,6 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
-/**
- * Goal which touches a timestamp file.
- */
 @Mojo(name = "analyze-dependencies", defaultPhase = LifecyclePhase.COMPILE, requiresDependencyResolution = ResolutionScope.RUNTIME)
 public class CvssMojo extends AbstractMojo {
 
@@ -46,18 +43,17 @@ public class CvssMojo extends AbstractMojo {
 	@Parameter
 	private DatabaseConfig database;
 
-	/*
-	 * @Parameter(alias = "threshold-value") private String baseScoreThresholdValue;
-	 */
+	@Parameter(alias = "threshold-value")
+	private String baseScoreThresholdValue;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		getLog().info("Starting CVSS analysis...");
 
-		getLog().info("Getting database credentials from plugin configuration");
+		getLog().debug("Getting database credentials from plugin configuration");
 		Engine.analysisMode = EngineMode.MAVEN_PLUGIN;
 		DbUtil.withDbCredentials(database.getUrl(), database.getUsername(), database.getPassword());
-		
+		Engine.initializeLuceneIndex();
 		// 1. Get ALL dependencies (including transitive ones)
 		Set<Artifact> artifacts = project.getArtifacts();
 
@@ -76,20 +72,22 @@ public class CvssMojo extends AbstractMojo {
 		}).collect(Collectors.toList());
 
 		getLog().info("Found " + dependencies.size() + " dependencies to analyze");
-		/*
-		 * Double wrkbaseScoreThresholdValue; try { wrkbaseScoreThresholdValue =
-		 * Double.parseDouble(baseScoreThresholdValue);
-		 * getLog().info("Parsed threshold value is " + wrkbaseScoreThresholdValue); }
-		 * catch (Exception e) { getLog().info(
-		 * "Exception occurred while parsing the threshold value. Proceeding with default threshold value 8.0"
-		 * ); wrkbaseScoreThresholdValue = 8.0; }
-		 */
+
+		Double wrkbaseScoreThresholdValue;
+		try {
+			wrkbaseScoreThresholdValue = Double.parseDouble(baseScoreThresholdValue);
+			getLog().debug("Parsed threshold value is " + wrkbaseScoreThresholdValue);
+		} catch (Exception e) {
+			getLog().info(
+					"Exception occurred while parsing the threshold value. Proceeding with default threshold value 8.0");
+			wrkbaseScoreThresholdValue = 8.0;
+		}
 
 		// 3. Run analysis
 		try {
 			Engine.withDependencies(dependencies);
 			Engine.withLogger(new MavenEngineLogger(getLog())); // Pass Maven's logger
-//			Engine.withThresholdValue(wrkbaseScoreThresholdValue);
+			Engine.withThresholdValue(wrkbaseScoreThresholdValue);
 			Engine.analyze(EngineMode.MAVEN_PLUGIN, null); // No SSE emitter in Maven plugin context
 			boolean isThresholdExceeded = Engine.checkForVulnerabilityForDependencies();
 			Engine.doFuzzySearchAndGetLikelyCpes();
