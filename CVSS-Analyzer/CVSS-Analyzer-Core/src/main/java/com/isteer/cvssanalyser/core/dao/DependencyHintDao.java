@@ -187,13 +187,14 @@ public class DependencyHintDao {
 		}
 	}
 
-	public Set<String> getVendorNameForApplication(Connection con, String vendorName) {
-		String query = "SELECT id, type, match_key, standardized_name, confidence, description, created_at, updated_at FROM dependency_hints WHERE match_key = ? AND evidence_type = ?";
-		Set<String> resolvedVendor = new HashSet<>();
+	public String getVendorAndProductNameForApplication(Connection con, String vendorName, String type) {
+		String query = "SELECT id, type, match_key, standardized_name, confidence, description, created_at, updated_at FROM dependency_hints WHERE match_key = ? AND evidence_type = ? AND type = ?";
+		String resolvedVendor = null;
 
 		try (PreparedStatement psc = con.prepareStatement(query)) {
 			psc.setString(1, vendorName);
 			psc.setString(2, "APPLICATION");
+			psc.setString(3, type);
 			try (ResultSet rs = psc.executeQuery()) {
 				while (rs.next()) {
 					DependencyHintModel hint = new DependencyHintModel();
@@ -209,7 +210,7 @@ public class DependencyHintDao {
 					if (rs.getTimestamp(8) != null) {
 						hint.setUpdatedAt(rs.getTimestamp(8).toLocalDateTime());
 					}
-					resolvedVendor.add(hint.getStandardized_name());
+					resolvedVendor = hint.getStandardized_name();
 				}
 			}
 		} catch (SQLException e) {
