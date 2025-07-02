@@ -24,19 +24,21 @@ import com.isteer.cvssapplication.datastore.exception.BussinessException;
 import com.isteer.cvssapplication.datastore.service.ApplicationService;
 import com.isteer.cvssapplication.datastore.util.UUIDUtil;
 
+import jakarta.validation.constraints.NotBlank;
+
 @Service
 public class ApplicationServiceImpl implements ApplicationService {
 	private static final Logger logger = LoggerFactory.getLogger(ApplicationServiceImpl.class);
 
 	@Autowired
 	private ApplicationDao applicationRepository;
-	
+
 	@Autowired
 	private ComputerDao computerRepository;
-	
+
 	@Autowired
 	private VulnerabilityService vulnerabilityService;
-	
+
 	@Autowired
 	private VulnerabilityDao vulnerabilityRepository;
 
@@ -62,11 +64,10 @@ public class ApplicationServiceImpl implements ApplicationService {
 			}
 			logger.info("Batch saved {} new applications", newApplications.size());
 		}
-		
+
 		vulnerabilityService.analyzeAndSaveApplicationVulnerabilitiesAsync(newApplications);
 		return 1;
 	}
-
 
 	@Override
 	public int createOrUpdateApplication(SoftwareDTO software, String computerUuid) {
@@ -74,7 +75,6 @@ public class ApplicationServiceImpl implements ApplicationService {
 		return createOrUpdateApplication(Collections.singletonList(software), computerUuid);
 	}
 
-	
 	@Override
 	public List<Application> getApplicationsByComputerUuid(String computerUuid, Boolean status) {
 	    logger.info("Fetching applications for computer UUID: {} with status: {}", computerUuid, status);
@@ -93,15 +93,36 @@ public class ApplicationServiceImpl implements ApplicationService {
 		return applications;
 	}
 
-    @Override
+	@Override
 	public List<Vulnerability> getVulnerabilitiesByApplicationUuid(String uuid) {
-    	 logger.info("Fetching vulnerabilities for application UUID: {}", uuid);
-         if (!(applicationRepository.findByApplicationUuid(uuid)).isPresent()) {
-             logger.warn("Application not found for UUID: {}", uuid);
-             throw new BussinessException(CVSSEnum.APPLICATION_NOT_FOUND);
-         }
-         List<Vulnerability> vulnerabilities = vulnerabilityRepository.findByApplicationUuid(uuid);
-         logger.info("Found {} vulnerabilities for application UUID: {}", vulnerabilities.size(), uuid);
-         return vulnerabilities;
+		logger.info("Fetching vulnerabilities for application UUID: {}", uuid);
+		if (!(applicationRepository.findByApplicationUuid(uuid)).isPresent()) {
+			logger.warn("Application not found for UUID: {}", uuid);
+			throw new BussinessException(CVSSEnum.APPLICATION_NOT_FOUND);
+		}
+		List<Vulnerability> vulnerabilities = vulnerabilityRepository.findByApplicationUuid(uuid);
+		logger.info("Found {} vulnerabilities for application UUID: {}", vulnerabilities.size(), uuid);
+		return vulnerabilities;
+	}
+
+	public Application getApplicationByUuid(String uuid) {
+		logger.info("Fetching application by UUID: {}", uuid);
+		Optional<Application> application = applicationRepository.findByApplicationUuid(uuid);
+		if (!application.isPresent()) {
+			logger.warn("Application not found for UUID: {}", uuid);
+			throw new BussinessException(CVSSEnum.APPLICATION_NOT_FOUND);
+		}
+		return application.get();
+
+	}
+
+	public List<Application> getApplicationsWithUnresolvedCpeNames() {
+		logger.info("Fetching applications with unresolved CPE names");
+		List<Application> applications = applicationRepository.findAllUnresolvedCpeApplications();
+		if (applications.isEmpty()) {
+			logger.warn("No applications found");
+			return Collections.emptyList();
+		}
+		return applications;
 	}
 }

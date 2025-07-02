@@ -20,4 +20,6 @@ public interface ApplicationDao {
 
 	Optional<Application> findByApplicationUuid(String uuid);
 
+	List<Application> findAllUnresolvedCpeApplications();
+
 }

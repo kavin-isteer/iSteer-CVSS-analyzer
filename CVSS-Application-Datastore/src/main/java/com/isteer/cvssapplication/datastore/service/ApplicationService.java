@@ -6,8 +6,6 @@ import com.isteer.cvssapplication.datastore.dto.SoftwareDTO;
 import com.isteer.cvssapplication.datastore.entity.Application;
 import com.isteer.cvssapplication.datastore.entity.Vulnerability;
 
-import jakarta.validation.constraints.NotBlank;
-
 public interface ApplicationService {
 	 
 
