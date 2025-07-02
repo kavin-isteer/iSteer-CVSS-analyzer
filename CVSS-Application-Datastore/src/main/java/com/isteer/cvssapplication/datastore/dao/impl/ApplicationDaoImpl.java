@@ -19,7 +19,6 @@ import org.springframework.stereotype.Repository;
 import com.isteer.cvssapplication.datastore.dao.ApplicationDao;
 import com.isteer.cvssapplication.datastore.dao.rowmapper.ApplicationRowMapper;
 import com.isteer.cvssapplication.datastore.dao.rowmapper.ApplicationWithVulnerabilitiesExtractor;
-import com.isteer.cvssapplication.datastore.dao.rowmapper.RowMapper;
 import com.isteer.cvssapplication.datastore.dto.SoftwareDTO;
 import com.isteer.cvssapplication.datastore.entity.Application;
 import com.isteer.cvssapplication.datastore.enums.CVSSEnum;
@@ -34,67 +33,67 @@ public class ApplicationDaoImpl implements ApplicationDao {
 
 	@Autowired
 	private JdbcTemplate template;
-	
+
 	@Override
 	public List<Application> findByComputerUuid(String computerUuid, Boolean status) {
-	    String sql = """
-	        SELECT 
-	            a.id, 
-	            a.uuid, 
-	            a.name, 
-	            a.version, 
-	            a.vendor_name, 
-	            a.created_at, 
-	            ca.installed_date, 
-	            ca.updated_at AS ca_updated_at, 
-	            ca.is_deleted AS ca_is_deleted,
-	            v.id AS v_id, 
-	            v.uuid AS v_uuid, 
-	            v.cve_id, 
-	            v.severity, 
-	            v.description, 
-	            v.vector_string, 
-	            v.source_identifier, 
-	            v.cvss_score, 
-	            v.cvss_version, 
-	            v.created_at AS v_created_at, 
-	            v.is_deleted AS v_is_deleted,
-	            acnd.cpe_name
-	        FROM applications a
-	        JOIN computer_applications ca ON a.uuid = ca.application_uuid
-	        JOIN computers c ON ca.computer_uuid = c.uuid
-	        LEFT JOIN application_vulnerabilities av ON a.uuid = av.application_uuid
-	        LEFT JOIN vulnerabilities v ON av.vulnerability_uuid = v.uuid AND v.is_deleted = false
-	        LEFT JOIN application_cpe_name_details acnd ON a.uuid = acnd.application_uuid
-	        WHERE c.uuid = :computerUuid AND c.is_deleted = false
-	    """;
+		String sql = """
+				    SELECT
+				        a.id,
+				        a.uuid,
+				        a.name,
+				        a.version,
+				        a.vendor_name,
+				        a.created_at,
+				        ca.installed_date,
+				        ca.updated_at AS ca_updated_at,
+				        ca.is_deleted AS ca_is_deleted,
+				        v.id AS v_id,
+				        v.uuid AS v_uuid,
+				        v.cve_id,
+				        v.severity,
+				        v.description,
+				        v.vector_string,
+				        v.source_identifier,
+				        v.cvss_score,
+				        v.cvss_version,
+				        v.created_at AS v_created_at,
+				        v.is_deleted AS v_is_deleted,
+				        acnd.cpe_name
+				    FROM applications a
+				    JOIN computer_applications ca ON a.uuid = ca.application_uuid
+				    JOIN computers c ON ca.computer_uuid = c.uuid
+				    LEFT JOIN application_vulnerabilities av ON a.uuid = av.application_uuid
+				    LEFT JOIN vulnerabilities v ON av.vulnerability_uuid = v.uuid AND v.is_deleted = false
+				    LEFT JOIN application_cpe_name_details acnd ON a.uuid = acnd.application_uuid
+				    WHERE c.uuid = :computerUuid AND c.is_deleted = false
+				""";
 
-	    MapSqlParameterSource params = new MapSqlParameterSource();
-	    params.addValue("computerUuid", computerUuid);
+		MapSqlParameterSource params = new MapSqlParameterSource();
+		params.addValue("computerUuid", computerUuid);
 
-	    if (status != null) {
-	        sql += " AND ca.is_deleted = :isDeleted";
-	        params.addValue("isDeleted", status);
-	    }
+		if (status != null) {
+			sql += " AND ca.is_deleted = :isDeleted";
+			params.addValue("isDeleted", status);
+		}
 
-	    try {
-	        List<Application> applications = jdbcTemplate.query(sql, params, new ApplicationWithVulnerabilitiesExtractor());
-	        if (applications.isEmpty()) {
-	            // Check if the computer exists by querying the computers table
-	            String checkComputerSql = "SELECT COUNT(*) FROM computers WHERE uuid = :computerUuid AND is_deleted = false";
-	            Integer count = jdbcTemplate.queryForObject(checkComputerSql, params, Integer.class);
-	            if (count == null || count == 0) {
-	                logger.warn("Computer not found or deleted for UUID: {}", computerUuid);
-	                throw new BussinessException(CVSSEnum.COMPUTER_NOT_FOUND);
-	            }
-	        }
-	        return applications;
-	    } catch (DataAccessException e) {
-	        logger.warn("Computer not found or deleted for UUID: {}", computerUuid);
-	        throw new BussinessException(CVSSEnum.COMPUTER_NOT_FOUND);
-	    }
+		try {
+			List<Application> applications = jdbcTemplate.query(sql, params,
+					new ApplicationWithVulnerabilitiesExtractor());
+			if (applications.isEmpty()) {
+				// Check if the computer exists by querying the computers table
+				String checkComputerSql = "SELECT COUNT(*) FROM computers WHERE uuid = :computerUuid AND is_deleted = false";
+				Integer count = jdbcTemplate.queryForObject(checkComputerSql, params, Integer.class);
+				if (count == null || count == 0) {
+					logger.warn("Computer not found or deleted for UUID: {}", computerUuid);
+					throw new BussinessException(CVSSEnum.COMPUTER_NOT_FOUND);
+				}
+			}
+			return applications;
+		} catch (DataAccessException e) {
+			logger.warn("Computer not found or deleted for UUID: {}", computerUuid);
+			throw new BussinessException(CVSSEnum.COMPUTER_NOT_FOUND);
+		}
 	}
-
 
 	@Override
 	public Map<Application, Boolean> isRecordExists1(List<SoftwareDTO> applications) {
@@ -179,7 +178,6 @@ public class ApplicationDaoImpl implements ApplicationDao {
 		}
 	}
 
-
 	@Override
 	public List<Application> findAllUnresolvedCpeApplications() {
 		String sql = "SELECT a.id, a.uuid, a.name, a.version, a.vendor_name, a.created_at FROM applications a JOIN application_cpe_name_details acnd ON a.uuid = acnd.application_uuid WHERE acnd.is_resolved_cpe = false";
@@ -188,6 +186,5 @@ public class ApplicationDaoImpl implements ApplicationDao {
 		logger.debug("Found {} unresolved CPE applications", applications.size());
 		return applications;
 	}
-
 
 }

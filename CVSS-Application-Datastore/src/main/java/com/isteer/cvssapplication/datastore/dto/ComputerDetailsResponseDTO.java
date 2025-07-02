@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.isteer.cvssapplication.datastore.entity.Application;
 import com.isteer.cvssapplication.datastore.entity.Computer;
-import com.isteer.cvssapplication.datastore.entity.Vulnerability;
 
 public class ComputerDetailsResponseDTO {
 	private Computer computer;

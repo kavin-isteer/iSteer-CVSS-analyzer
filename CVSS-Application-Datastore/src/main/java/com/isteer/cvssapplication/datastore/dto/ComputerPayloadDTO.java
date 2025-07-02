@@ -42,6 +42,7 @@ public class ComputerPayloadDTO {
 
 	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
 	private LocalDateTime lastUpdateCheck;
+	
 	@NotNull(message = "Timestamp cannot be blank")
 	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
 	private LocalDateTime timestamp;
