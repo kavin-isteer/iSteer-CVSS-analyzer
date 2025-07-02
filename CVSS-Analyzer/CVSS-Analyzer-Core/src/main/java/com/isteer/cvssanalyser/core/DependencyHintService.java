@@ -1,16 +1,15 @@
 package com.isteer.cvssanalyser.core;
 
 import java.sql.Connection;
-import java.util.List;
 import java.util.regex.Pattern;
 
 import com.isteer.cvssanalyser.core.dao.DependencyHintDao;
 import com.isteer.cvssanalyser.core.dto.DependencyHintDto;
 import com.isteer.cvssanalyser.core.enums.EvidenceType;
 import com.isteer.cvssanalyser.core.enums.HintAddedBy;
+import com.isteer.cvssanalyser.core.model.ApplicationModel;
 import com.isteer.cvssanalyser.core.model.DependencyHintModel;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
-import com.isteer.cvssanalyser.core.model.Evidence;
 import com.isteer.cvssanalyser.core.util.DbUtil;
 
 public class DependencyHintService {
@@ -136,5 +135,48 @@ public class DependencyHintService {
 		}
 		//Unknown error. Hint not saved.
 		return -6;
+	}
+	
+	public int addApplicationHint(String cpeName, ApplicationModel application) {
+		if (!isValidCPE(cpeName)) { 
+			return -1;
+		}
+		
+		DependencyHintModel hintToSave = new DependencyHintModel();
+		String[] cpeNameStripped = cpeName.split(":");
+		String vendor = cpeNameStripped[3];
+		String product = cpeNameStripped[4];
+//		String version = cpeNameStripped[5];
+		
+		String productName = application.getApplicationName();
+		String vendorName = application.getApplicationVendor();
+//		String version = application.getApplicationVersion();
+		
+		hintToSave.setType("vendor");
+		hintToSave.setMatch_key(vendorName);
+		hintToSave.setStandardized_name(vendor);
+		hintToSave.setConfidence("HIGH");
+		hintToSave.setDescription("Hint added through add hint api!");
+		hintToSave.setEvidenceType(EvidenceType.APPLICATION.toString());
+		hintToSave.setAddedBy(HintAddedBy.CLIENT_USER);
+		
+		int rows = hintDao.addDependencyHint(connection, hintToSave);
+		if(rows>0) {
+			hintToSave.setType("product");
+			hintToSave.setMatch_key(productName);
+			hintToSave.setStandardized_name(product);
+			hintToSave.setConfidence("HIGH");
+			hintToSave.setDescription("Hint added through add hint api!");
+			hintToSave.setEvidenceType(EvidenceType.APPLICATION.toString());
+			hintToSave.setAddedBy(HintAddedBy.CLIENT_USER);
+			rows = hintDao.addDependencyHint(connection, hintToSave);
+			if(rows>0) {
+				return 1;
+			}else {
+				return -2;
+			}
+		}else {
+			return -3;
+		}
 	}
 }

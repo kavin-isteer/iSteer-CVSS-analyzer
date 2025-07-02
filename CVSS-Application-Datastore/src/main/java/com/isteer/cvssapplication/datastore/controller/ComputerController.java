@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.isteer.cvssapplication.datastore.dto.ComputerDetailsResponseDTO;
 import com.isteer.cvssapplication.datastore.dto.ComputerPayloadDTO;
 import com.isteer.cvssapplication.datastore.dto.ErrorMessageDTO;
+import com.isteer.cvssapplication.datastore.dto.SoftwareDTO;
 import com.isteer.cvssapplication.datastore.dto.StatusMessageDTO;
 import com.isteer.cvssapplication.datastore.entity.Application;
 import com.isteer.cvssapplication.datastore.entity.Computer;
@@ -163,6 +164,31 @@ public class ComputerController {
 		}
 		logger.info("Returning {} vulnerabilities for application UUID: {}", vulnerabilities.size(), uuid);
 		return ResponseEntity.ok(vulnerabilities);
+	}
+	
+	@GetMapping("/applications/{uuid}")
+	public ResponseEntity<Application> getApplicationByUuid(
+			@PathVariable @NotBlank(message = "UUID cannot be blank") String uuid) {
+		logger.info("Received request to fetch application with UUID: {}", uuid);
+		Application application = applicationService.getApplicationByUuid(uuid);
+		if (application == null) {
+			logger.warn("Application not found for UUID: {}", uuid);
+			return ResponseEntity.noContent().build();
+		}
+		logger.info("Returning application details for UUID: {}", uuid);
+		return ResponseEntity.ok(application);
+	}
+	
+	@GetMapping("/applications/unresolved-cpe")
+	public ResponseEntity<List<Application>> getApplicationsWithUnresolvedCpeNames() {
+		logger.info("Received request to fetch applications with unresolved CPE names");
+		List<Application> applications = applicationService.getApplicationsWithUnresolvedCpeNames();
+		if (applications.isEmpty()) {
+			logger.warn("No applications found with unresolved CPE names");
+			return ResponseEntity.noContent().build(); // Return no content status
+		}
+		logger.info("Returning {} applications with unresolved CPE names", applications.size());
+		return ResponseEntity.ok(applications);
 	}
 
 	// Added: Soft delete computer by UUID

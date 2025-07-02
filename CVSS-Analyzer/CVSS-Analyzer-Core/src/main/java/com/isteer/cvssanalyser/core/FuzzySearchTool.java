@@ -82,13 +82,47 @@ public class FuzzySearchTool {
 				versionSearchStrings.add(ev.getEvidence());
 			}
 		}
+		List<CPENameModel> likelyCpeNames = searchForCpeName(vendorSearchStrings, productSearchStrings, versionSearchStrings);
+		if (likelyCpeNames.size() > 0) {
+			for (CPENameModel cpeName : likelyCpeNames) {
+				dependency.addLikelyCPEs(cpeName);
+			}
+		}
+//		try {
+//		filteredCpes = luceneSearcher.multiFieldSearch(vendorSearchStrings, productSearchStrings, versionSearchStrings);
+//		}catch (Exception e) {
+//			Engine.logger.debug(e.getMessage());
+//			Engine.logger.debug("Exception occured while searching for likely cpes !!");
+//		}
+//		// Create CPE entry model for each filtered CPE
+//		if (filteredCpes.size() > 0) {
+//			for (CpeEntryModel entry : filteredCpes) {
+//				CPENameModel wrkCpeNameModel = new CPENameModel();
+//				wrkCpeNameModel.setProduct(entry.getProduct());
+//				wrkCpeNameModel.setVendor(entry.getVendor());
+//				wrkCpeNameModel.setVersion(entry.getVersion());
+//				wrkCpeNameModel.setValidCpe(true);
+//				String[] wrkCPELiterals = entry.getCpeName().split(":");
+//				if (wrkCPELiterals.length > 6) {
+//					wrkCpeNameModel.setUpdate(wrkCPELiterals[6]);
+//				}
+//				// Engine.getMavenLog().info("Adding likely CPE for dependency:
+//				// "+dependency.getDependencyName()+" - "+wrkCpeNameModel.getCPE23Uri());
+//				dependency.addLikelyCPEs(wrkCpeNameModel);
+//			}
+//			Engine.logger.debug("Total likely CPEs found: " + filteredCpes.size());
+//		}
+	}
+	
+	public List<CPENameModel> searchForCpeName(List<String> vendorSearchStrings, List<String> productSearchStrings, List<String> versionSearchStrings) {
+		List<CpeEntryModel> filteredCpes = new ArrayList<>();
+		List<CPENameModel> likelyCpeNames = new ArrayList<>();
 		try {
-		filteredCpes = luceneSearcher.multiFieldSearch(vendorSearchStrings, productSearchStrings, versionSearchStrings);
+			filteredCpes = luceneSearcher.multiFieldSearch(vendorSearchStrings, productSearchStrings, versionSearchStrings);
 		}catch (Exception e) {
 			Engine.logger.debug(e.getMessage());
 			Engine.logger.debug("Exception occured while searching for likely cpes !!");
 		}
-		// Create CPE entry model for each filtered CPE
 		if (filteredCpes.size() > 0) {
 			for (CpeEntryModel entry : filteredCpes) {
 				CPENameModel wrkCpeNameModel = new CPENameModel();
@@ -102,10 +136,11 @@ public class FuzzySearchTool {
 				}
 				// Engine.getMavenLog().info("Adding likely CPE for dependency:
 				// "+dependency.getDependencyName()+" - "+wrkCpeNameModel.getCPE23Uri());
-				dependency.addLikelyCPEs(wrkCpeNameModel);
+				likelyCpeNames.add(wrkCpeNameModel);
 			}
 			Engine.logger.debug("Total likely CPEs found: " + filteredCpes.size());
 		}
+		return likelyCpeNames;
 	}
 
 	@Deprecated

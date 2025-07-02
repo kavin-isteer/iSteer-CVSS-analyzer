@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.isteer.cvssanalyser.core.DependencyHintService;
+import com.isteer.cvssanalyser.core.model.ApplicationModel;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
+import com.isteer.cvssapplication.datastore.entity.Application;
 import com.isteer.cvssanalyser.core.dto.DependencyHintDto;
 
 @RestController
@@ -106,5 +108,37 @@ public class DependencyHintController {
 
 		responseMessage.put("Status", statusMessage);
 		return new ResponseEntity<>(responseMessage, HttpStatus.OK);
+	}
+	
+	@PostMapping("/hint/application/addHint")
+	public ResponseEntity<?> addApplicationHint(@RequestParam String cpeName, @RequestBody ApplicationModel application) {
+		int status = hintService.addApplicationHint(cpeName, application);
+		String statusMessage = "";
+		switch (status) {
+		case 1: {
+			statusMessage = "Hint added Successfully!!";
+			break;
+		}
+		case -1: {
+			statusMessage = "CPE name is not valid!!";
+			break;
+		}
+		case -2: {
+			statusMessage = "Error while adding product hint!!";
+			break;
+		}
+		case -3: {
+			statusMessage = "Error while adding vendor hint!!";
+			break;
+		}
+		default: {
+			statusMessage = "Error while adding dependnecy hint!!";
+			break;
+		}
+		}
+		Map<String, String> responseMessage = new HashMap<>();
+		responseMessage.put("Status", statusMessage);
+		return new ResponseEntity<>(responseMessage, HttpStatus.OK);
+
 	}
 }
