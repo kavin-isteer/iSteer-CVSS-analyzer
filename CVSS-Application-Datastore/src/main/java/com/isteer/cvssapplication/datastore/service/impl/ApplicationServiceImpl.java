@@ -75,17 +75,12 @@ public class ApplicationServiceImpl implements ApplicationService {
 	}
 
 	
-	 @Override
-	    public List<Application> getApplicationsByComputerUuid(String computerUuid, Boolean status) {
-		 Optional<Computer> computerOpt = computerRepository.findByUuid(computerUuid);
-	        if (!computerOpt.isPresent() || computerOpt.get().isDeleted()) {
-	            logger.warn("Computer not found or deleted for UUID: {}", computerUuid);
-	            throw new BussinessException(CVSSEnum.COMPUTER_NOT_FOUND);
-	        }
-		 List<Application> applications = applicationRepository.findByComputerUuid(computerUuid, status);
-
-		    return applications;
-	    }
+	@Override
+	public List<Application> getApplicationsByComputerUuid(String computerUuid, Boolean status) {
+	    logger.info("Fetching applications for computer UUID: {} with status: {}", computerUuid, status);
+	    List<Application> applications = applicationRepository.findByComputerUuid(computerUuid, status);
+	    return applications;
+	}
 
 	@Override
 	public List<Application> getAllApplications() {
