@@ -1,4 +1,5 @@
 package com.isteer.cvssapplication.datastore.dao.rowmapper;
+
 import com.isteer.cvssapplication.datastore.dto.ComputerDetailsResponseDTO;
 import com.isteer.cvssapplication.datastore.entity.Application;
 import com.isteer.cvssapplication.datastore.entity.Computer;
@@ -58,9 +59,9 @@ public class ComputerWithAppsAndVulnsRowMapper implements ResultSetExtractor<Com
                 application.setCreatedAt(rs.getTimestamp("a_created_at").toLocalDateTime());
                 application.setInstalledDate(rs.getTimestamp("ca_installed_date") != null
                         ? rs.getTimestamp("ca_installed_date").toLocalDateTime() : null);
-                application.setDeleted(rs.getBoolean("ca_is_deleted")); // Added
+                application.setDeleted(rs.getBoolean("ca_is_deleted"));
                 application.setUpdatedAt(rs.getTimestamp("ca_updated_at") != null
-                        ? rs.getTimestamp("ca_updated_at").toLocalDateTime() : null); // Added
+                        ? rs.getTimestamp("ca_updated_at").toLocalDateTime() : null);
                 applicationMap.put(appUuid, application);
                 vulnerabilityMap.put(appUuid, new ArrayList<>());
             }
@@ -81,6 +82,8 @@ public class ComputerWithAppsAndVulnsRowMapper implements ResultSetExtractor<Com
                 vulnerability.setCvssVersion(rs.getString("cvss_version"));
                 vulnerability.setCreatedAt(rs.getTimestamp("v_created_at").toLocalDateTime());
                 vulnerability.setDeleted(rs.getBoolean("v_is_deleted"));
+                // Map cpeName to Vulnerability
+                vulnerability.setCpeName(rs.getString("cpe_name"));
                 vulnerabilityMap.get(appUuidForVuln).add(vulnerability);
             }
         }
@@ -94,4 +97,3 @@ public class ComputerWithAppsAndVulnsRowMapper implements ResultSetExtractor<Com
         return response;
     }
 }
-

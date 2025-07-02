@@ -55,6 +55,7 @@ public class ApplicationWithVulnerabilitiesExtractor implements ResultSetExtract
                 vulnerability.setCvssVersion(rs.getString("cvss_version"));
                 vulnerability.setCreatedAt(rs.getTimestamp("v_created_at").toLocalDateTime());
                 vulnerability.setDeleted(rs.getBoolean("v_is_deleted"));
+                vulnerability.setCpeName(rs.getString("cpe_name"));
                 vulnerabilityMap.get(appUuid).add(vulnerability);
             }
         }

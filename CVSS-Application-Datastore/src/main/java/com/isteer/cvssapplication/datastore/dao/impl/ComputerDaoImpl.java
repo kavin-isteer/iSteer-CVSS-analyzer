@@ -62,7 +62,7 @@ public class ComputerDaoImpl implements ComputerDao {
 
 	@Override
 	public Optional<Computer> findByDeviceIdAndIsDeletedFalse(String deviceId) {
-		String sql = "SELECT * FROM computers WHERE device_id = :deviceId AND is_deleted = false";
+		String sql = "SELECT id, uuid, device_id, hostname, ip_address, os_version, antivirus_status, firewall_status, logged_in_user, last_update_check, timestamp, is_deleted, is_active, created_at, updated_at FROM computers WHERE device_id = :deviceId AND is_deleted = false";
 		MapSqlParameterSource params = new MapSqlParameterSource("deviceId", deviceId);
 		try {
 			Computer computer = jdbcTemplate.queryForObject(sql, params, RowMapper::mapComputerRow);
@@ -73,17 +73,16 @@ public class ComputerDaoImpl implements ComputerDao {
 		}
 	}
 
-
 	@Override
 	public List<Computer> findAllPresentComputers() {
-		String sql = "SELECT * FROM computers WHERE is_deleted = false";
+		String sql = "SELECT id, uuid, device_id, hostname, ip_address, os_version, antivirus_status, firewall_status, logged_in_user, last_update_check, timestamp, is_deleted, is_active, created_at, updated_at FROM computers WHERE is_deleted = false";
 		return jdbcTemplate.query(sql, RowMapper::mapComputerRow);
 	}
 
 	// Added: Find computer by UUID (regardless of is_deleted)
 	@Override
 	public Optional<Computer> findByUuid(String uuid) {
-		String sql = "SELECT * FROM computers WHERE uuid = :uuid";
+		String sql = "SELECT id, uuid, device_id, hostname, ip_address, os_version, antivirus_status, firewall_status, logged_in_user, last_update_check, timestamp, is_deleted, is_active, created_at, updated_at FROM computers WHERE uuid = :uuid";
 		MapSqlParameterSource params = new MapSqlParameterSource("uuid", uuid);
 		try {
 			Computer computer = jdbcTemplate.queryForObject(sql, params, RowMapper::mapComputerRow);
@@ -121,9 +120,9 @@ public class ComputerDaoImpl implements ComputerDao {
 		String sql;
 		MapSqlParameterSource params = new MapSqlParameterSource();
 		if (isDeleted == null) {
-			sql = "SELECT * FROM computers";
+			sql = "SELECT id, uuid, device_id, hostname, ip_address, os_version, antivirus_status, firewall_status, logged_in_user, last_update_check, timestamp, is_deleted, is_active, created_at, updated_at FROM computers";
 		} else {
-			sql = "SELECT * FROM computers WHERE is_deleted = :isDeleted";
+			sql = "SELECT id, uuid, device_id, hostname, ip_address, os_version, antivirus_status, firewall_status, logged_in_user, last_update_check, timestamp, is_deleted, is_active, created_at, updated_at FROM computers WHERE is_deleted = :isDeleted";
 			params.addValue("isDeleted", isDeleted);
 		}
 		logger.debug("Fetching computers with deletion status: {}", isDeleted);
@@ -136,9 +135,9 @@ public class ComputerDaoImpl implements ComputerDao {
 		String sql;
 		MapSqlParameterSource params = new MapSqlParameterSource();
 		if (isActive == null) {
-			sql = "SELECT * FROM computers WHERE is_deleted = false AND is_active = true OR is_active = false";
+			sql = "SELECT id, uuid, device_id, hostname, ip_address, os_version, antivirus_status, firewall_status, logged_in_user, last_update_check, timestamp, is_deleted, is_active, created_at, updated_at FROM computers WHERE is_deleted = false AND is_active = true OR is_active = false";
 		} else {
-			sql = "SELECT * FROM computers WHERE is_deleted = false AND is_active = :isActive";
+			sql = "SELECT id, uuid, device_id, hostname, ip_address, os_version, antivirus_status, firewall_status, logged_in_user, last_update_check, timestamp, is_deleted, is_active, created_at, updated_at FROM computers WHERE is_deleted = false AND is_active = :isActive";
 			params.addValue("isActive", isActive);
 		}
 		logger.debug("Fetching computers with activation status: {}", isActive);
@@ -147,29 +146,62 @@ public class ComputerDaoImpl implements ComputerDao {
 
 	@Override
 	public List<Computer> findAllDeletedComputers() {
-		String sql = "SELECT * FROM computers WHERE is_deleted = true";
+		String sql = "SELECT id, uuid, device_id, hostname, ip_address, os_version, antivirus_status, firewall_status, logged_in_user, last_update_check, timestamp, is_deleted, is_active, created_at, updated_at FROM computers WHERE is_deleted = true";
 		logger.debug("Fetching all deleted computers");
 		return jdbcTemplate.query(sql, RowMapper::mapComputerRow);
 
 	}
-	
-	  @Override
-	    public ComputerDetailsResponseDTO findDetailsByUuid(String uuid) {
-	        String sql = "SELECT c.id AS c_id, c.uuid AS c_uuid, c.device_id, c.hostname, c.ip_address, c.os_version, " +
-	                     "c.antivirus_status, c.firewall_status, c.logged_in_user, c.last_update_check, c.timestamp, " +
-	                     "c.is_active, c.is_deleted, c.created_at AS c_created_at, c.updated_at AS c_updated_at, " +
-	                     "a.id AS a_id, a.uuid AS a_uuid, a.name, a.version, a.vendor_name AS a_vendor_name, a.created_at AS a_created_at, " +
-	                     "ca.installed_date AS ca_installed_date, ca.updated_at AS ca_updated_at, ca.is_deleted AS ca_is_deleted, " +
-	                     "v.id AS v_id, v.uuid AS v_uuid, v.cve_id, v.severity, v.description, v.vector_string, " +
-	                     "v.source_identifier, v.cvss_score, v.cvss_version, v.created_at AS v_created_at, v.is_deleted AS v_is_deleted " +
-	                     "FROM computers c " +
-	                     "LEFT JOIN computer_applications ca ON c.uuid = ca.computer_uuid AND ca.is_deleted = false " +
-	                     "LEFT JOIN applications a ON ca.application_uuid = a.uuid " +
-	                     "LEFT JOIN application_vulnerabilities av ON a.uuid = av.application_uuid " +
-	                     "LEFT JOIN vulnerabilities v ON av.vulnerability_uuid = v.id AND v.is_deleted = false " +
-	                     "WHERE c.uuid = :uuid AND c.is_deleted = false";
-	        MapSqlParameterSource params = new MapSqlParameterSource("uuid", uuid);
-	        logger.debug("Fetching details for computer UUID: {}", uuid);
-	        return jdbcTemplate.query(sql, params, new ComputerWithAppsAndVulnsRowMapper());
-	    }
+
+	@Override
+	public ComputerDetailsResponseDTO findDetailsByUuid(String uuid) {
+		String sql = """
+				SELECT
+				    c.id AS c_id,
+				    c.uuid AS c_uuid,
+				    c.device_id,
+				    c.hostname,
+				    c.ip_address,
+				    c.os_version,
+				    c.antivirus_status,
+				    c.firewall_status,
+				    c.logged_in_user,
+				    c.last_update_check,
+				    c.timestamp,
+				    c.is_active,
+				    c.is_deleted,
+				    c.created_at AS c_created_at,
+				    c.updated_at AS c_updated_at,
+				    a.id AS a_id,
+				    a.uuid AS a_uuid,
+				    a.name,
+				    a.version,
+				    a.vendor_name AS a_vendor_name,
+				    a.created_at AS a_created_at,
+				    ca.installed_date AS ca_installed_date,
+				    ca.updated_at AS ca_updated_at,
+				    ca.is_deleted AS ca_is_deleted,
+				    v.id AS v_id,
+				    v.uuid AS v_uuid,
+				    v.cve_id,
+				    v.severity,
+				    v.description,
+				    v.vector_string,
+				    v.source_identifier,
+				    v.cvss_score,
+				    v.cvss_version,
+				    v.created_at AS v_created_at,
+				    v.is_deleted AS v_is_deleted,
+				    acnd.cpe_name
+				FROM computers c
+				LEFT JOIN computer_applications ca ON c.uuid = ca.computer_uuid AND ca.is_deleted = false
+				LEFT JOIN applications a ON ca.application_uuid = a.uuid
+				LEFT JOIN application_vulnerabilities av ON a.uuid = av.application_uuid
+				LEFT JOIN vulnerabilities v ON av.vulnerability_uuid = v.uuid AND v.is_deleted = false
+				LEFT JOIN application_cpe_name_details acnd ON a.uuid = acnd.application_uuid
+				WHERE c.uuid = :uuid AND c.is_deleted = false;
+				""";
+		MapSqlParameterSource params = new MapSqlParameterSource("uuid", uuid);
+		logger.debug("Fetching details for computer UUID: {}", uuid);
+		return jdbcTemplate.query(sql, params, new ComputerWithAppsAndVulnsRowMapper());
+	}
 }
