@@ -168,12 +168,10 @@ public class ApplicationDaoImpl implements ApplicationDao {
 
 	@Override
 	public Optional<Application> findByApplicationUuid(String uuid) {
-		String sql = "SELECT a.id, a.uuid, a.name, a.version, a.vendor_name, a.created_at, MIN(ca.installed_date) as installed_date ,MIN(ca.updated_at) as updated_at , MIN(ca.is_deleted) as is_deleted "
-				+ "FROM applications a " + "LEFT JOIN computer_applications ca ON a.uuid = ca.application_uuid "
-				+ "WHERE a.uuid = :uuid " + "GROUP BY a.id, a.uuid, a.name, a.version, a.vendor_name, a.created_at";
+		String sql = "SELECT a.id, a.uuid, a.name, a.version, a.vendor_name, a.created_at FROM applications a WHERE a.uuid = :uuid";
 		MapSqlParameterSource params = new MapSqlParameterSource("uuid", uuid);
 		try {
-			Application application = jdbcTemplate.queryForObject(sql, params, RowMapper::mapApplicationRow);
+			Application application = jdbcTemplate.queryForObject(sql, params, new ApplicationRowMapper());
 			return Optional.ofNullable(application);
 		} catch (Exception e) {
 			logger.debug("No application found for UUID: {}", uuid);

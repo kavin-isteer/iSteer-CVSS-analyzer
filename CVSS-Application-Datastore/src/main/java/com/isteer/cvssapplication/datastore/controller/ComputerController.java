@@ -151,7 +151,7 @@ public class ComputerController {
 		return ResponseEntity.ok(applications);
 	}
 
-	@GetMapping("/applications/{uuid}")
+	@GetMapping("/applications/{uuid}/vulnerabilities")
 	public ResponseEntity<List<Vulnerability>> getApplicationVulnerabilities(
 			@PathVariable @NotBlank(message = "UUID cannot be blank") String uuid) {
 		logger.info("Received request to fetch vulnerabilities for application with UUID: {}", uuid);
