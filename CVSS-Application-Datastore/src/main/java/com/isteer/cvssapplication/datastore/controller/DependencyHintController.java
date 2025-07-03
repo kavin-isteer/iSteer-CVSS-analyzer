@@ -13,10 +13,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.isteer.cvssanalyser.core.DependencyHintService;
+import com.isteer.cvssanalyser.core.dto.DependencyHintDto;
 import com.isteer.cvssanalyser.core.model.ApplicationModel;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
-import com.isteer.cvssapplication.datastore.entity.Application;
-import com.isteer.cvssanalyser.core.dto.DependencyHintDto;
 
 @RestController
 @RequestMapping("/api")

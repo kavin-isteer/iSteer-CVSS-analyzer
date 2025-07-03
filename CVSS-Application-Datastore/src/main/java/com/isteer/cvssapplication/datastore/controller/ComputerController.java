@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.isteer.cvssapplication.datastore.dto.ComputerDetailsResponseDTO;
 import com.isteer.cvssapplication.datastore.dto.ComputerPayloadDTO;
 import com.isteer.cvssapplication.datastore.dto.ErrorMessageDTO;
-import com.isteer.cvssapplication.datastore.dto.SoftwareDTO;
 import com.isteer.cvssapplication.datastore.dto.StatusMessageDTO;
 import com.isteer.cvssapplication.datastore.entity.Application;
 import com.isteer.cvssapplication.datastore.entity.Computer;
@@ -154,7 +153,7 @@ public class ComputerController {
 
 	@GetMapping("/applications/{uuid}/vulnerabilities")
 	public ResponseEntity<List<Vulnerability>> getApplicationVulnerabilities(
-			@PathVariable @NotBlank(message = "UUID cannot be blank") String uuid) {
+			@PathVariable String uuid) {
 		logger.info("Received request to fetch vulnerabilities for application with UUID: {}", uuid);
 		List<Vulnerability> vulnerabilities = applicationService.getVulnerabilitiesByApplicationUuid(uuid);
 
@@ -168,7 +167,7 @@ public class ComputerController {
 	
 	@GetMapping("/applications/{uuid}")
 	public ResponseEntity<Application> getApplicationByUuid(
-			@PathVariable @NotBlank(message = "UUID cannot be blank") String uuid) {
+			@PathVariable String uuid) {
 		logger.info("Received request to fetch application with UUID: {}", uuid);
 		Application application = applicationService.getApplicationByUuid(uuid);
 		if (application == null) {
@@ -193,7 +192,7 @@ public class ComputerController {
 
 	// Added: Soft delete computer by UUID
 	@DeleteMapping("/computers/{uuid}/soft-delete")
-	public ResponseEntity<?> softDeleteComputer(@PathVariable @NotBlank(message = "UUID cannot be blank") String uuid) {
+	public ResponseEntity<?> softDeleteComputer(@PathVariable String uuid) {
 		logger.info("Received request to soft delete computer with UUID: {}", uuid);
 		int status = computerService.softDeleteComputer(uuid);
 		switch (status) {
