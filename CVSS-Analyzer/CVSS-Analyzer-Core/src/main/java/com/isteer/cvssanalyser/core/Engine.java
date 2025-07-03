@@ -30,7 +30,9 @@ public class Engine {
 	public static EngineMode analysisMode;
 
 	public static Double thresholdValue = 8.0;
-
+	static{
+		initializeLuceneIndex();
+	}
 	public static EngineLogger getLogger() {
 		return logger;
 	}

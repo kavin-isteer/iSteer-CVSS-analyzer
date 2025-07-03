@@ -1,10 +1,13 @@
 package com.isteer.cvssapplication.datastore.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,14 +16,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.isteer.cvssanalyser.core.DependencyHintService;
+import com.isteer.cvssanalyser.core.FuzzySearchTool;
 import com.isteer.cvssanalyser.core.dto.DependencyHintDto;
 import com.isteer.cvssanalyser.core.model.ApplicationModel;
+import com.isteer.cvssanalyser.core.model.CPENameModel;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
 
 @RestController
 @RequestMapping("/api")
 public class DependencyHintController {
 	DependencyHintService hintService = new DependencyHintService();
+	FuzzySearchTool fuzzySearchTool = new FuzzySearchTool();
 
 	/**
 	 * Add GAV dependency hint for a dependency to correct false positives and false
@@ -92,7 +98,7 @@ public class DependencyHintController {
 				responseMessage.put("Status", "product standardised name does not match with provided CPE name.");
 				return new ResponseEntity<>(responseMessage, HttpStatus.OK);
 			}
-			case -5: {	
+			case -5: {
 				responseMessage.put("Status", "Improper payload!!");
 				return new ResponseEntity<>(responseMessage, HttpStatus.OK);
 			}
@@ -108,9 +114,10 @@ public class DependencyHintController {
 		responseMessage.put("Status", statusMessage);
 		return new ResponseEntity<>(responseMessage, HttpStatus.OK);
 	}
-	
+
 	@PostMapping("/hint/application/addHint")
-	public ResponseEntity<?> addApplicationHint(@RequestParam String cpeName, @RequestBody ApplicationModel application) {
+	public ResponseEntity<?> addApplicationHint(@RequestParam String cpeName,
+			@RequestBody ApplicationModel application) {
 		int status = hintService.addApplicationHint(cpeName, application);
 		String statusMessage = "";
 		switch (status) {
@@ -140,4 +147,18 @@ public class DependencyHintController {
 		return new ResponseEntity<>(responseMessage, HttpStatus.OK);
 
 	}
+
+	@GetMapping("hint/likelyCpeNames")
+	public ResponseEntity<?> getLikelyCpeNames(@RequestParam String vendor, @RequestParam String product,
+			@RequestParam(required = false) String version) {
+		List<CPENameModel> likelyCpeNames = new ArrayList<>();
+		if (vendor == null || product == null || vendor.trim().isEmpty() || product.trim().isEmpty()) {
+			Map<String, String> responseMessage = new HashMap<>();
+			responseMessage.put("Status", "Vendor and Product cannot be empty!!");
+			return new ResponseEntity<>(responseMessage, HttpStatus.BAD_REQUEST);
+		}
+		likelyCpeNames = fuzzySearchTool.searchForLikelyCpeName(vendor, product, version);
+		return new ResponseEntity<>(likelyCpeNames, HttpStatus.OK);
+	}
+
 }

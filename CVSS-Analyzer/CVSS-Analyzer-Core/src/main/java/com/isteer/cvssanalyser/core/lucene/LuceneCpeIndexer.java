@@ -1,17 +1,22 @@
 package com.isteer.cvssanalyser.core.lucene;
 
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.*;
-import org.apache.lucene.index.*;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
 import com.isteer.cvssanalyser.core.model.CpeEntryModel;
-
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.List;
 public class LuceneCpeIndexer {
 	 private static final String INDEX_DIR = "lucene-index";
 	    private IndexWriter indexWriter;
@@ -38,6 +43,8 @@ public class LuceneCpeIndexer {
 	            doc.add(new TextField("vendor", entry.getVendor(), Field.Store.YES));
 	            doc.add(new TextField("product", entry.getProduct(), Field.Store.YES));
 	            doc.add(new TextField("version", entry.getVersion(), Field.Store.YES));
+	            String versionPrefixes = String.join(" ", getVersionPrefixes(entry.getVersion()));
+	            doc.add(new TextField("tokenizedVersion", versionPrefixes, Field.Store.YES));
 	            doc.add(new StringField("isDeprecated", String.valueOf(entry.isDeprecated()), Field.Store.YES));
 
 	            if (entry.getUpdatedDate() != null) {
@@ -46,6 +53,20 @@ public class LuceneCpeIndexer {
 
 	            indexWriter.addDocument(doc);
 	        }
+	    }
+	    
+	    private List<String> getVersionPrefixes(String version) {
+	        List<String> tokens = new ArrayList<>();
+	        if (version == null || version.isBlank()) return tokens;
+
+	        String[] parts = version.split("\\.");
+	        StringBuilder builder = new StringBuilder();
+	        for (int i = 0; i < parts.length; i++) {
+	            if (i > 0) builder.append(".");
+	            builder.append(parts[i]);
+	            tokens.add(builder.toString());
+	        }
+	        return tokens;
 	    }
 
 	    // Finalize and close writer (once)

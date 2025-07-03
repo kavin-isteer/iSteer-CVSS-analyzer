@@ -187,4 +187,13 @@ public class ApplicationDaoImpl implements ApplicationDao {
 		return applications;
 	}
 
+	@Override
+	public List<Application> findUnresolvedCpeApplicationsByComputerUuid(String uuid) {
+		String sql = "SELECT a.id, a.uuid, a.name, a.version, a.vendor_name, a.created_at FROM applications a JOIN application_cpe_name_details acnd ON a.uuid = acnd.application_uuid JOIN computer_applications ca ON ca.application_uuid = acnd.application_uuid WHERE ca.computer_uuid = :uuid AND acnd.is_resolved_cpe = false";
+		MapSqlParameterSource params = new MapSqlParameterSource("uuid", uuid);
+		logger.debug("Fetching all unresolved CPE applications");
+		List<Application> applications = jdbcTemplate.query(sql, params, new ApplicationRowMapper());
+		logger.debug("Found {} unresolved CPE applications", applications.size());
+		return applications;
+	}
 }
