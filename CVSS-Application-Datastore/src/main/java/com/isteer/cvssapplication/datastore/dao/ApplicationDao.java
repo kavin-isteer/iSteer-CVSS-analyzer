@@ -22,4 +22,6 @@ public interface ApplicationDao {
 
 	List<Application> findAllUnresolvedCpeApplications();
 
+	List<Application> findUnresolvedCpeApplicationsByComputerUuid(String uuid);
+
 }

@@ -70,9 +70,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
 	@Override
 	public List<Application> getApplicationsByComputerUuid(String computerUuid, Boolean status) {
-	    logger.info("Fetching applications for computer UUID: {} with status: {}", computerUuid, status);
-	    List<Application> applications = applicationRepository.findByComputerUuid(computerUuid, status);
-	    return applications;
+		logger.info("Fetching applications for computer UUID: {} with status: {}", computerUuid, status);
+		List<Application> applications = applicationRepository.findByComputerUuid(computerUuid, status);
+		return applications;
 	}
 
 	@Override
@@ -109,9 +109,14 @@ public class ApplicationServiceImpl implements ApplicationService {
 
 	}
 
-	public List<Application> getApplicationsWithUnresolvedCpeNames() {
+	public List<Application> getApplicationsWithUnresolvedCpeNames(String uuid) {
 		logger.info("Fetching applications with unresolved CPE names");
-		List<Application> applications = applicationRepository.findAllUnresolvedCpeApplications();
+		List<Application> applications = new ArrayList<>();
+		if (uuid == null || uuid.isBlank()) {
+			applications = applicationRepository.findAllUnresolvedCpeApplications();
+		} else {
+			applications = applicationRepository.findUnresolvedCpeApplicationsByComputerUuid(uuid);
+		}
 		if (applications.isEmpty()) {
 			logger.warn("No applications found");
 			return Collections.emptyList();
