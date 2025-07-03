@@ -178,7 +178,7 @@ public class ComputerController {
 		return ResponseEntity.ok(application);
 	}
 	
-	@GetMapping("/applications/unresolved-cpe/{uuid}")
+	@GetMapping({"/applications/unresolved-cpe", "/applications/unresolved-cpe/{uuid}"})
 	public ResponseEntity<List<Application>> getApplicationsWithUnresolvedCpeNames(@PathVariable(required = false) String uuid) {
 		logger.info("Received request to fetch applications with unresolved CPE names");
 		List<Application> applications = applicationService.getApplicationsWithUnresolvedCpeNames(uuid);
