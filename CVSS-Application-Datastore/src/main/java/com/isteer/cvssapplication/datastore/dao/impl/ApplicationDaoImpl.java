@@ -19,6 +19,7 @@ import org.springframework.stereotype.Repository;
 import com.isteer.cvssapplication.datastore.dao.ApplicationDao;
 import com.isteer.cvssapplication.datastore.dao.rowmapper.ApplicationRowMapper;
 import com.isteer.cvssapplication.datastore.dao.rowmapper.ApplicationWithVulnerabilitiesExtractor;
+import com.isteer.cvssapplication.datastore.dao.rowmapper.RowMapper;
 import com.isteer.cvssapplication.datastore.dto.SoftwareDTO;
 import com.isteer.cvssapplication.datastore.entity.Application;
 import com.isteer.cvssapplication.datastore.enums.CVSSEnum;
@@ -189,10 +190,10 @@ public class ApplicationDaoImpl implements ApplicationDao {
 
 	@Override
 	public List<Application> findUnresolvedCpeApplicationsByComputerUuid(String uuid) {
-		String sql = "SELECT a.id, a.uuid, a.name, a.version, a.vendor_name, a.created_at FROM applications a JOIN application_cpe_name_details acnd ON a.uuid = acnd.application_uuid JOIN computer_applications ca ON ca.application_uuid = acnd.application_uuid WHERE ca.computer_uuid = :uuid AND acnd.is_resolved_cpe = false";
+		String sql = "SELECT a.id, a.uuid, a.name, a.version, a.vendor_name, ca.installed_date, ca.created_at, ca.updated_at, ca.is_deleted FROM applications a JOIN application_cpe_name_details acnd ON a.uuid = acnd.application_uuid JOIN computer_applications ca ON ca.application_uuid = acnd.application_uuid WHERE ca.computer_uuid = :uuid AND acnd.is_resolved_cpe = false";
 		MapSqlParameterSource params = new MapSqlParameterSource("uuid", uuid);
 		logger.debug("Fetching all unresolved CPE applications");
-		List<Application> applications = jdbcTemplate.query(sql, params, new ApplicationRowMapper());
+		List<Application> applications = jdbcTemplate.query(sql, params, RowMapper::mapApplicationRow);
 		logger.debug("Found {} unresolved CPE applications", applications.size());
 		return applications;
 	}
