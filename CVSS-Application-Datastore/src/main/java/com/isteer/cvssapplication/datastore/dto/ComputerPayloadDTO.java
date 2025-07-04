@@ -1,6 +1,7 @@
 package com.isteer.cvssapplication.datastore.dto;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -41,8 +42,8 @@ public class ComputerPayloadDTO {
 	private LocalDateTime lastUpdateCheck;
 
 	@NotNull(message = "Timestamp cannot be blank")
-	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
-	private LocalDateTime timestamp;
+//	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+	private OffsetDateTime timestamp;
 
 	public String getDeviceId() {
 		return deviceId;
@@ -116,10 +117,10 @@ public class ComputerPayloadDTO {
 	}
 
 	public LocalDateTime getTimestamp() {
-		return timestamp;
+		return timestamp.toLocalDateTime();
 	}
 
-	public void setTimestamp(LocalDateTime timestamp) {
+	public void setTimestamp(OffsetDateTime timestamp) {
 		this.timestamp = timestamp;
 	}
 
