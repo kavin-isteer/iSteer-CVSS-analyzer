@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,12 +22,16 @@ import com.isteer.cvssanalyser.core.dto.DependencyHintDto;
 import com.isteer.cvssanalyser.core.model.ApplicationModel;
 import com.isteer.cvssanalyser.core.model.CPENameModel;
 import com.isteer.cvssanalyser.core.model.DependencyModel;
+import com.isteer.cvssapplication.datastore.service.impl.VulnerabilityService;
 
 @RestController
 @RequestMapping("/api")
 public class DependencyHintController {
 	DependencyHintService hintService = new DependencyHintService();
 	FuzzySearchTool fuzzySearchTool = new FuzzySearchTool();
+	
+	@Autowired
+	private VulnerabilityService vulnerabilityService;
 
 	/**
 	 * Add GAV dependency hint for a dependency to correct false positives and false
@@ -118,7 +123,7 @@ public class DependencyHintController {
 	@PostMapping("/hint/application/addHint")
 	public ResponseEntity<?> addApplicationHint(@RequestParam String cpeName,
 			@RequestBody ApplicationModel application) {
-		int status = hintService.addApplicationHint(cpeName, application);
+		int status = vulnerabilityService.addApplicationHint(cpeName, application);
 		String statusMessage = "";
 		switch (status) {
 		case 1: {
