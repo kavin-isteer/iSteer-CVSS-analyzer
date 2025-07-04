@@ -5,50 +5,30 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-import jakarta.validation.constraints.NotBlank;
-
 public class Application {
+
 	private Long id;
 
 	private String uuid;
 
-	@NotBlank(message = "Name cannot be blank")
-	private String name;
+	private String softwareName;
 
-	private String version;
+	private String softwareVersion;
 
 	private String vendorName;
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-	private LocalDateTime createdAt;
+	private LocalDateTime installedDate;
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-	private LocalDateTime installedDate;
-	
-	
+	private LocalDateTime createdAt;
+
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime updatedAt;
 
 	private boolean isDeleted;
 
 	private List<Vulnerability> vulnerabilities;
-
-
-	public String getVendorName() {
-		return vendorName;
-	}
-
-	public void setVendorName(String vendorName) {
-		this.vendorName = vendorName;
-	}
-
-	public LocalDateTime getInstalledDate() {
-		return installedDate;
-	}
-
-	public void setInstalledDate(LocalDateTime installedDate) {
-		this.installedDate = installedDate;
-	}
 
 	public Long getId() {
 		return id;
@@ -66,20 +46,36 @@ public class Application {
 		this.uuid = uuid;
 	}
 
-	public String getName() {
-		return name;
+	public String getSoftwareName() {
+		return softwareName;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setSoftwareName(String softwareName) {
+		this.softwareName = softwareName;
 	}
 
-	public String getVersion() {
-		return version;
+	public String getSoftwareVersion() {
+		return softwareVersion;
 	}
 
-	public void setVersion(String version) {
-		this.version = version;
+	public void setSoftwareVersion(String softwareVersion) {
+		this.softwareVersion = softwareVersion;
+	}
+
+	public String getVendorName() {
+		return vendorName;
+	}
+
+	public void setVendorName(String vendorName) {
+		this.vendorName = vendorName;
+	}
+
+	public LocalDateTime getInstalledDate() {
+		return installedDate;
+	}
+
+	public void setInstalledDate(LocalDateTime installedDate) {
+		this.installedDate = installedDate;
 	}
 
 	public LocalDateTime getCreatedAt() {
@@ -88,14 +84,6 @@ public class Application {
 
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
-	}
-
-	public List<Vulnerability> getVulnerabilities() {
-		return vulnerabilities;
-	}
-
-	public void setVulnerabilities(List<Vulnerability> vulnerabilities) {
-		this.vulnerabilities = vulnerabilities;
 	}
 
 	public LocalDateTime getUpdatedAt() {
@@ -113,4 +101,21 @@ public class Application {
 	public void setDeleted(boolean isDeleted) {
 		this.isDeleted = isDeleted;
 	}
+
+	public List<Vulnerability> getVulnerabilities() {
+		return vulnerabilities;
+	}
+
+	public void setVulnerabilities(List<Vulnerability> vulnerabilities) {
+		this.vulnerabilities = vulnerabilities;
+	}
+
+	@Override
+	public String toString() {
+		return "Application [id=" + id + ", uuid=" + uuid + ", softwareName=" + softwareName + ", softwareVersion="
+				+ softwareVersion + ", vendorName=" + vendorName + ", installedDate=" + installedDate + ", createdAt="
+				+ createdAt + ", updatedAt=" + updatedAt + ", isDeleted=" + isDeleted + ", vulnerabilities="
+				+ vulnerabilities + "]";
+	}
+
 }

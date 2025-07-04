@@ -112,7 +112,7 @@ public class ApplicationDaoImpl implements ApplicationDao {
 
 		// Batch insert all applications to check
 		template.batchUpdate("INSERT INTO temp_apps_to_check (name, version, vendor_name) VALUES (?, ?, ?)",
-				applications.stream().map(app -> new Object[] { app.getName(), app.getVersion(), app.getVendorName() })
+				applications.stream().map(app -> new Object[] { app.getSoftwareName(), app.getSoftwareVersion(), app.getVendorName() })
 						.collect(Collectors.toList()));
 
 		List<Map<String, Object>> rows = template.queryForList("SELECT a.id, a.uuid, t.name, t.version, t.vendor_name, "
@@ -125,8 +125,8 @@ public class ApplicationDaoImpl implements ApplicationDao {
 			Application app = new Application();
 			app.setId(row.get("id") != null ? ((Number) row.get("id")).longValue() : null);
 			app.setUuid((String) row.get("uuid"));
-			app.setName((String) row.get("name"));
-			app.setVersion((String) row.get("version"));
+			app.setSoftwareName((String) row.get("name"));
+			app.setSoftwareVersion((String) row.get("version"));
 			app.setVendorName((String) row.get("vendor_name"));
 //		        Timestamp createdAt = (Timestamp)row.get("created_at") != null ? (Timestamp)row.get("created_at") : null;
 			app.setCreatedAt(
@@ -148,8 +148,8 @@ public class ApplicationDaoImpl implements ApplicationDao {
 		String sql = "INSERT INTO applications (uuid, name, version, vendor_name, created_at) "
 				+ "VALUES (:uuid, :name, :version, :vendorName, :createdAt)";
 		List<MapSqlParameterSource> paramsList = applications.stream()
-				.map(app -> new MapSqlParameterSource().addValue("uuid", app.getUuid()).addValue("name", app.getName())
-						.addValue("version", app.getVersion()).addValue("vendorName", app.getVendorName())
+				.map(app -> new MapSqlParameterSource().addValue("uuid", app.getUuid()).addValue("name", app.getSoftwareName())
+						.addValue("version", app.getSoftwareVersion()).addValue("vendorName", app.getVendorName())
 						.addValue("createdAt", app.getCreatedAt()))
 				.collect(Collectors.toList());
 		logger.debug("Batch saving {} applications", applications.size());

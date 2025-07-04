@@ -11,7 +11,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 public class ComputerPayloadDTO {
-	
+
 	@NotBlank(message = "Device ID cannot be blank")
 	private String deviceId;
 
@@ -23,26 +23,23 @@ public class ComputerPayloadDTO {
 	private String ipAddress;
 
 	@NotBlank(message = "OS version cannot be blank")
-
 	private String osVersion;
 
 	@NotBlank(message = "Antivirus status cannot be blank")
-
 	private String antivirusStatus;
 
 	@NotBlank(message = "Firewall status cannot be blank")
-
 	private String firewallStatus;
 
 	@NotBlank(message = "Logged-in user cannot be blank")
 	private String loggedInUser;
 
 	@NotEmpty(message = "Installed software cannot be empty")
-	private List<SoftwareDTO> installedSoftware;
+	private List<SoftwareDTO> installedSoftwares;
 
 	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
 	private LocalDateTime lastUpdateCheck;
-	
+
 	@NotNull(message = "Timestamp cannot be blank")
 	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
 	private LocalDateTime timestamp;
@@ -111,12 +108,11 @@ public class ComputerPayloadDTO {
 		this.lastUpdateCheck = lastUpdateCheck;
 	}
 
-	public List<SoftwareDTO> getInstalledSoftware() {
-		return installedSoftware;
+	public List<SoftwareDTO> getInstalledSoftwares() {
+		return installedSoftwares;
 	}
-
-	public void setInstalledSoftware(List<SoftwareDTO> installedSoftware) {
-		this.installedSoftware = installedSoftware;
+	public void setInstalledSoftwares(List<SoftwareDTO> installedSoftwares) {
+		this.installedSoftwares = installedSoftwares;
 	}
 
 	public LocalDateTime getTimestamp() {
