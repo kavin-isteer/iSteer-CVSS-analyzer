@@ -5,12 +5,19 @@ import java.time.LocalDateTime;
 public class ComputerApplicationDTO {
 
 	private String uuid;
+
 	private String computerUuid;
+
 	private String applicationUuid;
+
 	private LocalDateTime installedDate;
+
 	private boolean isDeleted;
+
 	private String applicationName;
+
 	private String applicationVersion;
+
 	private String applicationVendorName;
 
 	public String getUuid() {

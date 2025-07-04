@@ -53,12 +53,12 @@ public class ComputerServiceImpl implements ComputerService {
 		Computer computer = new Computer();
 		// Added: Check for duplicate applications in installedSoftware
 		Map<String, SoftwareDTO> softwareDTOMapForValidation = new LinkedHashMap<>();
-		for (SoftwareDTO software : payload.getInstalledSoftware()) {
-			if (software.getName() == null || software.getName().trim().isEmpty()) {
+		for (SoftwareDTO software : payload.getInstalledSoftwares()) {
+			if (software.getSoftwareName() == null || software.getSoftwareName().trim().isEmpty()) {
 				logger.warn("Application name is null or blank in payload for deviceId: {}", payload.getDeviceId());
 				return -2; // Application name should not be blank
 			}
-			String key = key(software.getName(), software.getVendorName(), software.getVersion());
+			String key = key(software.getSoftwareName(), software.getVendorName(), software.getSoftwareVersion());
 			if (softwareDTOMapForValidation.containsKey(key)) {
 				logger.warn("Duplicate application found in payload for deviceId: {}, key: {}", payload.getDeviceId(),
 						key);
@@ -131,11 +131,11 @@ public class ComputerServiceImpl implements ComputerService {
 		// Get all known applications
 		List<Application> allApplications = applicationService.getAllApplications();
 		Map<String, Application> existingAppMap = allApplications.stream().collect(Collectors
-				.toMap(app -> key(app.getName(), app.getVendorName(), app.getVersion()), Function.identity()));
+				.toMap(app -> key(app.getSoftwareName(), app.getVendorName(), app.getSoftwareVersion()), Function.identity()));
 
 		// Keys for newly reported apps
-		Set<String> newAppKeys = payload.getInstalledSoftware().stream()
-				.map(software -> key(software.getName(), software.getVendorName(), software.getVersion()))
+		Set<String> newAppKeys = payload.getInstalledSoftwares().stream()
+				.map(software -> key(software.getSoftwareName(), software.getVendorName(), software.getSoftwareVersion()))
 				.collect(Collectors.toSet());
 
 		// Reactivatable keys
@@ -151,9 +151,9 @@ public class ComputerServiceImpl implements ComputerService {
 		Set<String> missingAppKeys = new HashSet<>(onlyInNew);
 		missingAppKeys.removeAll(existingAppMap.keySet());
 
-		List<SoftwareDTO> appsToCreate = payload.getInstalledSoftware().stream()
+		List<SoftwareDTO> appsToCreate = payload.getInstalledSoftwares().stream()
 				.filter(software -> missingAppKeys
-						.contains(key(software.getName(), software.getVendorName(), software.getVersion())))
+						.contains(key(software.getSoftwareName(), software.getVendorName(), software.getSoftwareVersion())))
 				.collect(Collectors.toList());
 
 		if (!appsToCreate.isEmpty()) {
@@ -169,11 +169,11 @@ public class ComputerServiceImpl implements ComputerService {
 		// Refresh app list after new app insert
 		allApplications = applicationService.getAllApplications();
 		existingAppMap = allApplications.stream().collect(Collectors
-				.toMap(app -> key(app.getName(), app.getVendorName(), app.getVersion()), Function.identity()));
+				.toMap(app -> key(app.getSoftwareName(), app.getVendorName(), app.getSoftwareVersion()), Function.identity()));
 
-		Map<String, SoftwareDTO> softwareDTOMap = payload.getInstalledSoftware().stream()
+		Map<String, SoftwareDTO> softwareDTOMap = payload.getInstalledSoftwares().stream()
 				.collect(Collectors.toMap(
-						software -> key(software.getName(), software.getVendorName(), software.getVersion()),
+						software -> key(software.getSoftwareName(), software.getVendorName(), software.getSoftwareVersion()),
 						Function.identity()));
 
 		// Insert new mappings using your save() method

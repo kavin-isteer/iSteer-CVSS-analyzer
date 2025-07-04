@@ -7,11 +7,12 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 
 public class Computer {
+
 	private Long id;
+
 	private String uuid;
 
 	@NotBlank(message = "Device ID cannot be blank")
-
 	private String deviceId;
 
 	@NotBlank(message = "Machine Name cannot be blank")
@@ -31,17 +32,23 @@ public class Computer {
 
 	@NotBlank(message = "Logged-in user cannot be blank")
 	private String loggedInUser;
+
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime lastUpdateCheck;
+
 	@NotBlank(message = "Timestamp cannot be blank")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime timestamp;
-	private boolean isDeleted;
+
 	private boolean isActive;
+
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime createdAt;
+
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime updatedAt;
+
+	private boolean isDeleted;
 
 	public Long getId() {
 		return id;
@@ -123,12 +130,12 @@ public class Computer {
 		this.lastUpdateCheck = lastUpdateCheck;
 	}
 
-	public boolean isDeleted() {
-		return isDeleted;
+	public LocalDateTime getTimestamp() {
+		return timestamp;
 	}
 
-	public void setDeleted(boolean isDeleted) {
-		this.isDeleted = isDeleted;
+	public void setTimestamp(LocalDateTime timestamp) {
+		this.timestamp = timestamp;
 	}
 
 	public boolean isActive() {
@@ -155,12 +162,21 @@ public class Computer {
 		this.updatedAt = updatedAt;
 	}
 
-	public LocalDateTime getTimestamp() {
-		return timestamp;
+	public boolean isDeleted() {
+		return isDeleted;
 	}
 
-	public void setTimestamp(LocalDateTime timestamp) {
-		this.timestamp = timestamp;
+	public void setDeleted(boolean isDeleted) {
+		this.isDeleted = isDeleted;
+	}
+
+	@Override
+	public String toString() {
+		return "Computer [id=" + id + ", uuid=" + uuid + ", deviceId=" + deviceId + ", machineName=" + machineName
+				+ ", ipAddress=" + ipAddress + ", osVersion=" + osVersion + ", antivirusStatus=" + antivirusStatus
+				+ ", firewallStatus=" + firewallStatus + ", loggedInUser=" + loggedInUser + ", lastUpdateCheck="
+				+ lastUpdateCheck + ", timestamp=" + timestamp + ", isActive=" + isActive + ", createdAt=" + createdAt
+				+ ", updatedAt=" + updatedAt + ", isDeleted=" + isDeleted + "]";
 	}
 
 }

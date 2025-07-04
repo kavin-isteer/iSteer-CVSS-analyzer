@@ -1,11 +1,11 @@
 package com.isteer.cvssapplication.datastore.dto;
 
-
 public class StatusMessageDTO {
-	
+
 	private int statusCode;
+
 	private String statusMessage;
-	
+
 	public StatusMessageDTO(int statusCode, String statusMessage) {
 		super();
 		this.statusCode = statusCode;
@@ -31,8 +31,5 @@ public class StatusMessageDTO {
 	public void setStatusMessage(String statusMessage) {
 		this.statusMessage = statusMessage;
 	}
-	
-	
-
 
 }

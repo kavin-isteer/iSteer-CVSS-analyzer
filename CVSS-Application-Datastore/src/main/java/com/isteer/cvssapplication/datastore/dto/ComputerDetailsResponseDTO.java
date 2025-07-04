@@ -6,7 +6,9 @@ import com.isteer.cvssapplication.datastore.entity.Application;
 import com.isteer.cvssapplication.datastore.entity.Computer;
 
 public class ComputerDetailsResponseDTO {
+
 	private Computer computer;
+
 	private List<Application> applications;
 
 	public Computer getComputer() {
