@@ -53,7 +53,7 @@ public class CvssMojo extends AbstractMojo {
 		getLog().debug("Getting database credentials from plugin configuration");
 		Engine.analysisMode = EngineMode.MAVEN_PLUGIN;
 		DbUtil.withDbCredentials(database.getUrl(), database.getUsername(), database.getPassword());
-		Engine.initializeLuceneIndex();
+	//	Engine.initializeLuceneIndex();
 		// 1. Get ALL dependencies (including transitive ones)
 		Set<Artifact> artifacts = project.getArtifacts();
 

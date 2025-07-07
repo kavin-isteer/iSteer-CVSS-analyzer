@@ -1,16 +1,24 @@
 package com.isteer.cvssanalyzer.api.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.isteer.cvssanalyser.core.DependencyHintService;
 import com.isteer.cvssanalyser.core.Engine;
 import com.isteer.cvssanalyser.core.enums.EngineMode;
 import com.isteer.cvssanalyser.core.exception.NvdApiException;
 import com.isteer.cvssanalyser.core.logging.Slf4jEngineLogger;
+import com.isteer.cvssanalyser.core.model.DependencyModel;
 import com.isteer.cvssanalyzer.api.service.CvssService;
 
 @RestController
@@ -30,8 +38,6 @@ public class CvssController {
 	 * @return SseEmitter to stream analysis progress and final message.
 	 */
 
-	// FIXME: Check if it will raise any issues by using new thread and handle multi
-	// threading issues.
 	@GetMapping("/getVulnerabilities")
 	public SseEmitter getVulnerabilities() {
 		SseEmitter emitter = new SseEmitter(0L);
@@ -141,45 +147,64 @@ public class CvssController {
 		}
 	}
 
-	/*	*//**
-			 * Add GAV dependency hint for a dependency to correct false positives and false
-			 * negatives.
-			 * 
-			 * @param cpeName    Correct CPE Name for the dependency.
-			 * @param dependency dependency object to which the hint needs to be updated.
-			 * @return status of the hint updation.
-			 */
-	/*
-	 * @PostMapping("/hint/addDependencyHint") public ResponseEntity<Object>
-	 * addDependencyHint(@RequestParam String cpeName,
+	/**
+	 * Add GAV dependency hint for a dependency to correct false positives and false
+	 * negatives.
 	 * 
-	 * @RequestBody DependencyModel dependency) { DependencyHintService hintService
-	 * = new DependencyHintService(); int status =
-	 * hintService.addGAVDependencyHint(cpeName, dependency); String statusMessage =
-	 * ""; switch (status) { case 1: { statusMessage = "Hint added Successfully!!";
-	 * break; } case -1: { statusMessage = "CPE name is not valid!!"; break; } case
-	 * -2: { statusMessage = "Error whlie adding product hint!!"; break; } case -3:
-	 * { statusMessage = "Error whlie adding vendor hint!!"; break; } default: {
-	 * statusMessage = "Error whlie adding dependnecy hint!!"; break; } }
-	 * Map<String, String> responseMessage = new HashMap<>();
-	 * responseMessage.put("Status", statusMessage); return new
-	 * ResponseEntity<>(responseMessage, HttpStatus.OK); }
+	 * @param cpeName    Correct CPE Name for the dependency.
+	 * @param dependency dependency object to which the hint needs to be updated.
+	 * @return status of the hint updation.
+	 */
+
+	@PostMapping("/hint/addDependencyHint")
+	public ResponseEntity<Object> addDependencyHint(@RequestParam String cpeName,
+
+			@RequestBody DependencyModel dependency) {
+		DependencyHintService hintService = new DependencyHintService();
+		int status = hintService.addGAVDependencyHint(cpeName, dependency);
+		String statusMessage = "";
+		switch (status) {
+		case 1: {
+			statusMessage = "Hint added Successfully!!";
+			break;
+		}
+		case -1: {
+			statusMessage = "CPE name is not valid!!";
+			break;
+		}
+		case -2: {
+			statusMessage = "Error whlie adding product hint!!";
+			break;
+		}
+		case -3: {
+			statusMessage = "Error whlie adding vendor hint!!";
+			break;
+		}
+		default: {
+			statusMessage = "Error whlie adding dependnecy hint!!";
+			break;
+		}
+		}
+		Map<String, String> responseMessage = new HashMap<>();
+		responseMessage.put("Status", statusMessage);
+		return new ResponseEntity<>(responseMessage, HttpStatus.OK);
+	}
+
+	/**
+	 * Handles the upload of a file for dependency analysis based on the file type
+	 * (e.g., Maven or Node).
+	 * <p>
+	 * This method accepts a multipart file and its type, processes it, and returns
+	 * a unique job ID if the analysis starts successfully. In case of errors or
+	 * invalid file types, it returns an error message.
 	 * 
-	 *//**
-		 * Handles the upload of a file for dependency analysis based on the file type
-		 * (e.g., Maven or Node).
-		 * <p>
-		 * This method accepts a multipart file and its type, processes it, and returns
-		 * a unique job ID if the analysis starts successfully. In case of errors or
-		 * invalid file types, it returns an error message.
-		 * 
-		 * @param fileType     the type of the uploaded file (e.g., "pom",
-		 *                     "package.json", etc.). Required.
-		 * @param uploadedFile the multipart file uploaded for analysis. Required.
-		 * @return a ResponseEntity containing: - a JSON object with the generated
-		 *         {@code jobId} on success, - or a JSON object with an {@code error}
-		 *         message if the file type is invalid or an error occurred.
-		 */
+	 * @param fileType     the type of the uploaded file (e.g., "pom",
+	 *                     "package.json", etc.). Required.
+	 * @param uploadedFile the multipart file uploaded for analysis. Required.
+	 * @return a ResponseEntity containing: - a JSON object with the generated
+	 *         {@code jobId} on success, - or a JSON object with an {@code error}
+	 *         message if the file type is invalid or an error occurred.
+	 */
 	/*
 	 * @PostMapping("/upload/file") public ResponseEntity<?>
 	 * uploadNodePackageFileForAnalysis(
