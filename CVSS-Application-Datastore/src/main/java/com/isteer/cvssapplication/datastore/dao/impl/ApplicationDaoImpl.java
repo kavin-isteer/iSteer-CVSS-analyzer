@@ -1,6 +1,7 @@
 package com.isteer.cvssapplication.datastore.dao.impl;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -130,8 +131,14 @@ public class ApplicationDaoImpl implements ApplicationDao {
 			app.setSoftwareVersion((String) row.get("version"));
 			app.setVendorName((String) row.get("vendor_name"));
 //		        Timestamp createdAt = (Timestamp)row.get("created_at") != null ? (Timestamp)row.get("created_at") : null;
-			app.setCreatedAt(
-					row.get("created_at") != null ? ((Timestamp) row.get("created_at")).toLocalDateTime() : null);
+			Object createdAtObj = row.get("created_at");
+			if (createdAtObj instanceof Timestamp) {
+			    app.setCreatedAt(((Timestamp) createdAtObj).toLocalDateTime());
+			} else if (createdAtObj instanceof LocalDateTime) {
+			    app.setCreatedAt((LocalDateTime) createdAtObj);
+			} else {
+			    app.setCreatedAt(null);
+			}
 
 			Long exists = (Long) row.get("exists_flag");
 			// FIXME: This should be Boolean, but the query returns Long. Dont do like this.

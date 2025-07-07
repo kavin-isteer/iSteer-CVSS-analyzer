@@ -35,7 +35,7 @@ public class ComputerPayloadDTO {
 	@NotBlank(message = "Logged-in user cannot be blank")
 	private String loggedInUser;
 
-	@NotEmpty(message = "Installed software cannot be empty")
+//	@NotEmpty(message = "Installed software cannot be empty")
 	private List<SoftwareDTO> installedSoftwares;
 
 	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
