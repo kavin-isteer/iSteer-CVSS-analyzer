@@ -3,14 +3,21 @@ package com.isteer.cvssapplication.datastore.entity;
 import java.time.LocalDateTime;
 
 public class ComputerApplication {
+
 	private Long id;
 
 	private String uuid;
+
 	private String computerUuid;
+
 	private String applicationUuid;
+
 	private LocalDateTime installedDate;
+
 	private boolean isDeleted;
+
 	private LocalDateTime createdAt;
+
 	private LocalDateTime updatedAt;
 
 	public Long getId() {

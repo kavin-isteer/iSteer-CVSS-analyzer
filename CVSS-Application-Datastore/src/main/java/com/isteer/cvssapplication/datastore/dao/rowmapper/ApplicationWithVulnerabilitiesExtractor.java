@@ -27,8 +27,8 @@ public class ApplicationWithVulnerabilitiesExtractor implements ResultSetExtract
                 Application application = new Application();
                 application.setId(rs.getLong("id"));
                 application.setUuid(appUuid);
-                application.setName(rs.getString("name"));
-                application.setVersion(rs.getString("version"));
+                application.setSoftwareName(rs.getString("name"));
+                application.setSoftwareVersion(rs.getString("version"));
                 application.setVendorName(rs.getString("vendor_name"));
                 application.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
                 application.setInstalledDate(rs.getTimestamp("installed_date") != null

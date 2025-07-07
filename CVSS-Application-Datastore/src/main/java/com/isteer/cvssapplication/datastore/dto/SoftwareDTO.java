@@ -11,29 +11,33 @@ import jakarta.validation.constraints.NotBlank;
 public class SoftwareDTO {
 
 	@NotBlank(message = "Software name cannot be blank")
-	private String name;
-	private String version;
+	private String softwareName;
+
+	private String softwareVersion;
+
 	private String vendorName;
+
 	@JsonDeserialize(using = CustomLocalDateTimeDeserializer.class)
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime installedDate;
+
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime createdAt;
 
-	public String getName() {
-		return name;
+	public String getSoftwareName() {
+		return softwareName;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setSoftwareName(String softwareName) {
+		this.softwareName = softwareName;
 	}
 
-	public String getVersion() {
-		return version;
+	public String getSoftwareVersion() {
+		return softwareVersion;
 	}
 
-	public void setVersion(String version) {
-		this.version = version;
+	public void setSoftwareVersion(String softwareVersion) {
+		this.softwareVersion = softwareVersion;
 	}
 
 	public String getVendorName() {
@@ -62,8 +66,8 @@ public class SoftwareDTO {
 
 	@Override
 	public String toString() {
-		return "SoftwareDTO [name=" + name + ", version=" + version + ", vendorName=" + vendorName + ", installedDate="
-				+ installedDate + ", createdAt=" + createdAt + "]";
+		return "SoftwareDTO [softwareName=" + softwareName + ", softwareVersion=" + softwareVersion + ", vendorName="
+				+ vendorName + ", installedDate=" + installedDate + ", createdAt=" + createdAt + "]";
 	}
 
 }
