@@ -193,7 +193,7 @@ public class ComputerDaoImpl implements ComputerDao {
 				    v.is_deleted AS v_is_deleted,
 				    acnd.cpe_name
 				FROM computers c
-				LEFT JOIN computer_applications ca ON c.uuid = ca.computer_uuid AND ca.is_deleted = false
+				LEFT JOIN computer_applications ca ON c.uuid = ca.computer_uuid 
 				LEFT JOIN applications a ON ca.application_uuid = a.uuid
 				LEFT JOIN application_vulnerabilities av ON a.uuid = av.application_uuid
 				LEFT JOIN vulnerabilities v ON av.vulnerability_uuid = v.uuid AND v.is_deleted = false

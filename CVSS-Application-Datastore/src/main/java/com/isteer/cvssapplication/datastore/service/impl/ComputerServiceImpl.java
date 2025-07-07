@@ -365,8 +365,8 @@ public class ComputerServiceImpl implements ComputerService {
 			return -3; // Internal error
 		}
 		// Soft delete associated computer_applications mappings using JOINs
-		int mappingStatus = computerApplicationRepository.softDeleteByComputerUuid(uuid);
-		logger.debug("Soft deleted {} mappings for computer UUID: {}", mappingStatus, uuid);
+//		int mappingStatus = computerApplicationRepository.softDeleteByComputerUuid(uuid);
+//		logger.debug("Soft deleted {} mappings for computer UUID: {}", mappingStatus, uuid);
 		return 1; // Success}
 	}
 
@@ -393,8 +393,8 @@ public class ComputerServiceImpl implements ComputerService {
 			return -3; // Internal error
 		}
 		// Revert soft delete for associated computer_applications mappings
-		int mappingStatus = computerApplicationRepository.revertSoftDeleteByComputerUuid(uuid);
-		logger.debug("Reverted soft delete for {} mappings for computer UUID: {}", mappingStatus, uuid);
+//		int mappingStatus = computerApplicationRepository.revertSoftDeleteByComputerUuid(uuid);
+//		logger.debug("Reverted soft delete for {} mappings for computer UUID: {}", mappingStatus, uuid);
 		return 1; // Success
 	}
 
