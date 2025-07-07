@@ -22,7 +22,6 @@ import com.isteer.cvssanalyser.core.model.DependencyModel;
 import com.isteer.cvssanalyzer.api.service.CvssService;
 
 @RestController
-@RequestMapping("/cvss")
 public class CvssController {
 	private CvssService service;
 
@@ -38,7 +37,7 @@ public class CvssController {
 	 * @return SseEmitter to stream analysis progress and final message.
 	 */
 
-	@GetMapping("/getVulnerabilities")
+	@GetMapping("/cvss/getVulnerabilities")
 	public SseEmitter getVulnerabilities() {
 		SseEmitter emitter = new SseEmitter(0L);
 		new Thread(() -> {
@@ -61,7 +60,7 @@ public class CvssController {
 	 *
 	 * @return ResponseEntity containing the analysis results.
 	 */
-	@GetMapping("/vulnerabilities")
+	@GetMapping("/cvss/vulnerabilities")
 	public ResponseEntity<Object> getAllVulnerabilities() {
 		return ResponseEntity.ok(Engine.dependencies);
 	}
@@ -72,7 +71,7 @@ public class CvssController {
 	 * @param cveId The CVE ID to search for (e.g., "CVE-2021-44228").
 	 * @return ResponseEntity with vulnerability details or error message.
 	 */
-	@GetMapping("/search/cve/cveId")
+	@GetMapping("/cvss/search/cve/cveId")
 	public ResponseEntity<Object> getVulnerabilitiesByCveId(@RequestParam String cveId) {
 		try {
 			Object result = service.getVulnerabilitiesByCveId(cveId);
@@ -88,7 +87,7 @@ public class CvssController {
 	 * @param keywords The keywords to search for.
 	 * @return ResponseEntity with search results or error message.
 	 */
-	@GetMapping("/search/cve/keyword")
+	@GetMapping("/cvss/search/cve/keyword")
 	public ResponseEntity<Object> getVulnerabilitiesByKeywords(@RequestParam String keywords) {
 		try {
 			Object result = service.getVulnerabilitiesByKeywords(keywords);
@@ -105,7 +104,7 @@ public class CvssController {
 	 *            "cpe:2.3:a:apache:log4j:2.14.1").
 	 * @return ResponseEntity with vulnerability data or error.
 	 */
-	@GetMapping("/search/cve/cpeName")
+	@GetMapping("/cvss/search/cve/cpeName")
 	public ResponseEntity<Object> getVulnerabilitiesByCpe(@RequestParam String cpe) {
 		try {
 			Object result = service.getVulnerabilitiesByCpe(cpe);
@@ -121,7 +120,7 @@ public class CvssController {
 	 * @param cpeName Partial or full CPE name to match.
 	 * @return ResponseEntity with a list of matching CPE names or error.
 	 */
-	@GetMapping("/search/cpe/matchingCpeName")
+	@GetMapping("/cvss/search/cpe/matchingCpeName")
 	public ResponseEntity<Object> getCpeNameList(@RequestParam String cpeName) {
 		try {
 			Object result = service.getCpeNameList(cpeName);
@@ -137,7 +136,7 @@ public class CvssController {
 	 * @param keyword The keyword to search for.
 	 * @return ResponseEntity with matching CPE names or error.
 	 */
-	@GetMapping("/search/cpe/keyword")
+	@GetMapping("/cvss/search/cpe/keyword")
 	public ResponseEntity<Object> getCpeNameListByKeyword(@RequestParam String keyword) {
 		try {
 			Object result = service.getCpeNameListByKeywords(keyword);
@@ -156,7 +155,7 @@ public class CvssController {
 	 * @return status of the hint updation.
 	 */
 
-	@PostMapping("/hint/addDependencyHint")
+	@PostMapping("api/hint/GAV/addHint")
 	public ResponseEntity<Object> addDependencyHint(@RequestParam String cpeName,
 
 			@RequestBody DependencyModel dependency) {

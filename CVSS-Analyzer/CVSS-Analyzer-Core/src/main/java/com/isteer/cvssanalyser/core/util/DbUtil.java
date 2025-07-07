@@ -35,10 +35,10 @@ public class DbUtil {
 		    if(url==null || url.isEmpty() ||username==null || username.isEmpty() ||password==null || password.isEmpty()) {
 		    	throw new RuntimeException("Unable to get connection to CVSS database. Credentials error!!");
 		    }
-			if(con!=null) {
+		    try {
+			if(con!=null && !con.isClosed()) {
 				return con;
 			}
-			try {
 				con = DriverManager.getConnection(url, username, password);
 				return con;
 			} catch (SQLException e) {
